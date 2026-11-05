@@ -1,0 +1,54 @@
+<p-card class="cs-inicio">
+  <ng-template #title>
+    <h2 class="cs-inicio__titulo">Bienvenido al panel del vendedor</h2>
+  </ng-template>
+  <ng-template #subtitle>Administra lo que tus clientes ven en la app de CatálogoStock.</ng-template>
+
+  <p>
+    Desde aquí gestionarás productos, marcas, inventario, pedidos, verificación de
+    transferencias y conflictos de sincronización. Estas secciones se habilitarán en las
+    próximas fases.
+  </p>
+
+  <p class="cs-inicio__fase">
+    <span>Fase actual:</span>
+    <p-badge value="Base técnica" severity="warn" badgeSize="large" />
+  </p>
+
+  <ng-template #footer>
+    <div class="cs-inicio__acciones">
+      <p-button
+        label="Mostrar aviso de prueba"
+        icon="pi pi-check"
+        (onClick)="mostrarAvisoDePrueba()"
+      />
+      <p-button
+        label="Ver colores corporativos"
+        icon="pi pi-palette"
+        severity="secondary"
+        (onClick)="abrirGuiaDeColores()"
+      />
+    </div>
+  </ng-template>
+</p-card>
+
+<p-dialog
+  header="Colores corporativos"
+  [(visible)]="guiaVisible"
+  [modal]="true"
+  [draggable]="false"
+  [style]="{ width: 'min(32rem, 95vw)' }"
+>
+  <ul class="cs-colores">
+    @for (color of colores; track color.nombre) {
+      <li class="cs-colores__item">
+        <span class="cs-muestra" [class]="color.clase" aria-hidden="true"></span>
+        <span>
+          <strong>{{ color.nombre }}</strong>
+          <br />
+          {{ color.uso }}
+        </span>
+      </li>
+    }
+  </ul>
+</p-dialog>
