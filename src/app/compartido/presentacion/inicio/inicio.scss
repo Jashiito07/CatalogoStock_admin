@@ -1,0 +1,64 @@
+// Colores solo desde las variables corporativas (colores.css), nunca en hexadecimal.
+.cs-inicio {
+  display: block;
+  max-width: 48rem;
+}
+
+.cs-inicio__titulo {
+  margin: 0;
+  font-size: 1.5rem;
+  color: var(--cs-primario);
+}
+
+.cs-inicio__fase {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.cs-inicio__acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.cs-colores {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.75rem;
+}
+
+.cs-colores__item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.cs-muestra {
+  flex: 0 0 2.5rem;
+  height: 2.5rem;
+  border-radius: 0.5rem;
+  border: 1px solid var(--cs-texto);
+}
+
+.cs-muestra--primario {
+  background-color: var(--cs-primario);
+}
+
+.cs-muestra--secundario {
+  background-color: var(--cs-secundario);
+}
+
+.cs-muestra--acento {
+  background-color: var(--cs-acento);
+}
+
+.cs-muestra--fondo {
+  background-color: var(--cs-fondo);
+}
+
+.cs-muestra--texto {
+  background-color: var(--cs-texto);
+}

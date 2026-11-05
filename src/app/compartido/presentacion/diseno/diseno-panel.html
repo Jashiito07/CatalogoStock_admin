@@ -1,0 +1,20 @@
+<a class="cs-saltar-contenido" href="#contenido-principal">Saltar al contenido</a>
+
+<p-toolbar class="cs-barra-superior">
+  <ng-template #start>
+    <i class="pi pi-shop cs-barra-superior__icono" aria-hidden="true"></i>
+    <h1 class="cs-barra-superior__titulo">{{ titulo }}</h1>
+  </ng-template>
+</p-toolbar>
+
+<div class="cs-diseno">
+  <nav class="cs-diseno__menu" aria-label="Secciones del panel">
+    <p-menu [model]="secciones" class="cs-menu-lateral" />
+  </nav>
+
+  <main id="contenido-principal" class="cs-diseno__contenido" tabindex="-1">
+    <router-outlet />
+  </main>
+</div>
+
+<p-toast position="top-right" />

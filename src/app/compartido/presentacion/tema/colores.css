@@ -1,0 +1,27 @@
+/*
+ * Colores corporativos de CatálogoStock (D-06). Se definen una sola vez aquí y en
+ * `tema-catalogostock.ts`. Los componentes usan estas variables, nunca hexadecimales.
+ *
+ * Contraste (RNF-11): sobre --cs-acento el texto va en --cs-texto, nunca en blanco,
+ * y --cs-acento no se usa como color de texto.
+ */
+:root {
+  --cs-primario: #2563eb;
+  --cs-secundario: #7c3aed;
+  --cs-acento: #f97316;
+  --cs-fondo: #f8fafc;
+  --cs-texto: #1e293b;
+  --cs-sobre-primario: #ffffff;
+  --cs-sobre-acento: var(--cs-texto);
+
+  /* Tamaño mínimo de los controles (RNF-10), igual que en la app móvil. */
+  --cs-control-minimo: 48px;
+
+  color-scheme: light;
+}
+
+html,
+body {
+  background-color: var(--cs-fondo);
+  color: var(--cs-texto);
+}

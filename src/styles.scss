@@ -1,0 +1,34 @@
+/*
+ * Estilos globales del panel. Los colores salen de colores.css y del preset de PrimeNG
+ * (tema-catalogostock.ts); aquí no se escriben colores en hexadecimal.
+ */
+html,
+body {
+  margin: 0;
+  min-height: 100%;
+  font-family:
+    system-ui,
+    -apple-system,
+    'Segoe UI',
+    Roboto,
+    'Helvetica Neue',
+    Arial,
+    sans-serif;
+}
+
+/* RNF-10: controles cómodos (mismo mínimo que la app móvil). */
+.p-button,
+.p-menu-item-link {
+  min-height: var(--cs-control-minimo);
+}
+
+/* El menú lateral ocupa todo el ancho de su columna. */
+.cs-menu-lateral .p-menu {
+  width: 100%;
+}
+
+/* Foco visible para la navegación por teclado. */
+:focus-visible {
+  outline: 2px solid var(--cs-primario);
+  outline-offset: 2px;
+}

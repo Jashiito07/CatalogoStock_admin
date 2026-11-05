@@ -1,0 +1,76 @@
+// Colores solo desde las variables corporativas (colores.css), nunca en hexadecimal.
+:host {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background-color: var(--cs-fondo);
+  color: var(--cs-texto);
+}
+
+.cs-saltar-contenido {
+  position: absolute;
+  left: -9999px;
+  top: 0.5rem;
+  padding: 0.75rem 1rem;
+  background-color: var(--cs-primario);
+  color: var(--cs-sobre-primario);
+  z-index: 10;
+
+  &:focus {
+    left: 0.5rem;
+  }
+}
+
+// Blanco sobre el Primario: contraste 5.17 (RNF-11).
+.cs-barra-superior {
+  display: block;
+  border-radius: 0;
+  border: none;
+  background: var(--cs-primario);
+  color: var(--cs-sobre-primario);
+  min-height: 4rem;
+}
+
+.cs-barra-superior__icono {
+  font-size: 1.5rem;
+  margin-right: 0.75rem;
+}
+
+.cs-barra-superior__titulo {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.cs-diseno {
+  display: flex;
+  flex: 1;
+  gap: 1.5rem;
+  padding: 1.5rem;
+}
+
+.cs-diseno__menu {
+  flex: 0 0 16rem;
+}
+
+.cs-menu-lateral {
+  display: block;
+  width: 100%;
+}
+
+.cs-diseno__contenido {
+  flex: 1;
+  min-width: 0;
+  outline: none;
+}
+
+@media (max-width: 768px) {
+  .cs-diseno {
+    flex-direction: column;
+    padding: 1rem;
+  }
+
+  .cs-diseno__menu {
+    flex-basis: auto;
+  }
+}
