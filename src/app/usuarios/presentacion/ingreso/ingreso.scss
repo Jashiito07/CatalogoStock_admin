@@ -1,0 +1,74 @@
+// Colores solo desde las variables corporativas (colores.css), nunca en hexadecimal.
+:host {
+  display: block;
+  min-height: 100vh;
+  background-color: var(--cs-fondo);
+  color: var(--cs-texto);
+}
+
+.cs-ingreso {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 1rem;
+  box-sizing: border-box;
+}
+
+.cs-ingreso__tarjeta {
+  display: block;
+  width: min(26rem, 100%);
+}
+
+.cs-ingreso__encabezado {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.cs-ingreso__icono {
+  font-size: 1.75rem;
+  color: var(--cs-primario);
+}
+
+.cs-ingreso__titulo {
+  margin: 0;
+  font-size: 1.5rem;
+  color: var(--cs-primario);
+}
+
+.cs-ingreso__formulario {
+  display: grid;
+  gap: 1.25rem;
+  margin-top: 1rem;
+}
+
+.cs-campo {
+  display: grid;
+  gap: 0.375rem;
+}
+
+.cs-campo__etiqueta {
+  font-weight: 600;
+}
+
+// RNF-10: campos cómodos en el celular.
+.cs-campo__control {
+  width: 100%;
+  min-height: var(--cs-control-minimo);
+  box-sizing: border-box;
+}
+
+.cs-ingreso__mensaje {
+  display: block;
+  margin-top: 1rem;
+}
+
+:host ::ng-deep .p-password-input {
+  min-height: var(--cs-control-minimo);
+}
+
+.cs-ingreso__nota {
+  margin: 0;
+  font-size: 0.875rem;
+}

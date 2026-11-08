@@ -1,0 +1,85 @@
+<main class="cs-ingreso">
+  <p-card class="cs-ingreso__tarjeta">
+    <ng-template #title>
+      <div class="cs-ingreso__encabezado">
+        <i class="pi pi-shop cs-ingreso__icono" aria-hidden="true"></i>
+        <h1 class="cs-ingreso__titulo">CatálogoStock</h1>
+      </div>
+    </ng-template>
+    <ng-template #subtitle>Panel del vendedor · Ingresa con tu cuenta de vendedor.</ng-template>
+
+    @if (aviso(); as textoAviso) {
+      <p-message severity="info" icon="pi pi-info-circle" class="cs-ingreso__mensaje">
+        {{ textoAviso }}
+      </p-message>
+    }
+
+    @if (error(); as textoError) {
+      <p-message
+        severity="error"
+        icon="pi pi-times-circle"
+        class="cs-ingreso__mensaje"
+        role="alert"
+        data-prueba="error-ingreso"
+      >
+        {{ textoError }}
+      </p-message>
+    }
+
+    <form class="cs-ingreso__formulario" [formGroup]="formulario" (ngSubmit)="ingresar()" novalidate>
+      <div class="cs-campo">
+        <label for="correo" class="cs-campo__etiqueta">Correo</label>
+        <input
+          pInputText
+          id="correo"
+          type="email"
+          formControlName="correo"
+          autocomplete="username"
+          inputmode="email"
+          class="cs-campo__control"
+          [invalid]="campoInvalido('correo')"
+          [attr.aria-invalid]="campoInvalido('correo')"
+          [attr.aria-describedby]="campoInvalido('correo') ? 'correo-error' : null"
+        />
+        @if (campoInvalido('correo')) {
+          <p-message id="correo-error" severity="error" variant="simple" size="small">
+            {{ mensajeCorreoInvalido }}
+          </p-message>
+        }
+      </div>
+
+      <div class="cs-campo">
+        <label for="clave" class="cs-campo__etiqueta">Clave</label>
+        <p-password
+          inputId="clave"
+          formControlName="clave"
+          autocomplete="current-password"
+          [feedback]="false"
+          [toggleMask]="true"
+          [fluid]="true"
+          [invalid]="campoInvalido('clave')"
+        />
+        @if (campoInvalido('clave')) {
+          <p-message id="clave-error" severity="error" variant="simple" size="small">
+            {{ mensajeClaveObligatoria }}
+          </p-message>
+        }
+      </div>
+
+      <p-button
+        type="submit"
+        label="Ingresar"
+        icon="pi pi-sign-in"
+        [loading]="enviando()"
+        [fluid]="true"
+      />
+    </form>
+
+    <ng-template #footer>
+      <p class="cs-ingreso__nota">
+        Este panel es solo para el vendedor. Los clientes compran desde la app móvil de
+        CatálogoStock.
+      </p>
+    </ng-template>
+  </p-card>
+</main>

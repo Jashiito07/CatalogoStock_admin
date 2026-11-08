@@ -23,11 +23,14 @@ dentro del espacio de trabajo `CatalogoStock/`.
 
 ```bash
 npm install                 # instala las dependencias
-npm start                   # servidor de desarrollo en http://localhost:4200
+npm start                   # servidor de desarrollo en http://localhost:4201
+npm run start:red           # igual, pero abierto a la red local (para el celular)
 npm run lint                # ESLint con angular-eslint
 npm test -- --watch=false   # pruebas unitarias (Vitest, una sola ejecución)
 npm run build               # compilación de producción en dist/catalogostock-admin
 ```
+
+El panel usa el puerto **4201** (la app móvil usa el 4200 en el navegador).
 
 ## Configuración
 
@@ -38,8 +41,64 @@ npm run build               # compilación de producción en dist/catalogostock-
 | `environment.development.ts` | `npm start` | `http://localhost:3000/api/v1` |
 | `environment.ts` | `npm run build` | `/api/v1` (mismo dominio, servido por HTTPS, RNF-01) |
 
-Los servicios HTTP obtienen la URL con el token `URL_API`, no leyendo el entorno.
+Los servicios HTTP obtienen la URL con el token `URL_API` (`compartido/infraestructura/http/url-api.ts`),
+no leyendo el entorno. Si la URL configurada apunta a `localhost` y el panel se abrió desde
+otro host (por ejemplo, el celular con la IP de la PC), se usa **el mismo host con el puerto
+de la API**: `http://<host del panel>:3000/api/v1`. Por eso no hay IPs escritas en archivos
+versionados. Una URL relativa (producción) no cambia.
+
 Las credenciales de PayPhone y cualquier secreto viven solo en el backend.
+
+## Abrir el panel desde el celular (red local, solo desarrollo)
+
+Sirve para probar el panel en el navegador del celular, conectado al **mismo Wi-Fi** que la PC.
+
+1. **Averigua la IP de la PC** en el Wi-Fi. En PowerShell:
+   `Get-NetIPAddress -AddressFamily IPv4 | Where-Object InterfaceAlias -like 'Wi-Fi*'`
+   (o `ipconfig`, en «Adaptador de LAN inalámbrica Wi-Fi», «Dirección IPv4»).
+   En los ejemplos se usa `192.168.100.113`.
+2. **Permite el origen del panel en la API.** En `CatalogoStock-backend/.env` (no se sube a
+   Git), agrega a `CORS_ORIGENES` el origen `http://<IP de la PC>:4201`, separado por coma.
+   Si cambias el archivo, reinicia la API.
+3. **Arranca la API** en `CatalogoStock-backend`: `npm run start:dev`. Nest escucha en todas
+   las interfaces, así que responde en `http://<IP de la PC>:3000/api/v1`.
+4. **Arranca el panel abierto a la red** en `CatalogoStock_admin`: `npm run start:red`
+   (equivale a `ng serve --host 0.0.0.0 --port 4201`). La consola muestra las direcciones
+   «Network», por ejemplo `http://192.168.100.113:4201/`.
+5. **Abre el firewall de Windows** (una sola vez y como administrador), con la red Wi-Fi como
+   **Privada** (Configuración → Red e Internet → Wi-Fi → Tipo de perfil de red → Privada):
+   ```powershell
+   New-NetFirewallRule -DisplayName "CatalogoStock panel 4201" -Direction Inbound -Protocol TCP -LocalPort 4201 -Action Allow -Profile Private
+   New-NetFirewallRule -DisplayName "CatalogoStock API 3000" -Direction Inbound -Protocol TCP -LocalPort 3000 -Action Allow -Profile Private
+   ```
+6. **En el celular**, abre `http://<IP de la PC>:4201` en el navegador e ingresa con la
+   cuenta del Vendedor. El panel llamará a la API en `http://<IP de la PC>:3000/api/v1`.
+7. Si no carga: comprueba que ambos equipos estén en el mismo Wi-Fi, que la IP no haya
+   cambiado (el router puede asignar otra) y que abrir `http://<IP de la PC>:3000/api/v1/salud`
+   en el celular responda `{"estado":"ok",…}`. Si la API responde pero el panel muestra
+   «No se pudo conectar con el servidor», revisa `CORS_ORIGENES` (paso 2).
+
+Es solo para desarrollo: el tráfico va por HTTP sin cifrar dentro de la red local. En
+producción el panel y la API se sirven por HTTPS en el mismo dominio (RNF-01).
+
+## Sesión del Vendedor (RF-USU-01, RF-USU-03, D-09, D-19)
+
+- El ingreso usa solo `POST /autenticacion/ingreso/vendedor`. Un Cliente recibe
+  «Correo o clave incorrectos.» y no obtiene sesión; además, el guard `soloVendedor`
+  comprueba el rol `VENDEDOR` como defensa adicional (la API valida siempre el rol).
+- **Token de acceso (15 min): solo en memoria** (`SesionVendedor`). **Token de renovación
+  (7 días, un solo uso): en `sessionStorage`**, para sobrevivir a una recarga de la pestaña;
+  se pierde al cerrarla y nunca se guarda en `localStorage` (contrato de usuarios).
+- El interceptor `interceptorAutenticacion` adjunta `Authorization: Bearer …` a las rutas
+  protegidas de la API. Ante un 401 `TOKEN_VENCIDO` renueva **una sola vez** (las solicitudes
+  simultáneas comparten la renovación) y repite la solicitud una vez. Cualquier otro 401 o
+  una renovación rechazada cierra la sesión y lleva al ingreso. Sin conexión, la sesión se
+  conserva para reintentar.
+- «Cerrar sesión» llama a `POST /autenticacion/salida` y borra la sesión local aunque la
+  API no responda.
+- Al duplicar una pestaña, el navegador copia `sessionStorage`: si las dos pestañas renuevan
+  con el mismo token, la API detecta la reutilización y cierra esa sesión en ambas (D-09).
+  Basta con volver a ingresar.
 
 ## Tecnologías
 
@@ -61,16 +120,37 @@ src/
     compartido/
       dominio/dinero.ts              Dinero exacto en centavos (sin frameworks)
       aplicacion/error-api.ts        Tipo ErrorApi { codigo, mensaje, estado, detalles }
-      infraestructura/http/          Interceptor de errores, proveerHttp(), URL_API
+      infraestructura/http/          Interceptor de errores, proveerHttp(), URL_API (url-api.ts)
       presentacion/
         tema/                        tema-catalogostock.ts (preset) y colores.css (--cs-*)
-        diseno/                      Barra superior y menú lateral del panel
+        traduccion-primeng.ts        Textos de PrimeNG en español (calendario, paginador)
+        diseno/                      Barra superior (Vendedor, cerrar sesión) y menú lateral
         inicio/                      Página de bienvenida
+    usuarios/                        Ingreso y sesión del Vendedor (F1)
+      dominio/usuario.ts             Usuario, Sesión, regla «solo Vendedor»
+      aplicacion/                    Puertos y SesionVendedor (tokens, renovación única)
+      infraestructura/               HTTP, sessionStorage, interceptor de autenticación
+      presentacion/                  Pantalla de ingreso y guards
+      pruebas/                       Dobles de prueba (excluidos de la compilación)
+    auditoria/                       Bitácora de actividades (F1, RF-USU-04)
+      dominio/bitacora.ts            Catálogo de acciones, filtros con zona -05:00
+      aplicacion/ · infraestructura/ Puerto y adaptador de GET /auditoria
+      presentacion/bitacora/         p-table paginada en el servidor con filtros
     <modulo>/{dominio,aplicacion,infraestructura,presentacion}/   (próximas fases)
 ```
 
 Módulos previstos: `usuarios`, `productos`, `inventario`, `pedidos`, `pagos`,
 `conflictos` y `auditoria` (ver `docs/PLAN.md`).
+
+## Bitácora (RF-USU-04, D-30, D-31)
+
+- `p-table` paginada en el servidor (`pagina`, `tamanio`), de lo más reciente a lo más antiguo.
+- Filtros: acción (catálogo del contrato), «Desde» y «Hasta» con `p-datepicker` y usuario
+  (botón de filtro en cada fila, quitable con el chip). Las fechas se envían con hora y zona
+  de Ecuador: `Desde` = `AAAA-MM-DDT00:00:00.000-05:00`, `Hasta` = `AAAA-MM-DDT23:59:59.999-05:00`.
+- La API responde en UTC y el panel muestra la hora de Ecuador.
+- `usuario: null` se muestra como «No identificado»; un usuario eliminado (`rol: null`),
+  como «Usuario eliminado».
 
 ### Regla de dependencias
 

@@ -1,0 +1,119 @@
+// Colores solo desde las variables corporativas (colores.css), nunca en hexadecimal.
+// minmax(0, 1fr): la tabla se desplaza dentro de su contenedor en pantallas angostas
+// (celular) en lugar de ensanchar toda la página.
+.cs-bitacora {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 1rem;
+}
+
+.cs-bitacora__titulo {
+  margin: 0;
+  font-size: 1.5rem;
+  color: var(--cs-primario);
+}
+
+.cs-bitacora__descripcion {
+  margin: 0.25rem 0 0;
+}
+
+.cs-filtros {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 1rem;
+}
+
+.cs-filtro {
+  display: grid;
+  gap: 0.375rem;
+  flex: 1 1 12rem;
+  max-width: 18rem;
+}
+
+.cs-filtro__etiqueta {
+  font-weight: 600;
+}
+
+.cs-filtro__control {
+  width: 100%;
+}
+
+.cs-filtros__acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.cs-bitacora__filtro-usuario {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.cs-bitacora__mensaje {
+  display: block;
+}
+
+.cs-bitacora__texto-error {
+  margin-right: 0.5rem;
+}
+
+.cs-bitacora__fecha {
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.cs-bitacora__usuario {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.25rem 0.5rem;
+}
+
+.cs-bitacora__usuario--sin-identificar {
+  font-style: italic;
+}
+
+.cs-bitacora__rol {
+  font-size: 0.875rem;
+  color: var(--cs-secundario);
+  font-weight: 600;
+}
+
+.cs-bitacora__detalle {
+  display: grid;
+  gap: 0.125rem;
+  margin: 0;
+  font-size: 0.875rem;
+
+  div {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem;
+  }
+
+  dt {
+    font-weight: 600;
+  }
+
+  dd {
+    margin: 0;
+    word-break: break-word;
+  }
+}
+
+.cs-bitacora__vacio {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem 0;
+}
+
+@media (max-width: 768px) {
+  .cs-filtro {
+    max-width: none;
+  }
+}

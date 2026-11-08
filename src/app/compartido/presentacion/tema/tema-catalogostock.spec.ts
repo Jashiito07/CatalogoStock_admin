@@ -30,6 +30,12 @@ describe('TemaCatalogoStock (D-06)', () => {
     expect(secundario.color).toBe(COLORES_CORPORATIVOS.sobreColor);
   });
 
+  it('RNF-11: los mensajes de error y de éxito usan el tono 700 para cumplir 4.5:1', () => {
+    expect((token('components.message.error') as TokensColor).color).toBe('{red.700}');
+    expect((token('components.message.error.simple') as TokensColor).color).toBe('{red.700}');
+    expect((token('components.message.success') as TokensColor).color).toBe('{green.700}');
+  });
+
   it('RNF-11: sobre el Acento el texto va en el color Texto, nunca en blanco', () => {
     for (const ruta of ['components.badge.warn', 'components.button.root.warn']) {
       const tokens = token(ruta) as TokensColor;

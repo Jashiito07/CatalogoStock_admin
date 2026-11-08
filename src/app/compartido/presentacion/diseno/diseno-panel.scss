@@ -23,7 +23,9 @@
 
 // Blanco sobre el Primario: contraste 5.17 (RNF-11).
 .cs-barra-superior {
-  display: block;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
   border-radius: 0;
   border: none;
   background: var(--cs-primario);
@@ -39,6 +41,21 @@
 .cs-barra-superior__titulo {
   margin: 0;
   font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.cs-barra-superior__sesion {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.75rem;
+}
+
+.cs-barra-superior__vendedor {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
   font-weight: 600;
 }
 

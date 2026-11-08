@@ -1,0 +1,201 @@
+<section class="cs-bitacora" aria-labelledby="titulo-bitacora">
+  <header class="cs-bitacora__encabezado">
+    <h2 id="titulo-bitacora" class="cs-bitacora__titulo">Bitácora de actividades</h2>
+    <p class="cs-bitacora__descripcion">
+      Ingresos, cierres de sesión, accesos denegados y otras actividades importantes, de la
+      más reciente a la más antigua. Las horas se muestran en hora de Ecuador.
+    </p>
+  </header>
+
+  <form
+    class="cs-filtros"
+    [formGroup]="filtros"
+    (ngSubmit)="aplicarFiltros()"
+    aria-label="Filtros de la bitácora"
+  >
+    <div class="cs-filtro">
+      <label for="filtro-accion" class="cs-filtro__etiqueta">Acción</label>
+      <p-select
+        inputId="filtro-accion"
+        formControlName="accion"
+        [options]="opcionesAccion"
+        optionLabel="etiqueta"
+        optionValue="valor"
+        placeholder="Todas las acciones"
+        [showClear]="true"
+        class="cs-filtro__control"
+      />
+    </div>
+
+    <div class="cs-filtro">
+      <label for="filtro-desde" class="cs-filtro__etiqueta">Desde</label>
+      <p-datepicker
+        inputId="filtro-desde"
+        formControlName="desde"
+        dateFormat="dd/mm/yy"
+        placeholder="dd/mm/aaaa"
+        [showIcon]="true"
+        [showButtonBar]="true"
+        [maxDate]="hoy"
+        class="cs-filtro__control"
+      />
+    </div>
+
+    <div class="cs-filtro">
+      <label for="filtro-hasta" class="cs-filtro__etiqueta">Hasta</label>
+      <p-datepicker
+        inputId="filtro-hasta"
+        formControlName="hasta"
+        dateFormat="dd/mm/yy"
+        placeholder="dd/mm/aaaa"
+        [showIcon]="true"
+        [showButtonBar]="true"
+        [minDate]="filtros.controls.desde.value"
+        [maxDate]="hoy"
+        class="cs-filtro__control"
+      />
+    </div>
+
+    <div class="cs-filtros__acciones">
+      <p-button type="submit" label="Aplicar filtros" icon="pi pi-filter" />
+      <p-button
+        type="button"
+        label="Limpiar filtros"
+        icon="pi pi-filter-slash"
+        severity="secondary"
+        [outlined]="true"
+        [disabled]="!hayFiltros()"
+        (onClick)="limpiarFiltros()"
+      />
+    </div>
+  </form>
+
+  @if (usuarioFiltrado(); as usuario) {
+    <div class="cs-bitacora__filtro-usuario">
+      <span>Mostrando solo las actividades de:</span>
+      <p-chip
+        [label]="usuario.nombre"
+        icon="pi pi-user"
+        [removable]="true"
+        (onRemove)="quitarFiltroUsuario()"
+      />
+    </div>
+  }
+
+  @if (errorFiltros(); as textoErrorFiltros) {
+    <p-message severity="error" icon="pi pi-times-circle" role="alert" class="cs-bitacora__mensaje">
+      {{ textoErrorFiltros }}
+    </p-message>
+  }
+
+  @if (error(); as textoError) {
+    <p-message severity="error" icon="pi pi-times-circle" role="alert" class="cs-bitacora__mensaje">
+      <span class="cs-bitacora__texto-error">{{ textoError }}</span>
+      <p-button
+        label="Reintentar"
+        icon="pi pi-refresh"
+        [text]="true"
+        size="small"
+        (onClick)="cargar()"
+      />
+    </p-message>
+  }
+
+  <p-table
+    [value]="filas()"
+    dataKey="id"
+    [lazy]="true"
+    [paginator]="true"
+    [rows]="tamanio()"
+    [first]="primero()"
+    [totalRecords]="total()"
+    [loading]="cargando()"
+    [rowsPerPageOptions]="opcionesFilas"
+    [showCurrentPageReport]="true"
+    currentPageReportTemplate="{first} a {last} de {totalRecords} actividades"
+    [tableStyle]="{ 'min-width': '52rem' }"
+    (onLazyLoad)="alCargarPagina($event)"
+    class="cs-bitacora__tabla"
+  >
+    <ng-template #header>
+      <tr>
+        <th scope="col">Fecha y hora</th>
+        <th scope="col">Acción</th>
+        <th scope="col">Usuario</th>
+        <th scope="col">Objeto</th>
+        <th scope="col">Detalle</th>
+      </tr>
+    </ng-template>
+
+    <ng-template #body let-fila>
+      <tr data-prueba="fila-bitacora">
+        <td class="cs-bitacora__fecha">
+          <time [attr.datetime]="fila.fecha">
+            {{ fila.fecha | date: 'dd/MM/yyyy HH:mm:ss' : zonaEcuador }}
+          </time>
+        </td>
+        <td><p-tag [value]="fila.accion" [severity]="fila.severidad" /></td>
+        <td>
+          <div class="cs-bitacora__usuario">
+            <span
+              data-prueba="usuario"
+              [class.cs-bitacora__usuario--sin-identificar]="!fila.usuario.identificado"
+            >
+              {{ fila.usuario.nombre }}
+            </span>
+            @if (fila.usuario.rol) {
+              <span class="cs-bitacora__rol">{{ fila.usuario.rol }}</span>
+            }
+            @if (fila.usuario.filtrable) {
+              <p-button
+                icon="pi pi-filter"
+                [text]="true"
+                [rounded]="true"
+                size="small"
+                [ariaLabel]="'Ver solo las actividades de ' + fila.usuario.nombre"
+                [pTooltip]="'Ver solo sus actividades'"
+                (onClick)="filtrarPorUsuario(fila)"
+              />
+            }
+          </div>
+        </td>
+        <td>{{ fila.entidad }}</td>
+        <td>
+          @if (fila.detalle.length > 0) {
+            <dl class="cs-bitacora__detalle">
+              @for (campo of fila.detalle; track campo.etiqueta) {
+                <div>
+                  <dt>{{ campo.etiqueta }}:</dt>
+                  <dd>{{ campo.valor }}</dd>
+                </div>
+              }
+            </dl>
+          } @else {
+            <span aria-label="Sin detalle">—</span>
+          }
+        </td>
+      </tr>
+    </ng-template>
+
+    <ng-template #emptymessage>
+      <tr>
+        <td colspan="5">
+          <div class="cs-bitacora__vacio" data-prueba="bitacora-vacia">
+            @if (hayFiltros()) {
+              <span>No hay actividades con estos filtros.</span>
+              <p-button
+                label="Limpiar filtros"
+                icon="pi pi-filter-slash"
+                severity="secondary"
+                [outlined]="true"
+                (onClick)="limpiarFiltros()"
+              />
+            } @else if (!error()) {
+              <span>Todavía no hay actividades registradas.</span>
+            }
+          </div>
+        </td>
+      </tr>
+    </ng-template>
+  </p-table>
+</section>
