@@ -8,6 +8,8 @@ import { providePrimeNG } from 'primeng/config';
 import { routes } from './app.routes';
 import { proveerHttp } from './compartido/infraestructura/http/proveer-http';
 import { TemaCatalogoStock } from './compartido/presentacion/tema/tema-catalogostock';
+import { TRADUCCION_PRIMENG } from './compartido/presentacion/traduccion-primeng';
+import { proveerUsuarios } from './usuarios/infraestructura/proveer-usuarios';
 
 registerLocaleData(localeEsEc);
 
@@ -16,7 +18,9 @@ export const appConfig: ApplicationConfig = {
     provideBrowserGlobalErrorListeners(),
     provideRouter(routes, withComponentInputBinding()),
     proveerHttp(),
+    proveerUsuarios(),
     providePrimeNG({
+      translation: TRADUCCION_PRIMENG,
       theme: {
         preset: TemaCatalogoStock,
         // Solo tema claro: el contraste de RNF-11 se validó sobre el Fondo corporativo.

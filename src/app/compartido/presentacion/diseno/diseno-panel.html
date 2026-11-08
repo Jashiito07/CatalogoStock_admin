@@ -5,6 +5,23 @@
     <i class="pi pi-shop cs-barra-superior__icono" aria-hidden="true"></i>
     <h1 class="cs-barra-superior__titulo">{{ titulo }}</h1>
   </ng-template>
+  <ng-template #end>
+    <div class="cs-barra-superior__sesion">
+      @if (nombreVendedor()) {
+        <span class="cs-barra-superior__vendedor" data-prueba="nombre-vendedor">
+          <i class="pi pi-user" aria-hidden="true"></i>
+          {{ nombreVendedor() }}
+        </span>
+      }
+      <p-button
+        label="Cerrar sesión"
+        icon="pi pi-sign-out"
+        severity="secondary"
+        [loading]="cerrando()"
+        (onClick)="cerrarSesion()"
+      />
+    </div>
+  </ng-template>
 </p-toolbar>
 
 <div class="cs-diseno">

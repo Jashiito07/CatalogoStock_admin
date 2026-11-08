@@ -100,6 +100,20 @@ export const TemaCatalogoStock = definePreset(Aura, {
         },
       },
     },
+    // RNF-11: el tono 600 de Aura sobre su fondo claro queda cerca o por debajo de 4.5:1
+    // (rojo ≈ 4.4, verde ≈ 3.1). Los mensajes usan el tono 700 de la misma escala.
+    message: {
+      error: {
+        color: '{red.700}',
+        simple: { color: '{red.700}' },
+        outlined: { color: '{red.700}', borderColor: '{red.700}' },
+      },
+      success: {
+        color: '{green.700}',
+        simple: { color: '{green.700}' },
+        outlined: { color: '{green.700}', borderColor: '{green.700}' },
+      },
+    },
     badge: {
       secondary: {
         background: secundario[500],

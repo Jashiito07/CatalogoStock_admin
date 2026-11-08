@@ -1,21 +1,22 @@
 import { provideHttpClient, withFetch, withInterceptors } from '@angular/common/http';
-import { EnvironmentProviders, InjectionToken, makeEnvironmentProviders } from '@angular/core';
+import { EnvironmentProviders, makeEnvironmentProviders } from '@angular/core';
 
-import { environment } from '../../../../environments/environment';
+import { interceptorAutenticacion } from '../../../usuarios/infraestructura/interceptor-autenticacion';
 import { interceptorErrores } from './interceptor-errores';
 
-/** URL base de la API (`…/api/v1`). Los servicios HTTP la inyectan en lugar de leer el entorno. */
-export const URL_API = new InjectionToken<string>('URL_API', {
-  providedIn: 'root',
-  factory: () => environment.apiUrl,
-});
+export { URL_API } from './url-api';
 
 /**
- * Cliente HTTP del panel con sus interceptores. En la Fase 1 se agregará aquí el
- * interceptor del token del vendedor, antes del de errores.
+ * Cliente HTTP del panel con sus interceptores, en este orden:
+ * 1. `interceptorAutenticacion`: adjunta el token del Vendedor y renueva ante
+ *    `TOKEN_VENCIDO` (RF-USU-01, D-09).
+ * 2. `interceptorErrores`: traduce cualquier error al `ErrorApi` del contrato.
  */
 export function proveerHttp(): EnvironmentProviders {
   return makeEnvironmentProviders([
-    provideHttpClient(withFetch(), withInterceptors([interceptorErrores])),
+    provideHttpClient(
+      withFetch(),
+      withInterceptors([interceptorAutenticacion, interceptorErrores]),
+    ),
   ]);
 }
