@@ -17,6 +17,19 @@ export abstract class ApiAutenticacion {
 
   /** GET /usuarios/yo. */
   abstract obtenerUsuarioActual(): Promise<Usuario>;
+
+  /**
+   * POST /usuarios/yo/clave (RF-USU-05, contrato recuperacion-clave.md): 204 sin cuerpo.
+   * Con `tokenRenovacionActual` la API conserva esta sesión y revoca las demás.
+   */
+  abstract cambiarClave(solicitud: SolicitudCambioClave): Promise<void>;
+}
+
+/** Cuerpo de `POST /usuarios/yo/clave`. Nunca se guarda ni se escribe en registros. */
+export interface SolicitudCambioClave {
+  readonly claveActual: string;
+  readonly claveNueva: string;
+  readonly tokenRenovacionActual?: string;
 }
 
 /**

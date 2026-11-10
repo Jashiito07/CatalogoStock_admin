@@ -2,8 +2,16 @@
   <p-card class="cs-ingreso__tarjeta">
     <ng-template #title>
       <div class="cs-ingreso__encabezado">
-        <i class="pi pi-shop cs-ingreso__icono" aria-hidden="true"></i>
-        <h1 class="cs-ingreso__titulo">CatálogoStock</h1>
+        <!-- Logo oficial como imagen (D-38); el texto alternativo da el nombre de la app. -->
+        <h1 class="cs-ingreso__titulo">
+          <img
+            class="cs-ingreso__logo"
+            [src]="logo"
+            alt="CatálogoStock"
+            width="318"
+            height="60"
+          />
+        </h1>
       </div>
     </ng-template>
     <ng-template #subtitle>Panel del vendedor · Ingresa con tu cuenta de vendedor.</ng-template>

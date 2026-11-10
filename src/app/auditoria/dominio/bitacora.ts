@@ -2,6 +2,7 @@
  * Bitácora de actividades (RF-USU-04, docs/contrato-api/auditoria.md).
  * Capa de dominio: TypeScript puro, sin Angular ni HTTP.
  */
+import { fechaHoraEcuador } from '../../compartido/dominio/fecha-ecuador';
 
 /** Catálogo cerrado de acciones del contrato, con su nombre para el Vendedor. */
 export const ETIQUETAS_ACCION = {
@@ -12,6 +13,11 @@ export const ETIQUETAS_ACCION = {
   SESION_CERRADA: 'Sesión cerrada',
   SESION_REUTILIZACION_DETECTADA: 'Reutilización de sesión detectada',
   ACCESO_DENEGADO: 'Acceso denegado',
+  // RF-USU-05 (D-35, D-39): recuperación y cambio de clave.
+  CODIGO_RECUPERACION_GENERADO: 'Código de recuperación generado',
+  CLAVE_RESTABLECIDA: 'Clave restablecida',
+  RECUPERACION_FALLIDA: 'Recuperación de clave fallida',
+  CLAVE_CAMBIADA: 'Clave cambiada',
   PAGO_VERIFICADO: 'Pago verificado',
   PEDIDO_ESTADO_CAMBIADO: 'Cambio de estado de pedido',
 } as const;
@@ -30,6 +36,10 @@ const GRAVEDAD_ACCION: Readonly<Record<AccionAuditoria, Gravedad>> = {
   SESION_CERRADA: 'neutral',
   SESION_REUTILIZACION_DETECTADA: 'alerta',
   ACCESO_DENEGADO: 'alerta',
+  CODIGO_RECUPERACION_GENERADO: 'neutral',
+  CLAVE_RESTABLECIDA: 'exito',
+  RECUPERACION_FALLIDA: 'alerta',
+  CLAVE_CAMBIADA: 'exito',
   PAGO_VERIFICADO: 'neutral',
   PEDIDO_ESTADO_CAMBIADO: 'neutral',
 };
@@ -129,7 +139,12 @@ const ETIQUETAS_CAMPO_DETALLE: Readonly<Record<string, string>> = {
   rolUsuario: 'Rol del usuario',
   origen: 'Origen',
   familiaRevocada: 'Sesiones revocadas',
+  venceEn: 'Vence',
+  sesionesRevocadas: 'Sesiones cerradas',
 };
+
+/** Campos de `detalle` que son fechas en UTC: se muestran en hora de Ecuador (D-31). */
+const CAMPOS_FECHA_DETALLE: ReadonlySet<string> = new Set(['venceEn']);
 
 const ETIQUETAS_VALOR_DETALLE: Readonly<Record<string, string>> = {
   CLIENTE: 'Cliente',
@@ -139,6 +154,15 @@ const ETIQUETAS_VALOR_DETALLE: Readonly<Record<string, string>> = {
   CREDENCIALES_INVALIDAS: 'Credenciales inválidas',
   ROL_NO_PERMITIDO: 'Rol no permitido en ese canal',
   COMANDO_SEMILLA: 'Comando de instalación',
+  // Origen de CLAVE_RESTABLECIDA.
+  CODIGO_VENDEDOR: 'Código del vendedor',
+  COMANDO_SERVIDOR: 'Comando del servidor',
+  // Motivos internos de RECUPERACION_FALLIDA (D-20); solo los ve el Vendedor.
+  SIN_CODIGO: 'Sin código vigente',
+  CODIGO_INCORRECTO: 'Código incorrecto',
+  VENCIDO: 'Código vencido',
+  AGOTADO: 'Intentos agotados',
+  NO_CLIENTE: 'No es una cuenta de cliente',
 };
 
 export interface CampoDetalle {
@@ -150,7 +174,10 @@ export interface CampoDetalle {
 export function describirDetalle(detalle: Readonly<Record<string, ValorDetalle>>): CampoDetalle[] {
   return Object.entries(detalle).map(([campo, valor]) => ({
     etiqueta: ETIQUETAS_CAMPO_DETALLE[campo] ?? campo,
-    valor: describirValor(valor),
+    valor:
+      CAMPOS_FECHA_DETALLE.has(campo) && typeof valor === 'string'
+        ? fechaHoraEcuador(valor) || valor
+        : describirValor(valor),
   }));
 }
 

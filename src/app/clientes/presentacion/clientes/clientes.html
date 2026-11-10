@@ -1,0 +1,136 @@
+<section class="cs-clientes" aria-labelledby="titulo-clientes">
+  <header class="cs-clientes__encabezado">
+    <h2 id="titulo-clientes" class="cs-clientes__titulo">Clientes</h2>
+    <p class="cs-clientes__descripcion">
+      Clientes registrados en la app, del más reciente al más antiguo. Si un cliente olvidó
+      su clave, genera un código de recuperación y compártelo solo con él. Las horas se
+      muestran en hora de Ecuador.
+    </p>
+  </header>
+
+  <div class="cs-clientes__busqueda">
+    <label for="busqueda-clientes" class="cs-clientes__etiqueta">Buscar</label>
+    <p-iconfield>
+      <p-inputicon class="pi pi-search" />
+      <input
+        pInputText
+        id="busqueda-clientes"
+        type="search"
+        [formControl]="busqueda"
+        [maxlength]="longitudMaximaBusqueda"
+        placeholder="Nombre, correo o teléfono"
+        autocomplete="off"
+        class="cs-clientes__campo"
+      />
+    </p-iconfield>
+  </div>
+
+  @if (error(); as textoError) {
+    <p-message severity="error" icon="pi pi-times-circle" role="alert" class="cs-clientes__mensaje">
+      <span class="cs-clientes__texto-error">{{ textoError }}</span>
+      <p-button
+        label="Reintentar"
+        icon="pi pi-refresh"
+        [text]="true"
+        size="small"
+        (onClick)="cargar()"
+      />
+    </p-message>
+  }
+
+  <p-table
+    [value]="filas()"
+    dataKey="id"
+    [lazy]="true"
+    [paginator]="true"
+    [rows]="tamanio()"
+    [first]="primero()"
+    [totalRecords]="total()"
+    [loading]="cargando()"
+    [rowsPerPageOptions]="opcionesFilas"
+    [showCurrentPageReport]="true"
+    currentPageReportTemplate="{first} a {last} de {totalRecords} clientes"
+    [tableStyle]="{ 'min-width': '56rem' }"
+    (onLazyLoad)="alCargarPagina($event)"
+    class="cs-clientes__tabla"
+  >
+    <ng-template #header>
+      <tr>
+        <th scope="col">Nombre</th>
+        <th scope="col">Correo</th>
+        <th scope="col">Teléfono</th>
+        <th scope="col">Fecha de registro</th>
+        <th scope="col">Código de recuperación</th>
+        <th scope="col"><span class="cs-solo-lector">Acciones</span></th>
+      </tr>
+    </ng-template>
+
+    <ng-template #body let-fila>
+      <tr data-prueba="fila-cliente">
+        <td class="cs-clientes__nombre">{{ fila.nombre }}</td>
+        <td class="cs-clientes__correo">{{ fila.correo }}</td>
+        <td class="cs-clientes__numero">{{ fila.telefono }}</td>
+        <td class="cs-clientes__numero">
+          <time [attr.datetime]="fila.creadoEn">
+            {{ fila.creadoEn | date: 'dd/MM/yyyy' : zonaEcuador }}
+          </time>
+        </td>
+        <td data-prueba="estado-codigo">
+          @switch (fila.estadoCodigo.tipo) {
+            @case ('inactiva') {
+              <p-tag value="Cuenta inactiva" severity="danger" />
+            }
+            @case ('vigente') {
+              <p-tag
+                [value]="'Código vigente hasta ' + fila.estadoCodigo.hasta"
+                severity="info"
+                icon="pi pi-clock"
+              />
+            }
+            @default {
+              <span class="cs-clientes__sin-codigo">Sin código vigente</span>
+            }
+          }
+        </td>
+        <td class="cs-clientes__acciones">
+          <p-button
+            label="Generar código"
+            icon="pi pi-key"
+            size="small"
+            [outlined]="true"
+            [disabled]="!fila.activo || generandoPara() !== null"
+            [loading]="generandoPara() === fila.id"
+            [ariaLabel]="'Generar código de recuperación para ' + fila.nombre"
+            data-prueba="generar-codigo"
+            (onClick)="confirmarGenerarCodigo(fila)"
+          />
+        </td>
+      </tr>
+    </ng-template>
+
+    <ng-template #emptymessage>
+      <tr>
+        <td colspan="6">
+          <div class="cs-clientes__vacio" data-prueba="clientes-vacio">
+            @if (busquedaAplicada()) {
+              <span>No hay clientes que coincidan con «{{ busquedaAplicada() }}».</span>
+              <p-button
+                label="Limpiar búsqueda"
+                icon="pi pi-filter-slash"
+                severity="secondary"
+                [outlined]="true"
+                (onClick)="limpiarBusqueda()"
+              />
+            } @else if (!error()) {
+              <span>Todavía no hay clientes registrados.</span>
+            }
+          </div>
+        </td>
+      </tr>
+    </ng-template>
+  </p-table>
+</section>
+
+<p-confirmdialog />
+
+<app-dialogo-codigo [codigo]="codigoGenerado()" (cerrado)="descartarCodigo()" />

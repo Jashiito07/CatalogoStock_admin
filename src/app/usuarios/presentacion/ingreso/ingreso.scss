@@ -26,15 +26,16 @@
   gap: 0.75rem;
 }
 
-.cs-ingreso__icono {
-  font-size: 1.75rem;
-  color: var(--cs-primario);
-}
-
 .cs-ingreso__titulo {
   margin: 0;
   font-size: 1.5rem;
-  color: var(--cs-primario);
+  line-height: 0;
+}
+
+.cs-ingreso__logo {
+  display: block;
+  width: min(100%, 18rem);
+  height: auto;
 }
 
 .cs-ingreso__formulario {

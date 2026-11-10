@@ -2,8 +2,17 @@
 
 <p-toolbar class="cs-barra-superior">
   <ng-template #start>
-    <i class="pi pi-shop cs-barra-superior__icono" aria-hidden="true"></i>
-    <h1 class="cs-barra-superior__titulo">{{ titulo }}</h1>
+    <h1 class="cs-barra-superior__titulo">
+      <!-- Logo oficial como imagen (D-38). Su texto alternativo da el nombre de la app. -->
+      <img
+        class="cs-barra-superior__logo"
+        [src]="logo"
+        alt="CatálogoStock"
+        width="212"
+        height="40"
+      />
+      <span class="cs-barra-superior__subtitulo">{{ subtitulo }}</span>
+    </h1>
   </ng-template>
   <ng-template #end>
     <div class="cs-barra-superior__sesion">
@@ -13,6 +22,14 @@
           {{ nombreVendedor() }}
         </span>
       }
+      <p-button
+        label="Cambiar mi clave"
+        icon="pi pi-key"
+        severity="secondary"
+        [outlined]="true"
+        data-prueba="cambiar-mi-clave"
+        (onClick)="irACambiarClave()"
+      />
       <p-button
         label="Cerrar sesión"
         icon="pi pi-sign-out"

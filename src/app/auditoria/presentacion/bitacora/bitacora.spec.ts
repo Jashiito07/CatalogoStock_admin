@@ -184,6 +184,18 @@ describe('Bitacora (RF-USU-04)', () => {
     expect(filas()).toHaveLength(3);
   });
 
+  it('RF-USU-05: el filtro de acción incluye las acciones de recuperación y cambio de clave', () => {
+    const opciones = componente()['opcionesAccion'];
+    for (const [valor, etiqueta] of [
+      ['CODIGO_RECUPERACION_GENERADO', 'Código de recuperación generado'],
+      ['CLAVE_RESTABLECIDA', 'Clave restablecida'],
+      ['RECUPERACION_FALLIDA', 'Recuperación de clave fallida'],
+      ['CLAVE_CAMBIADA', 'Clave cambiada'],
+    ]) {
+      expect(opciones).toContainEqual({ valor, etiqueta });
+    }
+  });
+
   it('muestra el mensaje del contrato sin detalles técnicos si la API no responde', async () => {
     consultar.mockRejectedValue(new ErrorApi('SIN_CONEXION', 'No se pudo conectar con el servidor.', 0));
     await componente().cargar();

@@ -5,7 +5,11 @@
 import { Mock } from 'vitest';
 
 import { ErrorApi } from '../../compartido/aplicacion/error-api';
-import { AlmacenTokenRenovacion, ApiAutenticacion } from '../aplicacion/puertos';
+import {
+  AlmacenTokenRenovacion,
+  ApiAutenticacion,
+  SolicitudCambioClave,
+} from '../aplicacion/puertos';
 import { Rol, Sesion, Usuario } from '../dominio/usuario';
 
 export function crearUsuario(rol: Rol = 'VENDEDOR', nombre = 'Rosa Vendedora'): Usuario {
@@ -40,6 +44,7 @@ export interface ApiAutenticacionFalsa {
   renovar: Mock<(tokenRenovacion: string) => Promise<Sesion>>;
   salir: Mock<(tokenRenovacion: string) => Promise<void>>;
   obtenerUsuarioActual: Mock<() => Promise<Usuario>>;
+  cambiarClave: Mock<(solicitud: SolicitudCambioClave) => Promise<void>>;
 }
 
 export function crearApiFalsa(): ApiAutenticacionFalsa & ApiAutenticacion {
@@ -48,6 +53,7 @@ export function crearApiFalsa(): ApiAutenticacionFalsa & ApiAutenticacion {
     renovar: vi.fn(),
     salir: vi.fn().mockResolvedValue(undefined),
     obtenerUsuarioActual: vi.fn(),
+    cambiarClave: vi.fn().mockResolvedValue(undefined),
   };
   return api as ApiAutenticacionFalsa & ApiAutenticacion;
 }

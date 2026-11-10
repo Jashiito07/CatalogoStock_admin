@@ -84,4 +84,35 @@ describe('ApiAutenticacionHttp (contrato de usuarios)', () => {
     solicitud.flush(usuario);
     await expect(respuesta).resolves.toEqual(usuario);
   });
+
+  describe('POST /usuarios/yo/clave (RF-USU-05)', () => {
+    const cuerpo = {
+      claveActual: 'Catalogo2026',
+      claveNueva: 'NuevaClave2026',
+      tokenRenovacionActual: 'renovacion-actual',
+    };
+
+    it('envía la clave actual, la nueva y el token de renovación; 204 sin cuerpo', async () => {
+      const respuesta = api.cambiarClave(cuerpo);
+      const solicitud = controlador.expectOne(`${API}/usuarios/yo/clave`);
+      expect(solicitud.request.method).toBe('POST');
+      expect(solicitud.request.body).toEqual(cuerpo);
+      solicitud.flush(null, { status: 204, statusText: 'No Content' });
+      await expect(respuesta).resolves.toBeUndefined();
+    });
+
+    it('422 CLAVE_ACTUAL_INCORRECTA llega como ErrorApi', async () => {
+      const respuesta = api.cambiarClave(cuerpo).catch((e: unknown) => e);
+      controlador
+        .expectOne(`${API}/usuarios/yo/clave`)
+        .flush(
+          { codigo: 'CLAVE_ACTUAL_INCORRECTA', mensaje: 'La clave actual no es correcta.' },
+          { status: 422, statusText: 'Unprocessable Entity' },
+        );
+      const error = (await respuesta) as ErrorApi;
+      expect(error).toBeInstanceOf(ErrorApi);
+      expect(error.codigo).toBe('CLAVE_ACTUAL_INCORRECTA');
+      expect(error.estado).toBe(422);
+    });
+  });
 });

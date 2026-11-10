@@ -3,7 +3,7 @@ import { inject, Injectable } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 
 import { URL_API } from '../../compartido/infraestructura/http/url-api';
-import { ApiAutenticacion } from '../aplicacion/puertos';
+import { ApiAutenticacion, SolicitudCambioClave } from '../aplicacion/puertos';
 import { Sesion, Usuario } from '../dominio/usuario';
 
 /** Rutas de autenticación del contrato de usuarios, relativas a `URL_API`. */
@@ -12,6 +12,7 @@ export const RUTAS_AUTENTICACION = {
   renovacion: '/autenticacion/renovacion',
   salida: '/autenticacion/salida',
   usuarioActual: '/usuarios/yo',
+  cambioClave: '/usuarios/yo/clave',
 } as const;
 
 /** Rutas públicas: el interceptor no les adjunta el token ni intenta renovar ante un 401. */
@@ -46,6 +47,10 @@ export class ApiAutenticacionHttp extends ApiAutenticacion {
 
   obtenerUsuarioActual(): Promise<Usuario> {
     return firstValueFrom(this.http.get<Usuario>(this.url(RUTAS_AUTENTICACION.usuarioActual)));
+  }
+
+  async cambiarClave(solicitud: SolicitudCambioClave): Promise<void> {
+    await firstValueFrom(this.http.post<null>(this.url(RUTAS_AUTENTICACION.cambioClave), solicitud));
   }
 
   private url(ruta: string): string {

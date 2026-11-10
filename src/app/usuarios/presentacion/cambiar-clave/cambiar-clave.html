@@ -1,0 +1,96 @@
+<section class="cs-cambiar-clave" aria-labelledby="titulo-cambiar-clave">
+  <p-card class="cs-cambiar-clave__tarjeta">
+    <ng-template #title>
+      <h2 id="titulo-cambiar-clave" class="cs-cambiar-clave__titulo">Cambiar mi clave</h2>
+    </ng-template>
+    <ng-template #subtitle>
+      Al cambiarla, esta sesión sigue abierta y se cierran las demás sesiones de tu cuenta.
+    </ng-template>
+
+    @if (error(); as textoError) {
+      <p-message
+        severity="error"
+        icon="pi pi-times-circle"
+        role="alert"
+        class="cs-cambiar-clave__mensaje"
+        data-prueba="error-cambio-clave"
+      >
+        {{ textoError }}
+      </p-message>
+    }
+
+    <form
+      class="cs-cambiar-clave__formulario"
+      [formGroup]="formulario"
+      (ngSubmit)="cambiar()"
+      novalidate
+    >
+      <div class="cs-campo">
+        <label for="clave-actual" class="cs-campo__etiqueta">Clave actual</label>
+        <p-password
+          inputId="clave-actual"
+          formControlName="claveActual"
+          autocomplete="current-password"
+          [feedback]="false"
+          [toggleMask]="true"
+          [fluid]="true"
+          [invalid]="errorDe('claveActual') !== null"
+        />
+        @if (errorDe('claveActual'); as texto) {
+          <p-message severity="error" variant="simple" size="small" data-prueba="error-clave-actual">
+            {{ texto }}
+          </p-message>
+        }
+      </div>
+
+      <div class="cs-campo">
+        <label for="clave-nueva" class="cs-campo__etiqueta">Clave nueva</label>
+        <p-password
+          inputId="clave-nueva"
+          formControlName="claveNueva"
+          autocomplete="new-password"
+          [feedback]="false"
+          [toggleMask]="true"
+          [fluid]="true"
+          [invalid]="errorDe('claveNueva') !== null"
+        />
+        <small class="cs-campo__ayuda">De 8 a 72 caracteres, con letras y números.</small>
+        @if (errorDe('claveNueva'); as texto) {
+          <p-message severity="error" variant="simple" size="small" data-prueba="error-clave-nueva">
+            {{ texto }}
+          </p-message>
+        }
+      </div>
+
+      <div class="cs-campo">
+        <label for="clave-confirmacion" class="cs-campo__etiqueta">Repite la clave nueva</label>
+        <p-password
+          inputId="clave-confirmacion"
+          formControlName="confirmacion"
+          autocomplete="new-password"
+          [feedback]="false"
+          [toggleMask]="true"
+          [fluid]="true"
+          [invalid]="errorDe('confirmacion') !== null"
+        />
+        @if (errorDe('confirmacion'); as texto) {
+          <p-message severity="error" variant="simple" size="small" data-prueba="error-confirmacion">
+            {{ texto }}
+          </p-message>
+        }
+      </div>
+
+      <div class="cs-cambiar-clave__acciones">
+        <p-button type="submit" label="Cambiar clave" icon="pi pi-key" [loading]="enviando()" />
+        <p-button
+          type="button"
+          label="Cancelar"
+          severity="secondary"
+          [outlined]="true"
+          [disabled]="enviando()"
+          (onClick)="cancelar()"
+        />
+      </div>
+    </form>
+  </p-card>
+</section>
