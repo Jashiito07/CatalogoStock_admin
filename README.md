@@ -179,6 +179,15 @@ infraestructura┘
 - Confirmación al eliminar y aviso al agregar (RNF-12). Textos en español y moneda en
   formato `es-EC` (`$12,50`).
 
+## Tema automático claro / oscuro (D-41)
+
+- **Horario** (hora local del equipo, Ecuador): de **18:40 a 06:45** el panel usa el **modo oscuro con violeta**; de 06:45 a 18:40, el claro. Intervalo `[18:40, 06:45)`: 18:39 claro, 18:40 oscuro, 06:44 oscuro, 06:45 claro. La regla vive en `compartido/dominio/tema.ts` (`temaPorHora`, `resolverTema`) y se prueba sin depender de la zona horaria.
+- **Cambia solo** con el panel abierto: `ServicioTema` revisa la hora cada 30 s y al volver a la pestaña (`visibilitychange`). Sin dependencias nuevas.
+- **Selector «Automático / Claro / Oscuro»** en la barra superior, junto a «Cambiar mi clave». Automático es el valor por defecto. La preferencia se guarda en `localStorage` con la clave `catalogostock_admin_preferencia_tema` (dato no sensible; los tokens nunca van ahí) detrás del puerto `AlmacenPreferenciaTema`.
+- **Sin destello**: el tema se aplica en `provideAppInitializer`, antes de la primera pantalla.
+- **Cómo se aplica**: la clase `app-oscuro` en `<html>` es el `darkModeSelector` de PrimeNG y activa las variables `--cs-*` oscuras (`colores.css`), el logo `catalogostock-logo-horizontal-fondo-oscuro.svg` y `<meta name="theme-color">`. El preset (`tema-catalogostock.ts`) usa `light-dark()`.
+- **Forzar el tema en desarrollo** (solo `isDevMode()`, nunca en producción): `http://localhost:4201/?tema=oscuro` (o `claro`, `automatico`). No se guarda.
+- **Paleta oscura**: fondo `#0F172A`, superficies `#1E293B`, bordes `#334155`, texto `#E2E8F0`; el Acento conserva texto `#1E293B`. Contrastes (RNF-11) en `presentacion/tema/contraste.spec.ts`.
 ## Reglas clave
 
 - El panel no decide estados, totales ni stock: muestra lo que devuelve la API y cada

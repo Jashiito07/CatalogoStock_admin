@@ -12,9 +12,21 @@
   --cs-fondo: #f8fafc;
   --cs-texto: #1e293b;
   --cs-sobre-primario: #ffffff;
-  --cs-sobre-acento: var(--cs-texto);
-  /* Superficie clara de la barra superior, donde va el logo horizontal (D-38). */
+  /* Fijo en ambos modos: sobre el Acento el texto es #1E293B, nunca claro ni blanco. */
+  --cs-sobre-acento: #1e293b;
+  /* Superficie de la barra superior y de las tarjetas (en claro, el logo va sobre blanco). */
   --cs-superficie: #ffffff;
+  --cs-borde: #e2e8f0;
+  --cs-texto-secundario: #475569;
+  /* Secundario usado como texto (etiquetas, subtítulos): en oscuro pasa a su tono claro. */
+  --cs-secundario-texto: #7c3aed;
+
+  /* Paleta corporativa fija (guía de colores): no cambia con el tema. */
+  --cs-marca-primario: #2563eb;
+  --cs-marca-secundario: #7c3aed;
+  --cs-marca-acento: #f97316;
+  --cs-marca-fondo: #f8fafc;
+  --cs-marca-texto: #1e293b;
 
   /* Tamaño mínimo de los controles (RNF-10), igual que en la app móvil. */
   --cs-control-minimo: 48px;
@@ -26,4 +38,26 @@ html,
 body {
   background-color: var(--cs-fondo);
   color: var(--cs-texto);
+}
+
+/*
+ * Modo oscuro con violeta (D-41). ServicioTema pone la clase `app-oscuro` en <html> entre
+ * 18:40 y 06:45 (o si el Vendedor elige «Oscuro»). Es también el `darkModeSelector` de
+ * PrimeNG. El Secundario pasa a ser el color de acción; su tono claro, el de enlaces.
+ *
+ * Contraste (RNF-11), probado en `contraste.spec.ts`: texto sobre fondo y superficie,
+ * blanco sobre --cs-secundario, violeta claro sobre superficie y #1E293B sobre el Acento.
+ */
+:root.app-oscuro {
+  --cs-primario: #c4b5fd;
+  --cs-fondo: #0f172a;
+  --cs-texto: #e2e8f0;
+  --cs-superficie: #1e293b;
+  --cs-borde: #334155;
+  --cs-texto-secundario: #cbd5e1;
+  --cs-secundario-texto: #c4b5fd;
+  /* Sobre el violeta claro (--cs-primario en oscuro) el texto va en el fondo oscuro. */
+  --cs-sobre-primario: #0f172a;
+
+  color-scheme: dark;
 }

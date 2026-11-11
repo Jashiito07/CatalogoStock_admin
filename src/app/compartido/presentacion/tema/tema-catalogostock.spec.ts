@@ -15,28 +15,44 @@ function token(ruta: string): unknown {
     );
 }
 
-describe('TemaCatalogoStock (D-06)', () => {
-  it('genera la escala primaria desde el Primario corporativo', () => {
-    expect(String(token('semantic.primary.500')).toLowerCase()).toBe(
-      COLORES_CORPORATIVOS.primario.toLowerCase(),
+describe('TemaCatalogoStock (D-06, D-41)', () => {
+  it('genera la escala primaria desde el Primario en claro y desde el Secundario en oscuro', () => {
+    const valor = String(token('semantic.primary.500')).toLowerCase();
+    expect(valor).toBe(
+      `light-dark(${COLORES_CORPORATIVOS.primario.toLowerCase()}, ${COLORES_CORPORATIVOS.secundario.toLowerCase()})`,
     );
   });
 
-  it('usa el Secundario corporativo en los botones secundarios, con texto blanco', () => {
+  it('el botón principal usa texto blanco sobre el tono 500 de la escala primaria', () => {
+    const principal = token('components.button.root.primary') as TokensColor;
+    expect(principal.background).toBe('{primary.500}');
+    expect(principal.color).toBe(COLORES_CORPORATIVOS.sobreColor);
+  });
+
+  it('usa el Secundario corporativo en los botones secundarios (claro), con texto blanco', () => {
     const secundario = token('components.button.root.secondary') as TokensColor;
-    expect(secundario.background?.toLowerCase()).toBe(
-      COLORES_CORPORATIVOS.secundario.toLowerCase(),
+    expect(secundario.background?.toLowerCase()).toContain(
+      `light-dark(${COLORES_CORPORATIVOS.secundario.toLowerCase()},`,
     );
-    expect(secundario.color).toBe(COLORES_CORPORATIVOS.sobreColor);
+    expect(secundario.color).toContain(`light-dark(${COLORES_CORPORATIVOS.sobreColor},`);
   });
 
-  it('RNF-11: los mensajes de error y de éxito usan el tono 700 para cumplir 4.5:1', () => {
-    expect((token('components.message.error') as TokensColor).color).toBe('{red.700}');
-    expect((token('components.message.error.simple') as TokensColor).color).toBe('{red.700}');
-    expect((token('components.message.success') as TokensColor).color).toBe('{green.700}');
+  it('RNF-11: los mensajes usan el tono 700 en claro (800 en advertencia) y el 300 en oscuro', () => {
+    expect((token('components.message.error') as TokensColor).color).toBe(
+      'light-dark({red.700}, {red.300})',
+    );
+    expect((token('components.message.error.simple') as TokensColor).color).toBe(
+      'light-dark({red.700}, {red.300})',
+    );
+    expect((token('components.message.success') as TokensColor).color).toBe(
+      'light-dark({green.700}, {green.300})',
+    );
+    expect((token('components.toast.warn') as TokensColor).color).toBe(
+      'light-dark({yellow.800}, {yellow.300})',
+    );
   });
 
-  it('RNF-11: sobre el Acento el texto va en el color Texto, nunca en blanco', () => {
+  it('RNF-11: sobre el Acento el texto va en el color Texto, nunca en blanco (claro y oscuro)', () => {
     for (const ruta of ['components.badge.warn', 'components.button.root.warn']) {
       const tokens = token(ruta) as TokensColor;
       expect(tokens.background?.toLowerCase()).toBe(COLORES_CORPORATIVOS.acento.toLowerCase());

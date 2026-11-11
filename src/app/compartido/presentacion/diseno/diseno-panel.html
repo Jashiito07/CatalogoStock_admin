@@ -6,7 +6,7 @@
       <!-- Logo oficial como imagen (D-38). Su texto alternativo da el nombre de la app. -->
       <img
         class="cs-barra-superior__logo"
-        [src]="logo"
+        [src]="logo()"
         alt="CatálogoStock"
         width="212"
         height="40"
@@ -22,6 +22,7 @@
           {{ nombreVendedor() }}
         </span>
       }
+      <app-selector-tema />
       <p-button
         label="Cambiar mi clave"
         icon="pi pi-key"
