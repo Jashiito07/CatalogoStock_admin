@@ -12,6 +12,7 @@ import {
   MENSAJE_ERROR_DESCONOCIDO,
   MENSAJE_SIN_CONEXION,
 } from '../../../compartido/infraestructura/http/interceptor-errores';
+import { RUTA_LOGO_HORIZONTAL } from '../../../compartido/presentacion/marca';
 import { MOTIVOS_INGRESO } from '../../aplicacion/motivos-ingreso';
 import { MENSAJE_SESION_TERMINADA, SesionVendedor } from '../../aplicacion/sesion-vendedor';
 import { RUTA_INICIO_PANEL } from '../guardias';
@@ -82,6 +83,8 @@ export class Ingreso {
     return motivo ? (AVISOS_POR_MOTIVO[motivo] ?? null) : null;
   });
 
+  /** Logo horizontal oficial para fondo claro (D-38). */
+  protected readonly logo = RUTA_LOGO_HORIZONTAL;
   protected readonly mensajeCorreoInvalido = MENSAJE_CORREO_INVALIDO;
   protected readonly mensajeClaveObligatoria = MENSAJE_CLAVE_OBLIGATORIA;
 

@@ -148,3 +148,33 @@ describe('Bitácora: presentación de los registros', () => {
     expect(describirDetalle({})).toEqual([]);
   });
 });
+
+describe('Bitácora: acciones de recuperación y cambio de clave (RF-USU-05, D-39)', () => {
+  it.each([
+    ['CODIGO_RECUPERACION_GENERADO', 'Código de recuperación generado', 'neutral'],
+    ['CLAVE_RESTABLECIDA', 'Clave restablecida', 'exito'],
+    ['RECUPERACION_FALLIDA', 'Recuperación de clave fallida', 'alerta'],
+    ['CLAVE_CAMBIADA', 'Clave cambiada', 'exito'],
+  ])('%s tiene etiqueta en español y gravedad', (accion, etiqueta, gravedad) => {
+    expect(etiquetaAccion(accion)).toBe(etiqueta);
+    expect(gravedadAccion(accion)).toBe(gravedad);
+  });
+
+  it('el vencimiento del código se muestra en hora de Ecuador (nunca el código)', () => {
+    expect(describirDetalle({ venceEn: '2026-11-09T15:30:00Z' })).toEqual([
+      { etiqueta: 'Vence', valor: '09/11/2026 10:30' },
+    ]);
+  });
+
+  it('describe el origen, las sesiones cerradas y los motivos internos', () => {
+    expect(describirDetalle({ origen: 'CODIGO_VENDEDOR', sesionesRevocadas: 2 })).toEqual([
+      { etiqueta: 'Origen', valor: 'Código del vendedor' },
+      { etiqueta: 'Sesiones cerradas', valor: '2' },
+    ]);
+    expect(describirDetalle({ origen: 'COMANDO_SERVIDOR' })[0]?.valor).toBe('Comando del servidor');
+    expect(
+      describirDetalle({ correo: 'intento@correo.com', motivo: 'AGOTADO' }).map((c) => c.valor),
+    ).toEqual(['intento@correo.com', 'Intentos agotados']);
+    expect(describirDetalle({ motivo: 'NO_CLIENTE' })[0]?.valor).toBe('No es una cuenta de cliente');
+  });
+});

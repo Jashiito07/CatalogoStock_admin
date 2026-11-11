@@ -21,27 +21,39 @@
   }
 }
 
-// Blanco sobre el Primario: contraste 5.17 (RNF-11).
+// Barra clara con el logo horizontal oficial (D-38): sobre el Primario, la mitad azul del
+// ícono de la bolsa se perdería. Texto en el color Texto (13.98:1 sobre blanco, RNF-11) y
+// una franja del Primario como acento de marca.
 .cs-barra-superior {
   display: flex;
   flex-wrap: wrap;
   gap: 0.75rem;
   border-radius: 0;
   border: none;
-  background: var(--cs-primario);
-  color: var(--cs-sobre-primario);
+  border-bottom: 4px solid var(--cs-primario);
+  background: var(--cs-superficie);
+  color: var(--cs-texto);
   min-height: 4rem;
 }
 
-.cs-barra-superior__icono {
-  font-size: 1.5rem;
-  margin-right: 0.75rem;
+.cs-barra-superior__titulo {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.25rem 0.75rem;
+  margin: 0;
+  font-size: 1.125rem;
+  font-weight: 600;
 }
 
-.cs-barra-superior__titulo {
-  margin: 0;
-  font-size: 1.25rem;
-  font-weight: 600;
+.cs-barra-superior__logo {
+  display: block;
+  height: 2.5rem;
+  width: auto;
+}
+
+.cs-barra-superior__subtitulo {
+  color: var(--cs-secundario);
 }
 
 .cs-barra-superior__sesion {

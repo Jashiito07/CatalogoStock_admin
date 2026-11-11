@@ -1,0 +1,45 @@
+// Colores solo desde las variables corporativas (colores.css), nunca en hexadecimal.
+.cs-dialogo-codigo {
+  display: grid;
+  gap: 1rem;
+  text-align: center;
+}
+
+.cs-dialogo-codigo__cliente {
+  display: grid;
+  gap: 0.25rem;
+  margin: 0;
+}
+
+.cs-dialogo-codigo__correo {
+  font-size: 0.875rem;
+}
+
+// Código grande y fácil de dictar; se puede seleccionar de una vez si no se puede copiar.
+.cs-dialogo-codigo__codigo {
+  margin: 0;
+  padding: 0.75rem 1rem;
+  border: 2px dashed var(--cs-primario);
+  border-radius: 0.75rem;
+  color: var(--cs-primario);
+  font-family: ui-monospace, 'Cascadia Mono', Consolas, monospace;
+  font-size: 2.75rem;
+  font-weight: 700;
+  letter-spacing: 0.5rem;
+  font-variant-numeric: tabular-nums;
+  user-select: all;
+}
+
+.cs-dialogo-codigo__vence {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  margin: 0;
+  font-weight: 600;
+}
+
+.cs-dialogo-codigo__aviso {
+  display: block;
+  text-align: left;
+}

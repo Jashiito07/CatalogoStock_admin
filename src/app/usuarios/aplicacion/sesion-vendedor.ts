@@ -107,6 +107,24 @@ export class SesionVendedor {
     }
   }
 
+  /**
+   * Cambia la clave del Vendedor con la sesión iniciada (RF-USU-05). Envía el token de
+   * renovación actual para que la API conserve **esta** sesión y revoque las demás. Si hay
+   * una renovación en curso, espera a que termine para enviar el token ya rotado.
+   * Las claves no se guardan en ningún lugar.
+   */
+  async cambiarClave(claveActual: string, claveNueva: string): Promise<void> {
+    if (this.renovacionEnCurso !== null) {
+      await this.renovacionEnCurso.catch(() => undefined);
+    }
+    const tokenRenovacionActual = this.almacen.leer();
+    await this.api.cambiarClave({
+      claveActual,
+      claveNueva,
+      ...(tokenRenovacionActual !== null ? { tokenRenovacionActual } : {}),
+    });
+  }
+
   /** Borra la sesión local (tokens y usuario) sin llamar a la API. */
   descartar(): void {
     this.tokenAcceso = null;

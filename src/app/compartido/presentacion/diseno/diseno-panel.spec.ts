@@ -44,9 +44,7 @@ describe('DisenoPanel', () => {
     await fixture.whenStable();
     const elemento = fixture.nativeElement as HTMLElement;
 
-    expect(elemento.querySelector('h1')?.textContent?.trim()).toBe(
-      'CatálogoStock · Panel del vendedor',
-    );
+    expect(elemento.querySelector('h1')?.textContent?.trim()).toBe('Panel del vendedor');
     expect(elemento.querySelector('[data-prueba="nombre-vendedor"]')?.textContent).toContain(
       'Rosa Vendedora',
     );
@@ -55,12 +53,35 @@ describe('DisenoPanel', () => {
     expect(elemento.querySelector('main#contenido-principal')).not.toBeNull();
   });
 
+  it('D-38: muestra el logo horizontal oficial como imagen, no como SVG en línea', async () => {
+    const fixture = TestBed.createComponent(DisenoPanel);
+    await fixture.whenStable();
+    const elemento = fixture.nativeElement as HTMLElement;
+    const logo = elemento.querySelector<HTMLImageElement>('h1 img');
+
+    expect(logo?.getAttribute('src')).toBe('marca/catalogostock-logo-horizontal.svg');
+    expect(logo?.getAttribute('alt')).toBe('CatálogoStock');
+    expect(elemento.querySelector('svg title')).toBeNull();
+  });
+
+  it('RF-USU-05: «Cambiar mi clave» en la barra superior lleva a /mi-clave', async () => {
+    const navegar = vi.spyOn(TestBed.inject(Router), 'navigateByUrl').mockResolvedValue(true);
+    const fixture = TestBed.createComponent(DisenoPanel);
+    await fixture.whenStable();
+    (fixture.nativeElement as HTMLElement)
+      .querySelector<HTMLButtonElement>('[data-prueba="cambiar-mi-clave"] button')
+      ?.click();
+    await fixture.whenStable();
+
+    expect(navegar).toHaveBeenCalledWith('/mi-clave');
+  });
+
   it('muestra todas las secciones en el menú lateral', async () => {
     const fixture = TestBed.createComponent(DisenoPanel);
     await fixture.whenStable();
     const texto = (fixture.nativeElement as HTMLElement).textContent ?? '';
 
-    for (const seccion of ['Inicio', 'Bitácora', ...SECCIONES_FUTURAS]) {
+    for (const seccion of ['Inicio', 'Clientes', 'Bitácora', ...SECCIONES_FUTURAS]) {
       expect(texto).toContain(seccion);
     }
   });
@@ -92,6 +113,12 @@ describe('crearSeccionesPanel', () => {
     const bitacora = items.find((i) => i.label === 'Bitácora');
     expect(bitacora?.disabled).toBeFalsy();
     expect(bitacora?.routerLink).toBe('/bitacora');
+  });
+
+  it('RF-USU-05: habilita Clientes', () => {
+    const clientes = itemsDe(crearSeccionesPanel()).find((i) => i.label === 'Clientes');
+    expect(clientes?.disabled).toBeFalsy();
+    expect(clientes?.routerLink).toBe('/clientes');
   });
 
   it('deshabilita las secciones de las próximas fases con un aviso', () => {

@@ -114,6 +114,13 @@ export const TemaCatalogoStock = definePreset(Aura, {
         outlined: { color: '{green.700}', borderColor: '{green.700}' },
       },
     },
+    // RNF-11: mismo criterio en los avisos (p-toast). El amarillo 600 sobre su fondo claro
+    // queda muy por debajo de 4.5:1; se usa el 800.
+    toast: {
+      success: { color: '{green.700}' },
+      error: { color: '{red.700}' },
+      warn: { color: '{yellow.800}' },
+    },
     badge: {
       secondary: {
         background: secundario[500],

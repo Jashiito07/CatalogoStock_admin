@@ -13,6 +13,8 @@
   --cs-texto: #1e293b;
   --cs-sobre-primario: #ffffff;
   --cs-sobre-acento: var(--cs-texto);
+  /* Superficie clara de la barra superior, donde va el logo horizontal (D-38). */
+  --cs-superficie: #ffffff;
 
   /* Tamaño mínimo de los controles (RNF-10), igual que en la app móvil. */
   --cs-control-minimo: 48px;

@@ -1,0 +1,51 @@
+<p-dialog
+  header="Código de recuperación"
+  [visible]="visible()"
+  (visibleChange)="alCambiarVisible($event)"
+  [modal]="true"
+  [closable]="true"
+  [draggable]="false"
+  [resizable]="false"
+  [style]="{ width: 'min(28rem, 95vw)' }"
+>
+  @if (codigo(); as datos) {
+    <div class="cs-dialogo-codigo" data-prueba="dialogo-codigo">
+      <p class="cs-dialogo-codigo__cliente">
+        Para <strong data-prueba="nombre-cliente">{{ datos.cliente.nombre }}</strong>
+        <span class="cs-dialogo-codigo__correo">{{ datos.cliente.correo }}</span>
+      </p>
+
+      <p
+        class="cs-dialogo-codigo__codigo"
+        data-prueba="codigo"
+        [attr.aria-label]="'Código: ' + codigoDeletreado()"
+      >
+        {{ datos.codigo }}
+      </p>
+
+      <p class="cs-dialogo-codigo__vence" data-prueba="vencimiento">
+        <i class="pi pi-clock" aria-hidden="true"></i>
+        Vence a las {{ horaVencimiento() }} (hora de Ecuador)
+      </p>
+
+      <p-message severity="info" icon="pi pi-lock" class="cs-dialogo-codigo__aviso">
+        {{ aviso }}
+      </p-message>
+    </div>
+  }
+
+  <ng-template #footer>
+    <p-button
+      label="Copiar"
+      icon="pi pi-copy"
+      data-prueba="copiar-codigo"
+      (onClick)="copiar()"
+    />
+    <p-button
+      label="Cerrar"
+      severity="secondary"
+      [outlined]="true"
+      (onClick)="cerrar()"
+    />
+  </ng-template>
+</p-dialog>

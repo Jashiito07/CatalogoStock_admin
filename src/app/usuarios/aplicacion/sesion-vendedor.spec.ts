@@ -178,4 +178,51 @@ describe('SesionVendedor', () => {
       expect(almacen.valor).toBeNull();
     });
   });
+
+  describe('cambiarClave (RF-USU-05)', () => {
+    it('envía el token de renovación actual para conservar esta sesión y no la cierra', async () => {
+      const respuesta = crearSesion();
+      api.ingresarVendedor.mockResolvedValue(respuesta);
+      await sesion.ingresar('vendedora@correo.com', 'Clave2026');
+
+      await sesion.cambiarClave('Clave2026', 'NuevaClave2026');
+
+      expect(api.cambiarClave).toHaveBeenCalledWith({
+        claveActual: 'Clave2026',
+        claveNueva: 'NuevaClave2026',
+        tokenRenovacionActual: respuesta.tokenRenovacion,
+      });
+      expect(sesion.activa()).toBe(true);
+      expect(almacen.valor).toBe(respuesta.tokenRenovacion);
+    });
+
+    it('espera una renovación en curso y envía el token ya rotado', async () => {
+      api.ingresarVendedor.mockResolvedValue(crearSesion());
+      await sesion.ingresar('vendedora@correo.com', 'Clave2026');
+      const rotada = crearSesion();
+      let terminarRenovacion: (s: typeof rotada) => void = () => undefined;
+      api.renovar.mockReturnValue(new Promise((resolver) => (terminarRenovacion = resolver)));
+
+      const renovacion = sesion.renovar();
+      const cambio = sesion.cambiarClave('Clave2026', 'NuevaClave2026');
+      terminarRenovacion(rotada);
+      await renovacion;
+      await cambio;
+
+      expect(api.cambiarClave.mock.calls[0]?.[0].tokenRenovacionActual).toBe(rotada.tokenRenovacion);
+    });
+
+    it('propaga CLAVE_ACTUAL_INCORRECTA sin tocar la sesión', async () => {
+      api.ingresarVendedor.mockResolvedValue(crearSesion());
+      await sesion.ingresar('vendedora@correo.com', 'Clave2026');
+      api.cambiarClave.mockRejectedValue(
+        new ErrorApi('CLAVE_ACTUAL_INCORRECTA', 'La clave actual no es correcta.', 422),
+      );
+
+      await expect(sesion.cambiarClave('Otra2026', 'NuevaClave2026')).rejects.toMatchObject({
+        codigo: 'CLAVE_ACTUAL_INCORRECTA',
+      });
+      expect(sesion.activa()).toBe(true);
+    });
+  });
 });
