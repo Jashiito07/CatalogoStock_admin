@@ -7,7 +7,9 @@ import { ToolbarModule } from 'primeng/toolbar';
 
 import { SesionVendedor } from '../../../usuarios/aplicacion/sesion-vendedor';
 import { MOTIVOS_INGRESO } from '../../../usuarios/aplicacion/motivos-ingreso';
-import { RUTA_LOGO_HORIZONTAL } from '../marca';
+import { rutaLogoHorizontal } from '../marca';
+import { SelectorTema } from '../tema/selector-tema';
+import { ServicioTema } from '../tema/servicio-tema';
 import { crearSeccionesPanel } from './secciones-panel';
 
 export const RUTA_CAMBIAR_CLAVE = '/mi-clave';
@@ -19,7 +21,7 @@ export const RUTA_CAMBIAR_CLAVE = '/mi-clave';
  */
 @Component({
   selector: 'app-diseno-panel',
-  imports: [RouterOutlet, ToolbarModule, MenuModule, ToastModule, ButtonModule],
+  imports: [RouterOutlet, ToolbarModule, MenuModule, ToastModule, ButtonModule, SelectorTema],
   templateUrl: './diseno-panel.html',
   styleUrl: './diseno-panel.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -28,8 +30,10 @@ export class DisenoPanel {
   private readonly sesion = inject(SesionVendedor);
   private readonly router = inject(Router);
 
-  /** Logo horizontal para fondo claro: la barra superior es clara (D-38). */
-  protected readonly logo = RUTA_LOGO_HORIZONTAL;
+  private readonly tema = inject(ServicioTema);
+
+  /** Logo horizontal (D-38): variante para fondo oscuro cuando la barra es oscura (D-41). */
+  protected readonly logo = computed(() => rutaLogoHorizontal(this.tema.temaAplicado()));
   protected readonly subtitulo = 'Panel del vendedor';
   protected readonly secciones = crearSeccionesPanel();
   protected readonly nombreVendedor = computed(() => this.sesion.usuario()?.nombre ?? '');

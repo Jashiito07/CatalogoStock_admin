@@ -10,6 +10,7 @@ import {
   crearApiFalsa,
   crearSesion,
 } from '../../../usuarios/pruebas/dobles-sesion';
+import { ServicioTema } from '../tema/servicio-tema';
 import { DisenoPanel } from './diseno-panel';
 import { AVISO_PROXIMA_FASE, crearSeccionesPanel } from './secciones-panel';
 
@@ -62,6 +63,18 @@ describe('DisenoPanel', () => {
     expect(logo?.getAttribute('src')).toBe('marca/catalogostock-logo-horizontal.svg');
     expect(logo?.getAttribute('alt')).toBe('CatálogoStock');
     expect(elemento.querySelector('svg title')).toBeNull();
+  });
+
+  it('D-41: en modo oscuro la barra usa el logo para fondo oscuro y muestra el selector de tema', async () => {
+    TestBed.inject(ServicioTema).temaAplicado.set('oscuro');
+    const fixture = TestBed.createComponent(DisenoPanel);
+    await fixture.whenStable();
+    const elemento = fixture.nativeElement as HTMLElement;
+
+    expect(elemento.querySelector('h1 img')?.getAttribute('src')).toBe(
+      'marca/catalogostock-logo-horizontal-fondo-oscuro.svg',
+    );
+    expect(elemento.querySelector('app-selector-tema')).not.toBeNull();
   });
 
   it('RF-USU-05: «Cambiar mi clave» en la barra superior lleva a /mi-clave', async () => {

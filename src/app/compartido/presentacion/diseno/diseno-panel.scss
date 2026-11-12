@@ -31,6 +31,7 @@
   border-radius: 0;
   border: none;
   border-bottom: 4px solid var(--cs-primario);
+  // Superficie del tema: blanca en claro, #1E293B en oscuro (D-41), con el logo de fondo oscuro.
   background: var(--cs-superficie);
   color: var(--cs-texto);
   min-height: 4rem;
@@ -53,7 +54,8 @@
 }
 
 .cs-barra-superior__subtitulo {
-  color: var(--cs-secundario);
+  // Secundario como texto: en modo oscuro pasa a su tono claro (RNF-11).
+  color: var(--cs-secundario-texto);
 }
 
 .cs-barra-superior__sesion {
