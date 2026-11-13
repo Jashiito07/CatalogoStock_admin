@@ -2,6 +2,8 @@ import { Routes } from '@angular/router';
 
 import { proveerAuditoria } from './auditoria/infraestructura/lector-bitacora.http';
 import { proveerClientes } from './clientes/infraestructura/api-clientes.http';
+import { proveerMarcas } from './marcas/infraestructura/api-marcas.http';
+import { negocioConfigurado, negocioSinConfigurar } from './marcas/presentacion/guardias-marcas';
 import { soloSinSesion, soloVendedor } from './usuarios/presentacion/guardias';
 
 /**
@@ -24,6 +26,8 @@ export const routes: Routes = [
     path: '',
     canActivate: [soloVendedor],
     canActivateChild: [soloVendedor],
+    // Las marcas se comparten con el menú, el guard de «Configura tu negocio» y las pantallas.
+    providers: [proveerMarcas()],
     loadComponent: () =>
       import('./compartido/presentacion/diseno/diseno-panel').then((m) => m.DisenoPanel),
     children: [
@@ -31,8 +35,25 @@ export const routes: Routes = [
       {
         path: 'inicio',
         title: 'Inicio · CatálogoStock',
+        // D-48: sin marcas, el ingreso termina en «Configura tu negocio».
+        canActivate: [negocioConfigurado],
         loadComponent: () =>
           import('./compartido/presentacion/inicio/inicio').then((m) => m.Inicio),
+      },
+      {
+        path: 'configura-tu-negocio',
+        title: 'Configura tu negocio · CatálogoStock',
+        canActivate: [negocioSinConfigurar],
+        loadComponent: () =>
+          import('./marcas/presentacion/configura-negocio/configura-negocio').then(
+            (m) => m.ConfiguraNegocio,
+          ),
+      },
+      {
+        path: 'marcas',
+        title: 'Marcas · CatálogoStock',
+        canActivate: [negocioConfigurado],
+        loadComponent: () => import('./marcas/presentacion/marcas/marcas').then((m) => m.Marcas),
       },
       {
         path: 'clientes',

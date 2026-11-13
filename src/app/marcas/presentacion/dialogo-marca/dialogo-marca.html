@@ -1,0 +1,111 @@
+<p-dialog
+  [header]="titulo()"
+  [(visible)]="visible"
+  [modal]="true"
+  [draggable]="false"
+  [closable]="!guardando()"
+  [style]="{ width: '34rem', 'max-width': '95vw' }"
+  data-prueba="dialogo-marca"
+>
+  <form class="cs-dialogo-marca" (ngSubmit)="guardar()" novalidate id="formulario-marca">
+    @if (errorGeneral(); as mensaje) {
+      <p-message severity="error" icon="pi pi-times-circle" role="alert" data-prueba="error-general">{{
+        mensaje
+      }}</p-message>
+    }
+
+    <div class="cs-dialogo-marca__campo">
+      <label for="nombre-marca" class="cs-dialogo-marca__etiqueta">Nombre</label>
+      <input
+        pInputText
+        id="nombre-marca"
+        [ngModelOptions]="{ standalone: true }"
+        [ngModel]="nombre()"
+        (ngModelChange)="nombre.set($event)"
+        (blur)="nombreTocado.set(true)"
+        [maxlength]="longitudMaximaNombre"
+        autocomplete="off"
+        [attr.aria-invalid]="errorNombre() ? 'true' : null"
+        class="cs-dialogo-marca__entrada"
+        data-prueba="nombre"
+      />
+      @if (errorNombre(); as mensaje) {
+        <small class="cs-dialogo-marca__error" role="alert" data-prueba="error-nombre">{{ mensaje }}</small>
+      }
+    </div>
+
+    <app-selector-color
+      etiqueta="Color principal"
+      [(valor)]="color"
+      [errorExterno]="erroresServidor()['color'] ?? null"
+    />
+
+    @if (colorAcento(); as acento) {
+      <app-selector-color
+        etiqueta="Color de acento"
+        [valor]="acento"
+        (valorChange)="colorAcento.set($event)"
+        [errorExterno]="erroresServidor()['colorAcento'] ?? null"
+      />
+      <p-button
+        label="Quitar color de acento"
+        icon="pi pi-minus"
+        severity="secondary"
+        [text]="true"
+        size="small"
+        data-prueba="quitar-acento"
+        (onClick)="quitarAcento()"
+      />
+    } @else {
+      <p-button
+        label="Agregar color de acento (opcional)"
+        icon="pi pi-plus"
+        severity="secondary"
+        [outlined]="true"
+        size="small"
+        data-prueba="agregar-acento"
+        (onClick)="agregarAcento()"
+      />
+    }
+
+    @if (marca()) {
+      <div class="cs-dialogo-marca__campo">
+        <label for="orden-marca" class="cs-dialogo-marca__etiqueta">Orden</label>
+        <p-inputnumber
+          inputId="orden-marca"
+          [ngModelOptions]="{ standalone: true }"
+          [ngModel]="orden()"
+          (ngModelChange)="orden.set($event)"
+          [min]="0"
+          [useGrouping]="false"
+          [showButtons]="true"
+          data-prueba="orden"
+        />
+      </div>
+    }
+
+    <div class="cs-dialogo-marca__campo">
+      <span class="cs-dialogo-marca__etiqueta">Vista previa de la cabecera</span>
+      <app-vista-previa-marca [nombre]="nombre()" [color]="color()" [colorAcento]="colorAcento()" />
+    </div>
+  </form>
+
+  <ng-template #footer>
+    <p-button
+      label="Cancelar"
+      severity="secondary"
+      [outlined]="true"
+      [disabled]="guardando()"
+      data-prueba="cancelar"
+      (onClick)="cancelar()"
+    />
+    <p-button
+      label="Guardar"
+      icon="pi pi-check"
+      [loading]="guardando()"
+      [disabled]="!formularioValido()"
+      data-prueba="guardar"
+      (onClick)="guardar()"
+    />
+  </ng-template>
+</p-dialog>

@@ -1,0 +1,141 @@
+<section class="cs-marcas" aria-labelledby="titulo-marcas">
+  <header class="cs-marcas__encabezado">
+    <div>
+      <h2 id="titulo-marcas" class="cs-marcas__titulo">Marcas</h2>
+      <p class="cs-marcas__descripcion">
+        Las marcas organizan tu catálogo. Una marca desactivada y sus productos no se muestran a
+        los clientes. El orden define cómo aparecen en la app.
+      </p>
+    </div>
+    <p-button label="Nueva marca" icon="pi pi-plus" data-prueba="nueva-marca" (onClick)="nueva()" />
+  </header>
+
+  @if (error(); as textoError) {
+    <p-message severity="error" icon="pi pi-times-circle" role="alert" class="cs-marcas__mensaje">
+      <span class="cs-marcas__texto-error">{{ textoError }}</span>
+      <p-button label="Reintentar" icon="pi pi-refresh" [text]="true" size="small" (onClick)="cargar()" />
+    </p-message>
+  }
+
+  <p-table
+    [value]="estado.marcas()"
+    dataKey="id"
+    [loading]="cargando()"
+    [tableStyle]="{ 'min-width': '52rem' }"
+    class="cs-marcas__tabla"
+  >
+    <ng-template #header>
+      <tr>
+        <th scope="col">Color</th>
+        <th scope="col">Nombre</th>
+        <th scope="col">Color de acento</th>
+        <th scope="col">Estado</th>
+        <th scope="col">Orden</th>
+        <th scope="col"><span class="cs-solo-lector">Acciones</span></th>
+      </tr>
+    </ng-template>
+
+    <ng-template #body let-fila let-indice="rowIndex">
+      <tr data-prueba="fila-marca">
+        <td>
+          <span
+            class="cs-marcas__muestra"
+            [style.background-color]="fila.color"
+            data-prueba="muestra-color"
+            role="img"
+            [attr.aria-label]="'Color principal ' + fila.color"
+          ></span>
+          <span class="cs-marcas__hex">{{ fila.color }}</span>
+        </td>
+        <td class="cs-marcas__nombre">{{ fila.nombre }}</td>
+        <td data-prueba="celda-acento">
+          @if (fila.colorAcento) {
+            <span
+              class="cs-marcas__muestra"
+              [style.background-color]="fila.colorAcento"
+              role="img"
+              [attr.aria-label]="'Color de acento ' + fila.colorAcento"
+            ></span>
+            <span class="cs-marcas__hex">{{ fila.colorAcento }}</span>
+          } @else {
+            <span class="cs-marcas__sin-acento">Sin acento</span>
+          }
+        </td>
+        <td data-prueba="estado-marca">
+          @if (fila.activa) {
+            <p-tag value="Activa" severity="success" />
+          } @else {
+            <p-tag value="Inactiva" severity="secondary" />
+          }
+        </td>
+        <td class="cs-marcas__orden">
+          <span class="cs-marcas__numero">{{ fila.orden }}</span>
+          <p-button
+            icon="pi pi-arrow-up"
+            [rounded]="true"
+            [text]="true"
+            size="small"
+            [disabled]="indice === 0 || ocupada() !== null"
+            [ariaLabel]="'Subir ' + fila.nombre"
+            data-prueba="subir"
+            (onClick)="mover(fila, -1)"
+          />
+          <p-button
+            icon="pi pi-arrow-down"
+            [rounded]="true"
+            [text]="true"
+            size="small"
+            [disabled]="indice === estado.marcas().length - 1 || ocupada() !== null"
+            [ariaLabel]="'Bajar ' + fila.nombre"
+            data-prueba="bajar"
+            (onClick)="mover(fila, 1)"
+          />
+        </td>
+        <td class="cs-marcas__acciones">
+          <p-button
+            label="Editar"
+            icon="pi pi-pencil"
+            size="small"
+            [outlined]="true"
+            [ariaLabel]="'Editar ' + fila.nombre"
+            data-prueba="editar"
+            (onClick)="editar(fila)"
+          />
+          <p-button
+            [label]="fila.activa ? 'Desactivar' : 'Activar'"
+            [icon]="fila.activa ? 'pi pi-eye-slash' : 'pi pi-eye'"
+            size="small"
+            severity="secondary"
+            [outlined]="true"
+            [disabled]="ocupada() !== null"
+            [loading]="ocupada() === fila.id"
+            [ariaLabel]="(fila.activa ? 'Desactivar ' : 'Activar ') + fila.nombre"
+            data-prueba="alternar-activa"
+            (onClick)="alternarActiva(fila)"
+          />
+        </td>
+      </tr>
+    </ng-template>
+
+    <ng-template #emptymessage>
+      <tr>
+        <td colspan="6">
+          <div class="cs-marcas__vacio" data-prueba="marcas-vacio">
+            @if (!error() && !cargando()) {
+              <span>Todavía no hay marcas.</span>
+              <a routerLink="/configura-tu-negocio" class="cs-marcas__enlace">Configura tu negocio</a>
+            }
+          </div>
+        </td>
+      </tr>
+    </ng-template>
+  </p-table>
+</section>
+
+<p-confirmdialog />
+
+<app-dialogo-marca
+  [(visible)]="dialogoVisible"
+  [marca]="marcaEnEdicion()"
+  (guardada)="alGuardar($event)"
+/>

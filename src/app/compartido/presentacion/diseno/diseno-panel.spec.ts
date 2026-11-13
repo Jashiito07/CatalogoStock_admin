@@ -1,6 +1,11 @@
 import { TestBed } from '@angular/core/testing';
 import { provideRouter, Router } from '@angular/router';
 import { MenuItem, MessageService } from 'primeng/api';
+import { Mock } from 'vitest';
+
+import { EstadoMarcas } from '../../../marcas/aplicacion/estado-marcas';
+import { ApiMarcas } from '../../../marcas/aplicacion/puertos';
+import { Marca } from '../../../marcas/dominio/marca';
 
 import { AlmacenTokenRenovacion, ApiAutenticacion } from '../../../usuarios/aplicacion/puertos';
 import { SesionVendedor } from '../../../usuarios/aplicacion/sesion-vendedor';
@@ -14,6 +19,18 @@ import { ServicioTema } from '../tema/servicio-tema';
 import { DisenoPanel } from './diseno-panel';
 import { AVISO_PROXIMA_FASE, crearSeccionesPanel } from './secciones-panel';
 
+const MARCA_PRUEBA: Marca = {
+  id: 'm1',
+  nombre: 'Yanbal',
+  color: '#FC5823',
+  colorAcento: null,
+  textoSobreColor: '#1E293B',
+  textoSobreAcento: null,
+  activa: true,
+  orden: 0,
+  creadaEn: '2026-11-11T10:00:00Z',
+};
+
 const SECCIONES_FUTURAS = ['Productos', 'Inventario', 'Pedidos', 'Pagos', 'Conflictos'];
 
 function itemsDe(secciones: MenuItem[]): MenuItem[] {
@@ -23,8 +40,10 @@ function itemsDe(secciones: MenuItem[]): MenuItem[] {
 describe('DisenoPanel', () => {
   let api: ApiAutenticacionFalsa;
   let almacen: AlmacenEnMemoria;
+  let listarMarcas: Mock<() => Promise<readonly Marca[]>>;
 
   beforeEach(async () => {
+    listarMarcas = vi.fn().mockResolvedValue([MARCA_PRUEBA]);
     api = crearApiFalsa();
     almacen = new AlmacenEnMemoria();
     await TestBed.configureTestingModule({
@@ -32,6 +51,8 @@ describe('DisenoPanel', () => {
       providers: [
         provideRouter([]),
         MessageService,
+        EstadoMarcas,
+        { provide: ApiMarcas, useValue: { listar: listarMarcas } },
         { provide: ApiAutenticacion, useValue: api },
         { provide: AlmacenTokenRenovacion, useValue: almacen },
       ],
@@ -99,6 +120,23 @@ describe('DisenoPanel', () => {
     }
   });
 
+  it('D-48: sin marcas el menú muestra «Configura tu negocio»; con marcas no', async () => {
+    listarMarcas.mockResolvedValue([]);
+    const sin = TestBed.createComponent(DisenoPanel);
+    await sin.whenStable();
+    await new Promise((resolver) => setTimeout(resolver, 0));
+    await sin.whenStable();
+    expect((sin.nativeElement as HTMLElement).textContent).toContain('Configura tu negocio');
+  });
+
+  it('D-48: con marcas el menú no muestra «Configura tu negocio»', async () => {
+    const fixture = TestBed.createComponent(DisenoPanel);
+    await fixture.whenStable();
+    await new Promise((resolver) => setTimeout(resolver, 0));
+    await fixture.whenStable();
+    expect((fixture.nativeElement as HTMLElement).textContent).not.toContain('Configura tu negocio');
+  });
+
   it('RF-USU-01: «Cerrar sesión» revoca la sesión en la API y lleva al ingreso', async () => {
     const navegar = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
     const fixture = TestBed.createComponent(DisenoPanel);
@@ -126,6 +164,17 @@ describe('crearSeccionesPanel', () => {
     const bitacora = items.find((i) => i.label === 'Bitácora');
     expect(bitacora?.disabled).toBeFalsy();
     expect(bitacora?.routerLink).toBe('/bitacora');
+  });
+
+  it('RF-PRO-04: habilita Marcas y, sin marcas, añade «Configura tu negocio» (D-48)', () => {
+    const con = itemsDe(crearSeccionesPanel(false));
+    expect(con.find((i) => i.label === 'Marcas')?.routerLink).toBe('/marcas');
+    expect(con.find((i) => i.label === 'Configura tu negocio')).toBeUndefined();
+
+    const sin = itemsDe(crearSeccionesPanel(true));
+    expect(sin.find((i) => i.label === 'Configura tu negocio')?.routerLink).toBe(
+      '/configura-tu-negocio',
+    );
   });
 
   it('RF-USU-05: habilita Clientes', () => {

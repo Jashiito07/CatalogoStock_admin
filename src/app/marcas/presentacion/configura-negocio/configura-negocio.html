@@ -1,0 +1,135 @@
+<section class="cs-negocio" aria-labelledby="titulo-negocio">
+  <header>
+    <h2 id="titulo-negocio" class="cs-negocio__titulo">Configura tu negocio</h2>
+    <p class="cs-negocio__descripcion">
+      Elige las marcas con las que vendes. Puedes ajustar el color de cada una y agregar una marca
+      propia. Después podrás cambiarlas desde la sección Marcas.
+    </p>
+  </header>
+
+  @if (error(); as textoError) {
+    <p-message severity="error" icon="pi pi-times-circle" role="alert">
+      <span class="cs-negocio__texto-error">{{ textoError }}</span>
+      <p-button label="Reintentar" icon="pi pi-refresh" [text]="true" size="small" (onClick)="cargar()" />
+    </p-message>
+  }
+
+  @if (cargando()) {
+    <p data-prueba="cargando" role="status">Cargando marcas sugeridas…</p>
+  }
+
+  <div class="cs-negocio__rejilla">
+    @for (opcion of opciones(); track opcion.clave) {
+      <p-card class="cs-negocio__tarjeta" data-prueba="tarjeta-marca">
+        <div class="cs-negocio__cabecera">
+          <p-checkbox
+            [inputId]="'elegir-' + opcion.clave"
+            [binary]="true"
+            [ngModel]="opcion.elegida || opcion.yaCreada"
+            (ngModelChange)="elegir(opcion.clave, $event)"
+            [disabled]="opcion.yaCreada || guardando()"
+            data-prueba="casilla"
+          />
+          <label [for]="'elegir-' + opcion.clave" class="cs-negocio__nombre">{{ opcion.nombre }}</label>
+          @if (opcion.yaCreada) {
+            <p-tag value="Ya creada" severity="success" />
+          }
+          @if (opcion.propia && !opcion.yaCreada) {
+            <p-button
+              icon="pi pi-times"
+              [rounded]="true"
+              [text]="true"
+              severity="secondary"
+              size="small"
+              [ariaLabel]="'Quitar ' + opcion.nombre + ' de la lista'"
+              data-prueba="quitar-propia"
+              (onClick)="quitarPropia(opcion.clave)"
+            />
+          }
+        </div>
+
+        <app-vista-previa-marca
+          [nombre]="opcion.nombre"
+          [color]="opcion.color"
+          [colorAcento]="opcion.colorAcento"
+          [compacta]="true"
+        />
+
+        @if (!opcion.yaCreada) {
+          <app-selector-color
+            etiqueta="Color principal"
+            [valor]="opcion.color"
+            (valorChange)="cambiarColor(opcion.clave, $event)"
+          />
+          @if (opcion.colorAcento; as acento) {
+            <app-selector-color
+              etiqueta="Color de acento"
+              [valor]="acento"
+              (valorChange)="cambiarAcento(opcion.clave, $event)"
+            />
+          }
+        }
+
+        @if (opcion.error; as mensaje) {
+          <p-message severity="error" icon="pi pi-times-circle" role="alert" data-prueba="error-marca">{{
+            mensaje
+          }}</p-message>
+        }
+      </p-card>
+    }
+
+    <p-card class="cs-negocio__tarjeta" data-prueba="tarjeta-propia">
+      <h3 class="cs-negocio__subtitulo">Agregar una marca propia</h3>
+      <div class="cs-negocio__campo">
+        <label for="nombre-propia" class="cs-negocio__etiqueta">Nombre</label>
+        <input
+          pInputText
+          id="nombre-propia"
+          [ngModel]="nombrePropia()"
+          (ngModelChange)="nombrePropia.set($event)"
+          (blur)="propiaTocada.set(true)"
+          [maxlength]="longitudMaximaNombre"
+          autocomplete="off"
+          [attr.aria-invalid]="errorPropia() ? 'true' : null"
+          class="cs-negocio__entrada"
+          data-prueba="nombre-propia"
+        />
+        @if (errorPropia(); as mensaje) {
+          <small class="cs-negocio__error" role="alert" data-prueba="error-propia">{{ mensaje }}</small>
+        }
+      </div>
+      <app-selector-color etiqueta="Color de la marca" [(valor)]="colorPropia" />
+      <app-vista-previa-marca [nombre]="nombrePropia()" [color]="colorPropia()" [compacta]="true" />
+      <p-button
+        label="Agregar marca"
+        icon="pi pi-plus"
+        severity="secondary"
+        [outlined]="true"
+        [disabled]="!puedeAgregarPropia()"
+        data-prueba="agregar-propia"
+        (onClick)="agregarPropia()"
+      />
+    </p-card>
+  </div>
+
+  <footer class="cs-negocio__pie">
+    <span class="cs-negocio__resumen" data-prueba="resumen" aria-live="polite">
+      @if (elegidas().length === 0) {
+        Elige al menos una marca para continuar.
+      } @else if (elegidas().length === 1) {
+        1 marca elegida.
+      } @else {
+        {{ elegidas().length }} marcas elegidas.
+      }
+    </span>
+    <p-button
+      label="Continuar"
+      icon="pi pi-arrow-right"
+      iconPos="right"
+      [disabled]="!puedeContinuar()"
+      [loading]="guardando()"
+      data-prueba="continuar"
+      (onClick)="continuar()"
+    />
+  </footer>
+</section>

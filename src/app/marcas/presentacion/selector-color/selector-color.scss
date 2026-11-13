@@ -1,0 +1,37 @@
+.cs-selector-color {
+  display: grid;
+  gap: 0.375rem;
+}
+
+.cs-selector-color__etiqueta {
+  font-weight: 600;
+}
+
+.cs-selector-color__controles {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+// RNF-10: campo cómodo en el celular.
+.cs-selector-color__hex {
+  width: 9rem;
+  min-height: var(--cs-control-minimo);
+  box-sizing: border-box;
+  font-variant-numeric: tabular-nums;
+  text-transform: uppercase;
+}
+
+// Borde en la muestra: las marcas muy oscuras (L'Bel, Leonisa) se ven también en modo oscuro (D-41).
+.cs-selector-color ::ng-deep .p-colorpicker-preview {
+  box-shadow: 0 0 0 1px var(--cs-texto-secundario);
+}
+
+// El error usa los colores de estado de PrimeNG (contraste en claro y oscuro).
+.cs-selector-color__error {
+  color: var(--p-red-600);
+}
+
+:host-context(.app-oscuro) .cs-selector-color__error {
+  color: var(--p-red-300);
+}
