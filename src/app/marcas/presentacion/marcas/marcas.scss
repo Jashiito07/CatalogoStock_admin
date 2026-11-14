@@ -1,0 +1,97 @@
+// Los colores de las marcas vienen de la API (estilos en línea); el resto usa --cs-*.
+.cs-marcas {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 1rem;
+}
+
+.cs-marcas__encabezado {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.cs-marcas__titulo {
+  margin: 0;
+  font-size: 1.5rem;
+  color: var(--cs-primario);
+}
+
+.cs-marcas__descripcion {
+  margin: 0.25rem 0 0;
+  max-width: 48rem;
+}
+
+.cs-marcas__mensaje {
+  display: block;
+}
+
+.cs-marcas__texto-error {
+  margin-right: 0.5rem;
+}
+
+// Borde visible para marcas muy oscuras sobre fondo oscuro (D-41).
+.cs-marcas__muestra {
+  display: inline-block;
+  width: 1.75rem;
+  height: 1.75rem;
+  margin-right: 0.5rem;
+  vertical-align: middle;
+  border-radius: 0.375rem;
+  box-shadow: 0 0 0 1px var(--cs-texto-secundario);
+}
+
+.cs-marcas__hex {
+  font-variant-numeric: tabular-nums;
+  font-size: 0.875rem;
+}
+
+.cs-marcas__sin-acento {
+  font-size: 0.875rem;
+  color: var(--cs-texto-secundario);
+}
+
+.cs-marcas__nombre {
+  font-weight: 600;
+}
+
+.cs-marcas__orden {
+  white-space: nowrap;
+}
+
+.cs-marcas__numero {
+  display: inline-block;
+  min-width: 1.5rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.cs-marcas__acciones {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: flex-end;
+  white-space: nowrap;
+}
+
+.cs-marcas__vacio {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem 0;
+}
+
+.cs-marcas__enlace {
+  color: var(--cs-primario);
+  font-weight: 600;
+}
+
+.cs-solo-lector {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}

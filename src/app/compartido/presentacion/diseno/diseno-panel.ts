@@ -5,6 +5,7 @@ import { MenuModule } from 'primeng/menu';
 import { ToastModule } from 'primeng/toast';
 import { ToolbarModule } from 'primeng/toolbar';
 
+import { EstadoMarcas } from '../../../marcas/aplicacion/estado-marcas';
 import { SesionVendedor } from '../../../usuarios/aplicacion/sesion-vendedor';
 import { MOTIVOS_INGRESO } from '../../../usuarios/aplicacion/motivos-ingreso';
 import { rutaLogoHorizontal } from '../marca';
@@ -35,9 +36,15 @@ export class DisenoPanel {
   /** Logo horizontal (D-38): variante para fondo oscuro cuando la barra es oscura (D-41). */
   protected readonly logo = computed(() => rutaLogoHorizontal(this.tema.temaAplicado()));
   protected readonly subtitulo = 'Panel del vendedor';
-  protected readonly secciones = crearSeccionesPanel();
+  private readonly marcas = inject(EstadoMarcas);
+  protected readonly secciones = computed(() => crearSeccionesPanel(this.marcas.sinMarcas()));
   protected readonly nombreVendedor = computed(() => this.sesion.usuario()?.nombre ?? '');
   protected readonly cerrando = signal(false);
+
+  constructor() {
+    // El menú muestra «Configura tu negocio» solo si la API confirma que no hay marcas (D-48).
+    void this.marcas.asegurarCargada().catch(() => undefined);
+  }
 
   /** «Cambiar mi clave» (RF-USU-05): pantalla dentro del panel. */
   protected async irACambiarClave(): Promise<void> {

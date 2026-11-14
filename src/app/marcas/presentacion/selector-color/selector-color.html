@@ -1,0 +1,36 @@
+<div class="cs-selector-color">
+  <label class="cs-selector-color__etiqueta" [for]="idCampo">{{ etiqueta() }}</label>
+  <div class="cs-selector-color__controles">
+    <p-colorpicker
+      [ngModel]="valorDelSelector()"
+      (ngModelChange)="alElegir($event)"
+      [ngModelOptions]="{ standalone: true }"
+      format="hex"
+      appendTo="body"
+      data-prueba="selector-visual"
+    />
+    <input
+      pInputText
+      [id]="idCampo"
+      type="text"
+      [value]="valor()"
+      (input)="alEscribir($event)"
+      maxlength="7"
+      autocomplete="off"
+      spellcheck="false"
+      placeholder="#RRGGBB"
+      [attr.aria-invalid]="!valido() || errorExterno() ? 'true' : null"
+      class="cs-selector-color__hex"
+      data-prueba="selector-hex"
+    />
+  </div>
+  @if (!valido()) {
+    <small class="cs-selector-color__error" role="alert" data-prueba="error-color">
+      Escribe el color como #RRGGBB, por ejemplo #2563EB.
+    </small>
+  } @else if (errorExterno(); as mensaje) {
+    <small class="cs-selector-color__error" role="alert" data-prueba="error-color">{{
+      mensaje
+    }}</small>
+  }
+</div>

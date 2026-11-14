@@ -7,7 +7,7 @@ export const AVISO_PROXIMA_FASE = 'Disponible en una próxima fase';
  * «Clientes» (RF-USU-05) y «Bitácora» (RF-USU-04); las demás se habilitan cuando se implementen sus RF
  * (ver docs/PLAN.md).
  */
-export function crearSeccionesPanel(): MenuItem[] {
+export function crearSeccionesPanel(sinMarcas = false): MenuItem[] {
   const proximamente = (label: string, icon: string, id: string): MenuItem => ({
     id,
     label,
@@ -32,6 +32,23 @@ export function crearSeccionesPanel(): MenuItem[] {
     {
       label: 'Administración',
       items: [
+        // D-48: el enlace se muestra mientras el negocio no tenga marcas.
+        ...(sinMarcas
+          ? [
+              {
+                id: 'configura-tu-negocio',
+                label: 'Configura tu negocio',
+                icon: 'pi pi-cog',
+                routerLink: '/configura-tu-negocio',
+              } satisfies MenuItem,
+            ]
+          : []),
+        {
+          id: 'marcas',
+          label: 'Marcas',
+          icon: 'pi pi-tags',
+          routerLink: '/marcas',
+        },
         {
           id: 'clientes',
           label: 'Clientes',

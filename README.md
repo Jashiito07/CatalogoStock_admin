@@ -136,6 +136,12 @@ src/
       dominio/bitacora.ts            Catálogo de acciones, filtros con zona -05:00
       aplicacion/ · infraestructura/ Puerto y adaptador de GET /auditoria
       presentacion/bitacora/         p-table paginada en el servidor con filtros
+    marcas/                          Marcas y «Configura tu negocio» (F2, RF-PRO-04, RF-PRO-06)
+      dominio/marca.ts               Modelo, validación #RRGGBB, texto y contraste, reordenar
+      aplicacion/                    Puerto ApiMarcas, EstadoMarcas (lista compartida), mensajes
+      infraestructura/               ApiMarcasHttp (GET/POST/PATCH /marcas, sin DELETE)
+      presentacion/                  configura-negocio, marcas, dialogo-marca, selector-color,
+                                     vista-previa-marca y guards del negocio
     <modulo>/{dominio,aplicacion,infraestructura,presentacion}/   (próximas fases)
 ```
 
@@ -151,6 +157,22 @@ Módulos previstos: `usuarios`, `productos`, `inventario`, `pedidos`, `pagos`,
 - La API responde en UTC y el panel muestra la hora de Ecuador.
 - `usuario: null` se muestra como «No identificado»; un usuario eliminado (`rol: null`),
   como «Usuario eliminado».
+
+## Marcas y «Configura tu negocio» (RF-PRO-04, RF-PRO-06, D-43, D-48)
+
+- **Configura tu negocio** (`/configura-tu-negocio`): si `GET /marcas?incluirInactivas=true` viene
+  vacío, el guard `negocioConfigurado` lleva aquí tras el ingreso y el menú muestra el enlace
+  mientras no haya marcas. Muestra las sugeridas (`GET /marcas/sugeridas`) con casilla, color y vista
+  previa; permite editar el color y agregar una marca propia. «Continuar» crea con `POST /marcas`
+  solo las elegidas (al menos una) y lleva a **Marcas**. Errores: 409 `MARCA_DUPLICADA` y 400 por campo
+  se señalan en la tarjeta.
+- **Marcas** (`/marcas`): `p-table` con color, acento, estado y orden; crear y editar en `p-dialog`
+  (selector de color + campo `#RRGGBB`, acento opcional, vista previa de la cabecera con el texto
+  calculado y «Contraste 4.9:1 ✔»); activar o desactivar (desactivar pide confirmación) y subir o
+  bajar el orden. No existe eliminar: una marca se desactiva.
+- Los colores de cada marca vienen de la API y se aplican como estilos en línea (única excepción a
+  «sin hexadecimales en componentes»); el texto sobre el color se calcula igual que el servidor
+  (blanco, `#1E293B`, `#0F172A`, negro: el primero con 4.5:1, RNF-11).
 
 ### Regla de dependencias
 

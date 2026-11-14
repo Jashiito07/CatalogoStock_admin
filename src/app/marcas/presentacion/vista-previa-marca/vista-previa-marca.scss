@@ -1,0 +1,45 @@
+.cs-vista-previa {
+  display: grid;
+  gap: 0.375rem;
+  margin: 0;
+}
+
+// El borde mantiene visibles las marcas muy oscuras sobre el fondo oscuro (D-41).
+.cs-vista-previa__cabecera {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  min-height: 3rem;
+  padding: 0.5rem 1rem;
+  border: 1px solid var(--cs-texto-secundario);
+  border-radius: 0.5rem;
+  font-weight: 700;
+}
+
+.cs-vista-previa__nombre {
+  overflow-wrap: anywhere;
+}
+
+.cs-vista-previa__chip {
+  padding: 0.25rem 0.75rem;
+  border-radius: 999px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.cs-vista-previa__leyenda {
+  display: grid;
+  gap: 0.125rem;
+  font-size: 0.875rem;
+  color: var(--cs-texto-secundario);
+}
+
+.cs-vista-previa__fallo {
+  color: var(--p-red-600);
+}
+
+:host-context(.app-oscuro) .cs-vista-previa__fallo {
+  color: var(--p-red-300);
+}

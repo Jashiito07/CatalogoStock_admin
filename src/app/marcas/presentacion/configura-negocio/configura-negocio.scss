@@ -1,0 +1,91 @@
+.cs-negocio {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 1rem;
+}
+
+.cs-negocio__titulo {
+  margin: 0;
+  font-size: 1.5rem;
+  color: var(--cs-primario);
+}
+
+.cs-negocio__descripcion {
+  margin: 0.25rem 0 0;
+  max-width: 48rem;
+}
+
+.cs-negocio__texto-error {
+  margin-right: 0.5rem;
+}
+
+.cs-negocio__rejilla {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(19rem, 1fr));
+  gap: 1rem;
+}
+
+// Contenido de cada tarjeta en columna.
+.cs-negocio__tarjeta ::ng-deep .p-card-body,
+.cs-negocio__tarjeta ::ng-deep .p-card-content {
+  display: grid;
+  gap: 1rem;
+}
+
+.cs-negocio__cabecera {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.cs-negocio__nombre {
+  flex: 1;
+  font-size: 1.125rem;
+  font-weight: 700;
+  min-height: var(--cs-control-minimo);
+  display: flex;
+  align-items: center;
+}
+
+.cs-negocio__subtitulo {
+  margin: 0;
+  font-size: 1.125rem;
+}
+
+.cs-negocio__campo {
+  display: grid;
+  gap: 0.375rem;
+}
+
+.cs-negocio__etiqueta {
+  font-weight: 600;
+}
+
+// RNF-10: campo cómodo en el celular.
+.cs-negocio__entrada {
+  width: 100%;
+  min-height: var(--cs-control-minimo);
+  box-sizing: border-box;
+}
+
+.cs-negocio__error {
+  color: var(--p-red-600);
+}
+
+:host-context(.app-oscuro) .cs-negocio__error {
+  color: var(--p-red-300);
+}
+
+.cs-negocio__pie {
+  position: sticky;
+  bottom: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.75rem 1rem;
+  background: var(--cs-superficie);
+  border: 1px solid var(--cs-borde);
+  border-radius: 0.5rem;
+}

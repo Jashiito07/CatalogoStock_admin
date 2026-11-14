@@ -1,0 +1,27 @@
+<figure class="cs-vista-previa" data-prueba="vista-previa">
+  <div
+    class="cs-vista-previa__cabecera"
+    [style.background-color]="franjaPrincipal().fondo"
+    [style.color]="franjaPrincipal().texto"
+    data-prueba="cabecera"
+  >
+    <span class="cs-vista-previa__nombre">{{ nombreMostrado() }}</span>
+    @if (franjaAcento(); as franja) {
+      <span
+        class="cs-vista-previa__chip"
+        [style.background-color]="franja.fondo"
+        [style.color]="franja.texto"
+        data-prueba="chip-acento"
+        >Ver productos</span
+      >
+    }
+  </div>
+  <figcaption class="cs-vista-previa__leyenda">
+    <span data-prueba="contraste-principal" [class.cs-vista-previa__fallo]="principal()?.cumple === false">{{
+      leyendaPrincipal()
+    }}</span>
+    @if (!compacta() && leyendaAcento(); as leyenda) {
+      <span data-prueba="contraste-acento">Acento: {{ leyenda }}</span>
+    }
+  </figcaption>
+</figure>
