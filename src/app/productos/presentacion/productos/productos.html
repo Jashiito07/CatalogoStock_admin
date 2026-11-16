@@ -1,0 +1,232 @@
+<section class="cs-productos" aria-labelledby="titulo-productos">
+  <header class="cs-productos__encabezado">
+    <div>
+      <h2 id="titulo-productos" class="cs-productos__titulo">Productos</h2>
+      <p class="cs-productos__descripcion">
+        Administra lo que ven tus clientes: precio, marca, imágenes y disponibilidad. Un producto
+        eliminado deja de verse en el catálogo, pero su historial de pedidos se conserva.
+      </p>
+    </div>
+    <p-button label="Nuevo producto" icon="pi pi-plus" data-prueba="nuevo-producto" (onClick)="nuevo()" />
+  </header>
+
+  <form class="cs-productos__filtros" role="search" (submit)="$event.preventDefault()">
+    <div class="cs-productos__filtro cs-productos__filtro--busqueda">
+      <label for="busqueda-productos" class="cs-productos__etiqueta">Buscar</label>
+      <p-iconfield>
+        <p-inputicon class="pi pi-search" />
+        <input
+          pInputText
+          id="busqueda-productos"
+          type="search"
+          name="busqueda"
+          autocomplete="off"
+          placeholder="Nombre o descripción"
+          [maxlength]="busquedaMaxima"
+          [ngModel]="texto()"
+          (ngModelChange)="alEscribir($event)"
+          [ngModelOptions]="{ standalone: true }"
+          class="cs-productos__busqueda"
+          data-prueba="busqueda"
+        />
+      </p-iconfield>
+    </div>
+
+    <div class="cs-productos__filtro">
+      <label for="filtro-marca" class="cs-productos__etiqueta">Marca</label>
+      <p-select
+        inputId="filtro-marca"
+        [options]="opcionesMarca()"
+        optionLabel="etiqueta"
+        optionValue="valor"
+        placeholder="Todas las marcas"
+        [showClear]="true"
+        [ngModel]="marcaFiltro()"
+        (ngModelChange)="marcaFiltro.set($event)"
+        (onChange)="alElegirFiltro()"
+        (onClear)="alElegirFiltro()"
+        [ngModelOptions]="{ standalone: true }"
+        appendTo="body"
+        [fluid]="true"
+        data-prueba="filtro-marca"
+      />
+    </div>
+
+    <div class="cs-productos__filtro">
+      <label for="filtro-disponibilidad" class="cs-productos__etiqueta">Disponibilidad</label>
+      <p-select
+        inputId="filtro-disponibilidad"
+        [options]="opcionesDisponibilidad"
+        optionLabel="etiqueta"
+        optionValue="valor"
+        placeholder="Todas"
+        [showClear]="true"
+        [ngModel]="disponibilidadFiltro()"
+        (ngModelChange)="disponibilidadFiltro.set($event)"
+        (onChange)="alElegirFiltro()"
+        (onClear)="alElegirFiltro()"
+        [ngModelOptions]="{ standalone: true }"
+        appendTo="body"
+        [fluid]="true"
+        data-prueba="filtro-disponibilidad"
+      />
+    </div>
+
+    @if (estado.hayFiltros() || texto() !== '') {
+      <p-button
+        label="Limpiar filtros"
+        icon="pi pi-filter-slash"
+        severity="secondary"
+        [outlined]="true"
+        data-prueba="limpiar-filtros"
+        (onClick)="limpiarFiltros()"
+      />
+    }
+  </form>
+
+  @if (estado.error(); as textoError) {
+    <p-message severity="error" icon="pi pi-times-circle" role="alert" class="cs-productos__mensaje" data-prueba="error-lista">
+      <span class="cs-productos__texto-error">{{ textoError }}</span>
+      <p-button label="Reintentar" icon="pi pi-refresh" [text]="true" size="small" (onClick)="reintentar()" />
+    </p-message>
+  }
+
+  <p-table
+    [value]="filasTabla()"
+    dataKey="id"
+    [lazy]="true"
+    [lazyLoadOnInit]="false"
+    [paginator]="true"
+    [rows]="estado.consulta().tamanio"
+    [first]="estado.primero()"
+    [totalRecords]="estado.total()"
+    [rowsPerPageOptions]="tamaniosPagina"
+    [loading]="estado.cargando()"
+    [showCurrentPageReport]="true"
+    currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} productos"
+    [scrollable]="true"
+    [tableStyle]="{ 'min-width': '58rem' }"
+    class="cs-productos__tabla"
+    (onLazyLoad)="alCambiarPagina($event)"
+  >
+    <ng-template #header>
+      <tr>
+        <th scope="col"><span class="cs-solo-lector">Imagen</span></th>
+        <th scope="col">Nombre</th>
+        <th scope="col">Marca</th>
+        <th scope="col" class="cs-productos__derecha">Precio</th>
+        <th scope="col">Disponibilidad</th>
+        <th scope="col"><span class="cs-solo-lector">Acciones</span></th>
+      </tr>
+    </ng-template>
+
+    <ng-template #body let-fila>
+      <tr data-prueba="fila-producto">
+        <td>
+          @if (urlMiniatura(fila); as url) {
+            <img
+              [src]="url"
+              [alt]="'Imagen principal de ' + fila.nombre"
+              class="cs-productos__miniatura"
+              width="48"
+              height="48"
+              loading="lazy"
+              data-prueba="miniatura"
+            />
+          } @else {
+            <span class="cs-productos__miniatura cs-productos__miniatura--vacia" data-prueba="sin-imagen" title="Sin imagen">
+              <i class="pi pi-image" aria-hidden="true"></i>
+              <span class="cs-solo-lector">Sin imagen</span>
+            </span>
+          }
+        </td>
+        <td class="cs-productos__nombre" data-prueba="nombre-producto">{{ fila.nombre }}</td>
+        <td>
+          <span
+            class="cs-productos__marca"
+            [style.background-color]="fila.marca.color"
+            [style.color]="fila.marca.textoSobreColor"
+            data-prueba="marca-producto"
+          >
+            {{ fila.marca.nombre }}
+          </span>
+        </td>
+        <td class="cs-productos__derecha cs-productos__precio" data-prueba="precio-producto">
+          {{ formatearPrecio(fila.precio) }}
+        </td>
+        <td data-prueba="disponibilidad-producto">
+          <p-select
+            [options]="opcionesDisponibilidad"
+            optionLabel="etiqueta"
+            optionValue="valor"
+            [ngModel]="fila.disponibilidad"
+            (onChange)="cambiarDisponibilidad(fila, $event.value)"
+            [disabled]="ocupado() !== null"
+            [ariaLabel]="'Disponibilidad de ' + fila.nombre"
+            appendTo="body"
+            styleClass="cs-productos__selector"
+            data-prueba="cambiar-disponibilidad"
+          >
+            <ng-template #selectedItem let-opcion>
+              <p-tag [value]="opcion.etiqueta" [severity]="severidad(opcion.valor)" data-prueba="etiqueta-disponibilidad" />
+            </ng-template>
+            <ng-template #item let-opcion>
+              <p-tag [value]="opcion.etiqueta" [severity]="severidad(opcion.valor)" />
+            </ng-template>
+          </p-select>
+        </td>
+        <td class="cs-productos__acciones">
+          <p-button
+            label="Editar"
+            icon="pi pi-pencil"
+            size="small"
+            [outlined]="true"
+            [ariaLabel]="'Editar ' + fila.nombre"
+            data-prueba="editar"
+            (onClick)="editar(fila)"
+          />
+          <p-button
+            label="Eliminar"
+            icon="pi pi-trash"
+            size="small"
+            severity="danger"
+            [outlined]="true"
+            [disabled]="ocupado() !== null"
+            [loading]="ocupado() === fila.id"
+            [ariaLabel]="'Eliminar ' + fila.nombre"
+            data-prueba="eliminar"
+            (onClick)="pedirEliminar(fila)"
+          />
+        </td>
+      </tr>
+    </ng-template>
+
+    <ng-template #emptymessage>
+      <tr>
+        <td colspan="6">
+          <div class="cs-productos__vacio" data-prueba="productos-vacio">
+            @if (!estado.error() && !estado.cargando()) {
+              @if (estado.hayFiltros()) {
+                <span>No encontramos productos con esos filtros.</span>
+                <p-button label="Limpiar filtros" icon="pi pi-filter-slash" size="small" [outlined]="true" data-prueba="limpiar-vacio" (onClick)="limpiarFiltros()" />
+              } @else {
+                <span>Todavía no hay productos.</span>
+                <p-button label="Nuevo producto" icon="pi pi-plus" size="small" data-prueba="nuevo-vacio" (onClick)="nuevo()" />
+              }
+            }
+          </div>
+        </td>
+      </tr>
+    </ng-template>
+  </p-table>
+</section>
+
+<p-confirmdialog />
+
+<app-dialogo-producto
+  [visible]="dialogoVisible()"
+  (visibleChange)="alCambiarDialogo($event)"
+  [producto]="productoEnEdicion()"
+  (cambios)="marcarCambios()"
+  (guardado)="alGuardar($event)"
+/>

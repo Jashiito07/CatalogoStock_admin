@@ -31,7 +31,7 @@ const MARCA_PRUEBA: Marca = {
   creadaEn: '2026-11-11T10:00:00Z',
 };
 
-const SECCIONES_FUTURAS = ['Productos', 'Inventario', 'Pedidos', 'Pagos', 'Conflictos'];
+const SECCIONES_FUTURAS = ['Inventario', 'Pedidos', 'Pagos', 'Conflictos'];
 
 function itemsDe(secciones: MenuItem[]): MenuItem[] {
   return secciones.flatMap((grupo) => grupo.items ?? []);
@@ -115,7 +115,7 @@ describe('DisenoPanel', () => {
     await fixture.whenStable();
     const texto = (fixture.nativeElement as HTMLElement).textContent ?? '';
 
-    for (const seccion of ['Inicio', 'Clientes', 'Bitácora', ...SECCIONES_FUTURAS]) {
+    for (const seccion of ['Inicio', 'Clientes', 'Productos', 'Bitácora', ...SECCIONES_FUTURAS]) {
       expect(texto).toContain(seccion);
     }
   });
@@ -175,6 +175,12 @@ describe('crearSeccionesPanel', () => {
     expect(sin.find((i) => i.label === 'Configura tu negocio')?.routerLink).toBe(
       '/configura-tu-negocio',
     );
+  });
+
+  it('RF-PRO-01: habilita Productos y lleva a /productos', () => {
+    const productos = itemsDe(crearSeccionesPanel()).find((i) => i.label === 'Productos');
+    expect(productos?.disabled).toBeFalsy();
+    expect(productos?.routerLink).toBe('/productos');
   });
 
   it('RF-USU-05: habilita Clientes', () => {

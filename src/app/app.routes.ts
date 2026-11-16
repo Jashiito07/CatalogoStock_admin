@@ -4,6 +4,7 @@ import { proveerAuditoria } from './auditoria/infraestructura/lector-bitacora.ht
 import { proveerClientes } from './clientes/infraestructura/api-clientes.http';
 import { proveerMarcas } from './marcas/infraestructura/api-marcas.http';
 import { negocioConfigurado, negocioSinConfigurar } from './marcas/presentacion/guardias-marcas';
+import { proveerProductos } from './productos/infraestructura/api-productos.http';
 import { soloSinSesion, soloVendedor } from './usuarios/presentacion/guardias';
 
 /**
@@ -54,6 +55,15 @@ export const routes: Routes = [
         title: 'Marcas · CatálogoStock',
         canActivate: [negocioConfigurado],
         loadComponent: () => import('./marcas/presentacion/marcas/marcas').then((m) => m.Marcas),
+      },
+      {
+        path: 'productos',
+        title: 'Productos — CatálogoStock',
+        // Sin marcas, el guard existente lleva a «Configura tu negocio» (D-48).
+        canActivate: [negocioConfigurado],
+        providers: [proveerProductos()],
+        loadComponent: () =>
+          import('./productos/presentacion/productos/productos').then((m) => m.Productos),
       },
       {
         path: 'clientes',

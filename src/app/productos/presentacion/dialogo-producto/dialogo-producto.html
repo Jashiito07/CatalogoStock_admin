@@ -1,0 +1,259 @@
+<p-dialog
+  [header]="titulo()"
+  [(visible)]="visible"
+  [modal]="true"
+  [draggable]="false"
+  [closable]="!guardando()"
+  [closeOnEscape]="!guardando()"
+  [style]="{ width: '46rem', 'max-width': '96vw' }"
+  [contentStyle]="{ 'max-height': '75vh' }"
+  data-prueba="dialogo-producto"
+  (onHide)="alCerrar()"
+>
+  <form class="cs-dialogo-producto" (ngSubmit)="guardar()" novalidate id="formulario-producto">
+    @if (errorGeneral(); as mensaje) {
+      <p-message severity="error" icon="pi pi-times-circle" role="alert" data-prueba="error-general">{{
+        mensaje
+      }}</p-message>
+    }
+
+    <div class="cs-dialogo-producto__campo">
+      <label for="nombre-producto" class="cs-dialogo-producto__etiqueta">Nombre</label>
+      <input
+        pInputText
+        id="nombre-producto"
+        [ngModelOptions]="{ standalone: true }"
+        [ngModel]="nombre()"
+        (ngModelChange)="nombre.set($event)"
+        (blur)="tocar('nombre')"
+        [maxlength]="longitudMaximaNombre"
+        autocomplete="off"
+        [attr.aria-invalid]="errorNombre() ? 'true' : null"
+        class="cs-dialogo-producto__entrada"
+        data-prueba="nombre"
+      />
+      @if (errorNombre(); as mensaje) {
+        <small class="cs-dialogo-producto__error" role="alert" data-prueba="error-nombre">{{ mensaje }}</small>
+      }
+    </div>
+
+    <div class="cs-dialogo-producto__fila">
+      <div class="cs-dialogo-producto__campo">
+        <label for="marca-producto" class="cs-dialogo-producto__etiqueta">Marca</label>
+        <p-select
+          inputId="marca-producto"
+          [ngModelOptions]="{ standalone: true }"
+          [ngModel]="marcaId()"
+          (ngModelChange)="marcaId.set($event); tocar('marca')"
+          [options]="opcionesMarca()"
+          optionLabel="nombre"
+          optionValue="id"
+          optionDisabled="inactiva"
+          placeholder="Elige una marca"
+          appendTo="body"
+          [fluid]="true"
+          [attr.aria-invalid]="errorMarca() ? 'true' : null"
+          data-prueba="marca"
+        >
+          <ng-template #item let-opcion>
+            <span class="cs-dialogo-producto__marca">
+              <span class="cs-dialogo-producto__muestra" [style.background-color]="opcion.color"></span>
+              {{ opcion.nombre }}{{ opcion.inactiva ? ' (inactiva)' : '' }}
+            </span>
+          </ng-template>
+        </p-select>
+        @if (errorMarca(); as mensaje) {
+          <small class="cs-dialogo-producto__error" role="alert" data-prueba="error-marca">{{ mensaje }}</small>
+        }
+      </div>
+
+      <div class="cs-dialogo-producto__campo">
+        <label for="precio-producto" class="cs-dialogo-producto__etiqueta">Precio (USD)</label>
+        <input
+          pInputText
+          id="precio-producto"
+          [ngModelOptions]="{ standalone: true }"
+          [ngModel]="precio()"
+          (ngModelChange)="precio.set($event)"
+          (blur)="tocar('precio')"
+          inputmode="decimal"
+          autocomplete="off"
+          placeholder="12.50"
+          [attr.aria-invalid]="errorPrecio() ? 'true' : null"
+          class="cs-dialogo-producto__entrada"
+          data-prueba="precio"
+        />
+        @if (errorPrecio(); as mensaje) {
+          <small class="cs-dialogo-producto__error" role="alert" data-prueba="error-precio">{{ mensaje }}</small>
+        }
+      </div>
+    </div>
+
+    <div class="cs-dialogo-producto__campo">
+      <label for="disponibilidad-producto" class="cs-dialogo-producto__etiqueta">Disponibilidad</label>
+      <p-select
+        inputId="disponibilidad-producto"
+        [ngModelOptions]="{ standalone: true }"
+        [ngModel]="disponibilidad()"
+        (ngModelChange)="disponibilidad.set($event)"
+        [options]="opcionesDisponibilidad"
+        optionLabel="etiqueta"
+        optionValue="valor"
+        appendTo="body"
+        [fluid]="true"
+        data-prueba="disponibilidad"
+      />
+    </div>
+
+    <div class="cs-dialogo-producto__campo">
+      <label for="descripcion-producto" class="cs-dialogo-producto__etiqueta">Descripción</label>
+      <textarea
+        pTextarea
+        id="descripcion-producto"
+        rows="3"
+        [ngModelOptions]="{ standalone: true }"
+        [ngModel]="descripcion()"
+        (ngModelChange)="descripcion.set($event)"
+        [maxlength]="longitudMaximaDescripcion"
+        class="cs-dialogo-producto__entrada"
+        data-prueba="descripcion"
+      ></textarea>
+      <small class="cs-dialogo-producto__ayuda">{{ descripcion().length }} / {{ longitudMaximaDescripcion }}</small>
+      @if (errorDescripcion(); as mensaje) {
+        <small class="cs-dialogo-producto__error" role="alert">{{ mensaje }}</small>
+      }
+    </div>
+
+    <fieldset class="cs-dialogo-producto__imagenes" data-prueba="imagenes">
+      <legend class="cs-dialogo-producto__etiqueta">Imágenes ({{ items().length }} de {{ maxImagenes }})</legend>
+      <p class="cs-dialogo-producto__ayuda">
+        JPG, PNG o WebP, hasta 2 MB cada una. La primera es la principal. Las imágenes nuevas y el
+        orden se aplican al guardar; quitar una imagen ya guardada es inmediato.
+      </p>
+
+      @for (aviso of erroresImagenes(); track aviso) {
+        <p-message severity="error" icon="pi pi-times-circle" role="alert" data-prueba="error-imagen">{{
+          aviso
+        }}</p-message>
+      }
+
+      <p-fileupload
+        #cargador
+        mode="advanced"
+        name="archivo"
+        [multiple]="true"
+        [customUpload]="true"
+        [auto]="false"
+        [showUploadButton]="false"
+        [showCancelButton]="false"
+        [disabled]="cupoLleno() || guardando()"
+        chooseLabel="Elegir imágenes"
+        chooseIcon="pi pi-image"
+        data-prueba="cargador"
+        (onSelect)="alSeleccionar($event)"
+      >
+        <ng-template #empty>
+          <p class="cs-dialogo-producto__vacio">
+            {{ cupoLleno() ? 'Llegaste al máximo de imágenes.' : 'Arrastra imágenes aquí o usa «Elegir imágenes».' }}
+          </p>
+        </ng-template>
+      </p-fileupload>
+
+      @if (items().length > 0) {
+        <ul class="cs-dialogo-producto__lista" data-prueba="lista-imagenes">
+          @for (item of items(); track item.clave; let indice = $index; let primero = $first; let ultimo = $last) {
+            <li class="cs-dialogo-producto__imagen" data-prueba="imagen">
+              @if (item.url) {
+                <img [src]="item.url" [alt]="'Vista previa de ' + item.nombre" class="cs-dialogo-producto__miniatura" />
+              } @else {
+                <span class="cs-dialogo-producto__miniatura cs-dialogo-producto__miniatura--vacia"
+                  ><i class="pi pi-image" aria-hidden="true"></i
+                ></span>
+              }
+              <div class="cs-dialogo-producto__datos">
+                <span class="cs-dialogo-producto__nombre-imagen">{{ item.nombre }}</span>
+                <span class="cs-dialogo-producto__etiquetas">
+                  @if (primero) {
+                    <p-tag value="Principal" severity="success" data-prueba="etiqueta-principal" />
+                  }
+                  @if (item.tipo === 'pendiente') {
+                    <p-tag value="Por subir" severity="info" />
+                    @if (item.tamano) {
+                      <span class="cs-dialogo-producto__ayuda">{{ formatearTamano(item.tamano) }}</span>
+                    }
+                  }
+                </span>
+                @if (item.error) {
+                  <small class="cs-dialogo-producto__error" role="alert" data-prueba="error-item">{{ item.error }}</small>
+                }
+              </div>
+              <div class="cs-dialogo-producto__acciones-imagen">
+                @if (!primero) {
+                  <p-button
+                    icon="pi pi-star"
+                    [rounded]="true"
+                    [text]="true"
+                    severity="secondary"
+                    [ariaLabel]="'Elegir ' + item.nombre + ' como principal'"
+                    data-prueba="hacer-principal"
+                    [disabled]="guardando()"
+                    (onClick)="hacerPrincipal(indice)"
+                  />
+                }
+                <p-button
+                  icon="pi pi-arrow-up"
+                  [rounded]="true"
+                  [text]="true"
+                  severity="secondary"
+                  [disabled]="primero || guardando()"
+                  [ariaLabel]="'Subir ' + item.nombre"
+                  data-prueba="subir-imagen"
+                  (onClick)="mover(indice, -1)"
+                />
+                <p-button
+                  icon="pi pi-arrow-down"
+                  [rounded]="true"
+                  [text]="true"
+                  severity="secondary"
+                  [disabled]="ultimo || guardando()"
+                  [ariaLabel]="'Bajar ' + item.nombre"
+                  data-prueba="bajar-imagen"
+                  (onClick)="mover(indice, 1)"
+                />
+                <p-button
+                  icon="pi pi-trash"
+                  [rounded]="true"
+                  [text]="true"
+                  severity="danger"
+                  [disabled]="guardando()"
+                  [ariaLabel]="'Quitar ' + item.nombre"
+                  data-prueba="quitar-imagen"
+                  (onClick)="pedirQuitar(item)"
+                />
+              </div>
+            </li>
+          }
+        </ul>
+      }
+    </fieldset>
+  </form>
+
+  <ng-template #footer>
+    <p-button
+      label="Cancelar"
+      severity="secondary"
+      [outlined]="true"
+      [disabled]="guardando()"
+      data-prueba="cancelar"
+      (onClick)="cancelar()"
+    />
+    <p-button
+      label="Guardar"
+      icon="pi pi-check"
+      [loading]="guardando()"
+      [disabled]="!formularioValido()"
+      data-prueba="guardar"
+      (onClick)="guardar()"
+    />
+  </ng-template>
+</p-dialog>
