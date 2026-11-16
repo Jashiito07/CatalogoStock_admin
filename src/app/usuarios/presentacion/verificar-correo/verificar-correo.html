@@ -1,0 +1,86 @@
+<p-card class="cs-verificar-correo" data-prueba="verificar-correo">
+  <ng-template #title>
+    <h2 class="cs-verificar-correo__titulo">
+      <i class="pi pi-envelope" aria-hidden="true"></i>
+      Verifica tu correo
+    </h2>
+  </ng-template>
+
+  <p class="cs-verificar-correo__texto">
+    Con tu correo verificado podrás recuperar tu clave sin usar el servidor. Te enviaremos un
+    código de 6 dígitos a <strong>{{ correo() }}</strong
+    >.
+  </p>
+
+  <div class="cs-verificar-correo__acciones">
+    <p-button
+      [label]="codigoEnviado() ? 'Reenviar código' : 'Enviar código'"
+      icon="pi pi-send"
+      [outlined]="codigoEnviado()"
+      [loading]="enviando()"
+      [disabled]="enviando() || espera.segundos() > 0"
+      data-prueba="enviar-codigo"
+      (onClick)="enviarCodigo()"
+    />
+    @if (espera.segundos() > 0) {
+      <p class="cs-verificar-correo__espera" role="status" data-prueba="espera">
+        Podrás pedir otro código en {{ formatearEspera(espera.segundos()) }}.
+      </p>
+    }
+  </div>
+
+  @if (errorEnvio(); as mensaje) {
+    <p-message severity="error" role="alert" class="cs-verificar-correo__mensaje" data-prueba="error-envio">
+      {{ mensaje }}
+    </p-message>
+  }
+
+  @if (codigoEnviado()) {
+    <p-message severity="success" icon="pi pi-check" role="status" class="cs-verificar-correo__mensaje">
+      Te enviamos un código a tu correo. Vence a los 15 minutos.
+    </p-message>
+
+    <form
+      class="cs-verificar-correo__formulario"
+      (submit)="$event.preventDefault(); confirmarCodigo()"
+      novalidate
+    >
+      <div class="cs-campo">
+        <label for="verificar-codigo" class="cs-campo__etiqueta">Código de 6 dígitos</label>
+        <input
+          pInputText
+          id="verificar-codigo"
+          type="text"
+          inputmode="numeric"
+          autocomplete="one-time-code"
+          maxlength="6"
+          placeholder="000000"
+          class="cs-campo__control"
+          [formControl]="codigo"
+          [invalid]="!!errorCodigo()"
+          [attr.aria-describedby]="errorCodigo() ? 'verificar-codigo-error' : null"
+        />
+        @if (errorCodigo(); as mensaje) {
+          <p-message
+            id="verificar-codigo-error"
+            severity="error"
+            size="small"
+            variant="simple"
+            role="alert"
+            data-prueba="error-codigo"
+          >
+            {{ mensaje }}
+          </p-message>
+        }
+      </div>
+      <p-button
+        type="submit"
+        label="Confirmar"
+        icon="pi pi-check"
+        [loading]="confirmando()"
+        [disabled]="confirmando()"
+        data-prueba="confirmar-codigo"
+      />
+    </form>
+  }
+</p-card>

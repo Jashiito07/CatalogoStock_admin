@@ -24,6 +24,29 @@ export function mensajeDeErrorAlGenerarCodigo(error: unknown): string {
   return error.mensaje;
 }
 
+export const MENSAJE_NO_SE_PUEDE_DESACTIVAR_VENDEDOR =
+  'Esta cuenta es la del vendedor y no se puede desactivar.';
+
+/**
+ * Mensaje claro para un error al desactivar o reactivar (D-53): 403, 404 y 422
+ * `OPERACION_NO_PERMITIDA` (la cuenta del Vendedor). Sin detalles técnicos.
+ */
+export function mensajeDeErrorAlCambiarEstado(error: unknown): string {
+  if (!(error instanceof ErrorApi)) {
+    return MENSAJE_ERROR_INESPERADO;
+  }
+  if (error.estado === 403) {
+    return MENSAJE_SIN_PERMISO;
+  }
+  if (error.estado === 404) {
+    return MENSAJE_CLIENTE_NO_ENCONTRADO;
+  }
+  if (error.codigo === 'OPERACION_NO_PERMITIDA') {
+    return MENSAJE_NO_SE_PUEDE_DESACTIVAR_VENDEDOR;
+  }
+  return error.mensaje;
+}
+
 /** Mensaje claro para un error al consultar la lista de clientes. */
 export function mensajeDeErrorAlListar(error: unknown): string {
   if (!(error instanceof ErrorApi)) {

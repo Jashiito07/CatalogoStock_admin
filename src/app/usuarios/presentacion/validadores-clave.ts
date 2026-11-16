@@ -11,6 +11,17 @@ export const validadorReglaClave: ValidatorFn = (control: AbstractControl): Vali
   return cumpleReglaClave(valor) ? null : { reglaClave: true };
 };
 
+/** La confirmación coincide con la clave nueva (recuperación por correo, sin clave actual). */
+export function validadorConfirmacion(campoNueva: string, campoConfirmacion: string): ValidatorFn {
+  return (grupo: AbstractControl): ValidationErrors | null => {
+    const nueva: unknown = grupo.get(campoNueva)?.value;
+    const confirmacion: unknown = grupo.get(campoConfirmacion)?.value;
+    return typeof confirmacion === 'string' && confirmacion !== '' && confirmacion !== nueva
+      ? { noCoinciden: true }
+      : null;
+  };
+}
+
 /**
  * Validador del grupo del cambio de clave: la confirmación coincide con la nueva y la
  * nueva es distinta de la actual (la API también lo comprueba: 400 DATOS_INVALIDOS).

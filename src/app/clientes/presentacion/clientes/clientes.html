@@ -8,21 +8,37 @@
     </p>
   </header>
 
-  <div class="cs-clientes__busqueda">
-    <label for="busqueda-clientes" class="cs-clientes__etiqueta">Buscar</label>
-    <p-iconfield>
-      <p-inputicon class="pi pi-search" />
-      <input
-        pInputText
-        id="busqueda-clientes"
-        type="search"
-        [formControl]="busqueda"
-        [maxlength]="longitudMaximaBusqueda"
-        placeholder="Nombre, correo o teléfono"
-        autocomplete="off"
-        class="cs-clientes__campo"
+  <div class="cs-clientes__filtros">
+    <div class="cs-clientes__busqueda">
+      <label for="busqueda-clientes" class="cs-clientes__etiqueta">Buscar</label>
+      <p-iconfield>
+        <p-inputicon class="pi pi-search" />
+        <input
+          pInputText
+          id="busqueda-clientes"
+          type="search"
+          [formControl]="busqueda"
+          [maxlength]="longitudMaximaBusqueda"
+          placeholder="Nombre, correo o teléfono"
+          autocomplete="off"
+          class="cs-clientes__campo"
+        />
+      </p-iconfield>
+    </div>
+
+    <div class="cs-clientes__busqueda">
+      <label for="filtro-estado-clientes" class="cs-clientes__etiqueta">Estado</label>
+      <p-select
+        inputId="filtro-estado-clientes"
+        [options]="opcionesEstado"
+        optionLabel="etiqueta"
+        optionValue="valor"
+        [formControl]="filtroEstado"
+        [fluid]="true"
+        ariaLabel="Filtrar clientes por estado"
+        data-prueba="filtro-estado"
       />
-    </p-iconfield>
+    </div>
   </div>
 
   @if (error(); as textoError) {
@@ -50,7 +66,7 @@
     [rowsPerPageOptions]="opcionesFilas"
     [showCurrentPageReport]="true"
     currentPageReportTemplate="{first} a {last} de {totalRecords} clientes"
-    [tableStyle]="{ 'min-width': '56rem' }"
+    [tableStyle]="{ 'min-width': '48rem' }"
     (onLazyLoad)="alCargarPagina($event)"
     class="cs-clientes__tabla"
   >
@@ -58,6 +74,7 @@
       <tr>
         <th scope="col">Nombre</th>
         <th scope="col">Correo</th>
+        <th scope="col">Estado</th>
         <th scope="col">Teléfono</th>
         <th scope="col">Fecha de registro</th>
         <th scope="col">Código de recuperación</th>
@@ -69,6 +86,13 @@
       <tr data-prueba="fila-cliente">
         <td class="cs-clientes__nombre">{{ fila.nombre }}</td>
         <td class="cs-clientes__correo">{{ fila.correo }}</td>
+        <td data-prueba="estado-cuenta">
+          <p-tag
+            [value]="fila.etiquetaEstado"
+            [severity]="fila.activo ? 'success' : 'secondary'"
+            [icon]="fila.activo ? 'pi pi-check-circle' : 'pi pi-ban'"
+          />
+        </td>
         <td class="cs-clientes__numero">{{ fila.telefono }}</td>
         <td class="cs-clientes__numero">
           <time [attr.datetime]="fila.creadoEn">
@@ -78,7 +102,7 @@
         <td data-prueba="estado-codigo">
           @switch (fila.estadoCodigo.tipo) {
             @case ('inactiva') {
-              <p-tag value="Cuenta inactiva" severity="danger" />
+              <span class="cs-clientes__sin-codigo">No disponible</span>
             }
             @case ('vigente') {
               <p-tag
@@ -92,25 +116,54 @@
             }
           }
         </td>
-        <td class="cs-clientes__acciones">
-          <p-button
-            label="Generar código"
-            icon="pi pi-key"
-            size="small"
-            [outlined]="true"
-            [disabled]="!fila.activo || generandoPara() !== null"
-            [loading]="generandoPara() === fila.id"
-            [ariaLabel]="'Generar código de recuperación para ' + fila.nombre"
-            data-prueba="generar-codigo"
-            (onClick)="confirmarGenerarCodigo(fila)"
-          />
+        <td>
+          <div class="cs-clientes__acciones">
+          <!-- D-53: sin «Eliminar». Una cuenta desactivada no recibe código (422 CUENTA_INACTIVA). -->
+          @if (fila.activo) {
+            <p-button
+              label="Generar código"
+              icon="pi pi-key"
+              size="small"
+              [outlined]="true"
+              [disabled]="generandoPara() !== null"
+              [loading]="generandoPara() === fila.id"
+              [ariaLabel]="'Generar código de recuperación para ' + fila.nombre"
+              data-prueba="generar-codigo"
+              (onClick)="confirmarGenerarCodigo(fila)"
+            />
+            <p-button
+              label="Desactivar"
+              icon="pi pi-ban"
+              size="small"
+              severity="danger"
+              [outlined]="true"
+              [disabled]="cambiandoEstadoPara() !== null"
+              [loading]="cambiandoEstadoPara() === fila.id"
+              [ariaLabel]="'Desactivar la cuenta de ' + fila.nombre"
+              data-prueba="desactivar"
+              (onClick)="confirmarDesactivar(fila)"
+            />
+          } @else {
+            <p-button
+              label="Reactivar"
+              icon="pi pi-replay"
+              size="small"
+              [outlined]="true"
+              [disabled]="cambiandoEstadoPara() !== null"
+              [loading]="cambiandoEstadoPara() === fila.id"
+              [ariaLabel]="'Reactivar la cuenta de ' + fila.nombre"
+              data-prueba="reactivar"
+              (onClick)="reactivar(fila)"
+            />
+          }
+          </div>
         </td>
       </tr>
     </ng-template>
 
     <ng-template #emptymessage>
       <tr>
-        <td colspan="6">
+        <td colspan="7">
           <div class="cs-clientes__vacio" data-prueba="clientes-vacio">
             @if (busquedaAplicada()) {
               <span>No hay clientes que coincidan con «{{ busquedaAplicada() }}».</span>
@@ -119,7 +172,16 @@
                 icon="pi pi-filter-slash"
                 severity="secondary"
                 [outlined]="true"
-                (onClick)="limpiarBusqueda()"
+                (onClick)="limpiarFiltros()"
+              />
+            } @else if (filtroAplicado() !== 'todos' && !error()) {
+              <span>No hay clientes con ese estado.</span>
+              <p-button
+                label="Limpiar filtros"
+                icon="pi pi-filter-slash"
+                severity="secondary"
+                [outlined]="true"
+                (onClick)="limpiarFiltros()"
               />
             } @else if (!error()) {
               <span>Todavía no hay clientes registrados.</span>

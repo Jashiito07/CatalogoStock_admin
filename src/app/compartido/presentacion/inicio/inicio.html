@@ -1,3 +1,7 @@
+@if (correoPorVerificar(); as correo) {
+  <app-verificar-correo [correo]="correo" />
+}
+
 <p-card class="cs-inicio">
   <ng-template #title>
     <h2 class="cs-inicio__titulo">Bienvenido al panel del vendedor</h2>

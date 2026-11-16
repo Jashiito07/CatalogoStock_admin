@@ -228,6 +228,11 @@ describe('esRutaProtegidaDeLaApi', () => {
     [`${API}/usuarios/yo`, true],
     [`${API}/autenticacion/ingreso/vendedor`, false],
     [`${API}/autenticacion/renovacion`, false],
+    // D-50: la recuperación por correo es pública (sin token); la verificación no.
+    [`${API}/autenticacion/recuperacion/solicitud`, false],
+    [`${API}/autenticacion/recuperacion`, false],
+    [`${API}/usuarios/yo/correo/verificacion`, true],
+    [`${API}/usuarios/yo/correo/confirmacion`, true],
     ['http://otro/api/v1/auditoria', false],
     [`${API}x/auditoria`, false],
   ])('%s → %s', (url, esperado) => {

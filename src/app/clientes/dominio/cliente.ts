@@ -39,6 +39,39 @@ export interface ConsultaClientes {
   readonly pagina: number;
   readonly tamanio: number;
   readonly busqueda?: string;
+  /** `?activo=true|false` (D-53); ausente = todos los clientes. */
+  readonly activo?: boolean;
+}
+
+/** Filtro de estado de la tabla (D-53). */
+export type FiltroEstadoCliente = 'todos' | 'activos' | 'desactivados';
+
+export const OPCIONES_FILTRO_ESTADO: { etiqueta: string; valor: FiltroEstadoCliente }[] = [
+  { etiqueta: 'Todos', valor: 'todos' },
+  { etiqueta: 'Activos', valor: 'activos' },
+  { etiqueta: 'Desactivados', valor: 'desactivados' },
+];
+
+/** Valor de `?activo=` para el filtro, o `undefined` para no filtrar. */
+export function activoDeFiltro(filtro: FiltroEstadoCliente): boolean | undefined {
+  if (filtro === 'activos') {
+    return true;
+  }
+  return filtro === 'desactivados' ? false : undefined;
+}
+
+/** Texto del estado de la cuenta (D-53). */
+export function etiquetaEstado(activo: boolean): 'Activo' | 'Desactivado' {
+  return activo ? 'Activo' : 'Desactivado';
+}
+
+/**
+ * Respuesta de `PATCH /usuarios/{id}/estado`: el usuario público con `activo` actualizado.
+ * Solo se usan estos campos; la lista se vuelve a consultar para mostrar lo oficial.
+ */
+export interface EstadoClienteActualizado {
+  readonly id: string;
+  readonly activo: boolean;
 }
 
 export const TAMANIO_PAGINA_CLIENTES = 20;
@@ -53,6 +86,7 @@ export function construirConsultaClientes(
   busqueda: string | null | undefined,
   pagina: number,
   tamanio: number,
+  activo?: boolean,
 ): ConsultaClientes {
   const paginaValida = Number.isInteger(pagina) && pagina >= 1 ? pagina : 1;
   const tamanioValido =
@@ -60,7 +94,12 @@ export function construirConsultaClientes(
       ? tamanio
       : TAMANIO_PAGINA_CLIENTES;
   const texto = [...(busqueda ?? '').trim()].slice(0, LONGITUD_MAXIMA_BUSQUEDA).join('');
-  return { pagina: paginaValida, tamanio: tamanioValido, ...(texto ? { busqueda: texto } : {}) };
+  return {
+    pagina: paginaValida,
+    tamanio: tamanioValido,
+    ...(texto ? { busqueda: texto } : {}),
+    ...(activo === undefined ? {} : { activo }),
+  };
 }
 
 /** Página (desde 1) a partir del primer índice de la tabla. */

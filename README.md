@@ -195,6 +195,21 @@ infraestructura┘
 - `infraestructura`: adaptadores HTTP contra la API.
 - `presentacion`: páginas y componentes de Angular con PrimeNG.
 
+## Clientes: estado de la cuenta, correo verificado y clave por correo (RF-USU-03, RF-USU-05, D-50, D-53, D-54)
+
+- **Clientes** (`/clientes`): columna «Estado» (`p-tag` Activo / Desactivado) y filtro por estado
+  (`GET /usuarios?activo=true|false`). «Desactivar» pide confirmación («El cliente no podrá ingresar a la
+  app. Sus pedidos se conservan.»); «Reactivar» es directa, con aviso. No existe «Eliminar». Una cuenta
+  desactivada no ofrece «Generar código» (la API respondería 422 `CUENTA_INACTIVA`). Errores 403, 404 y
+  422 `OPERACION_NO_PERMITIDA` (la cuenta del Vendedor) se avisan con mensajes claros.
+- **Verifica tu correo** (Inicio): mientras `correoVerificadoEn` sea `null`, «Enviar código»
+  (`POST /usuarios/yo/correo/verificacion`), campo de 6 dígitos y «Confirmar»
+  (`/correo/confirmacion`), con cuenta regresiva de reenvío y avisos para 409, 422, 429 y 503.
+- **¿Olvidaste tu clave?** (`/recuperar-clave`, desde el ingreso): correo → mensaje neutro siempre →
+  código + clave nueva + repetirla (`POST /autenticacion/recuperacion/solicitud` y `/recuperacion`) →
+  vuelve al ingreso con aviso. Si el correo no está verificado, el código no se envía: la clave se
+  restablece en el servidor con `npm run restablecer-clave-vendedor`. El mensaje de ingreso del panel
+  sigue siendo «Correo o clave incorrectos.» (D-19).
 ## Interfaz y diseño
 
 - Todos los controles se construyen con PrimeNG (`p-button`, `p-table`, `p-dialog`,

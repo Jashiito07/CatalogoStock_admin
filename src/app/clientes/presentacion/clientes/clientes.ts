@@ -9,22 +9,29 @@ import { IconFieldModule } from 'primeng/iconfield';
 import { InputIconModule } from 'primeng/inputicon';
 import { InputTextModule } from 'primeng/inputtext';
 import { MessageModule } from 'primeng/message';
+import { SelectModule } from 'primeng/select';
 import { TableLazyLoadEvent, TableModule } from 'primeng/table';
 import { TagModule } from 'primeng/tag';
 import { debounceTime, distinctUntilChanged, map } from 'rxjs';
 
+import { ErrorApi } from '../../../compartido/aplicacion/error-api';
 import { horaEcuador } from '../../../compartido/dominio/fecha-ecuador';
 import {
+  mensajeDeErrorAlCambiarEstado,
   mensajeDeErrorAlGenerarCodigo,
   mensajeDeErrorAlListar,
 } from '../../aplicacion/mensajes-clientes';
 import { ApiClientes } from '../../aplicacion/puertos';
 import {
+  activoDeFiltro,
   Cliente,
   CodigoRecuperacion,
   construirConsultaClientes,
+  etiquetaEstado,
+  FiltroEstadoCliente,
   formatearTelefono,
   LONGITUD_MAXIMA_BUSQUEDA,
+  OPCIONES_FILTRO_ESTADO,
   paginaDesdeIndice,
   TAMANIO_PAGINA_CLIENTES,
   tieneCodigoVigente,
@@ -35,6 +42,10 @@ import { DialogoCodigo } from '../dialogo-codigo/dialogo-codigo';
 export const RETARDO_BUSQUEDA_MS = 400;
 
 export const MENSAJE_NO_SE_GENERO = 'No se generó el código';
+export const MENSAJE_NO_SE_DESACTIVO = 'No se desactivó la cuenta';
+export const MENSAJE_NO_SE_REACTIVO = 'No se reactivó la cuenta';
+export const MENSAJE_CONFIRMAR_DESACTIVAR =
+  'El cliente no podrá ingresar a la app. Sus pedidos se conservan.';
 
 /** Estado del código de recuperación de una fila, ya listo para mostrarse. */
 export type EstadoCodigoFila =
@@ -48,6 +59,7 @@ export interface FilaCliente {
   readonly correo: string;
   readonly telefono: string;
   readonly activo: boolean;
+  readonly etiquetaEstado: 'Activo' | 'Desactivado';
   /** UTC tal como llega de la API; la vista lo muestra en hora de Ecuador. */
   readonly creadoEn: string;
   readonly estadoCodigo: EstadoCodigoFila;
@@ -66,6 +78,7 @@ export function aFilaCliente(cliente: Cliente, ahora: Date): FilaCliente {
     correo: cliente.correo,
     telefono: formatearTelefono(cliente.telefono),
     activo: cliente.activo,
+    etiquetaEstado: etiquetaEstado(cliente.activo),
     creadoEn: cliente.creadoEn,
     estadoCodigo,
   };
@@ -88,6 +101,7 @@ export function aFilaCliente(cliente: Cliente, ahora: Date): FilaCliente {
     ButtonModule,
     TagModule,
     MessageModule,
+    SelectModule,
     ConfirmDialogModule,
     DialogoCodigo,
   ],
@@ -106,6 +120,10 @@ export class Clientes {
   protected readonly longitudMaximaBusqueda = LONGITUD_MAXIMA_BUSQUEDA;
 
   protected readonly busqueda = new FormControl('', { nonNullable: true });
+  protected readonly filtroEstado = new FormControl<FiltroEstadoCliente>('todos', {
+    nonNullable: true,
+  });
+  protected readonly opcionesEstado = OPCIONES_FILTRO_ESTADO;
 
   protected readonly filas = signal<FilaCliente[]>([]);
   protected readonly total = signal(0);
@@ -115,6 +133,9 @@ export class Clientes {
   protected readonly error = signal<string | null>(null);
   protected readonly busquedaAplicada = signal('');
   protected readonly generandoPara = signal<string | null>(null);
+  /** Cliente cuyo estado se está cambiando (evita dobles clics). */
+  protected readonly cambiandoEstadoPara = signal<string | null>(null);
+  protected readonly filtroAplicado = signal<FiltroEstadoCliente>('todos');
   /** Código recién generado. Solo en memoria mientras el diálogo está abierto. */
   protected readonly codigoGenerado = signal<CodigoRecuperacion | null>(null);
 
@@ -130,6 +151,14 @@ export class Clientes {
         takeUntilDestroyed(inject(DestroyRef)),
       )
       .subscribe((texto) => this.aplicarBusqueda(texto));
+
+    this.filtroEstado.valueChanges
+      .pipe(takeUntilDestroyed(inject(DestroyRef)))
+      .subscribe((filtro) => {
+        this.filtroAplicado.set(filtro);
+        this.primero.set(0);
+        void this.cargar();
+      });
   }
 
   /** La tabla pide una página (al iniciar, al paginar o al cambiar las filas por página). */
@@ -139,8 +168,11 @@ export class Clientes {
     void this.cargar();
   }
 
-  protected limpiarBusqueda(): void {
+  /** Quita la búsqueda y el filtro de estado y vuelve a consultar una sola vez. */
+  protected limpiarFiltros(): void {
     this.busqueda.setValue('', { emitEvent: false });
+    this.filtroEstado.setValue('todos', { emitEvent: false });
+    this.filtroAplicado.set('todos');
     this.aplicarBusqueda('');
   }
 
@@ -156,6 +188,7 @@ export class Clientes {
       this.busquedaAplicada(),
       paginaDesdeIndice(this.primero(), this.tamanio()),
       this.tamanio(),
+      activoDeFiltro(this.filtroAplicado()),
     );
     const numero = ++this.consultaActual;
     this.error.set(null);
@@ -214,6 +247,58 @@ export class Clientes {
       });
     } finally {
       this.generandoPara.set(null);
+    }
+  }
+
+  /** D-53: desactivar pide confirmación; los pedidos del cliente se conservan. */
+  protected confirmarDesactivar(fila: FilaCliente): void {
+    this.confirmacion.confirm({
+      header: `Desactivar a ${fila.nombre}`,
+      message: MENSAJE_CONFIRMAR_DESACTIVAR,
+      icon: 'pi pi-ban',
+      acceptLabel: 'Desactivar',
+      rejectLabel: 'Cancelar',
+      acceptIcon: 'pi pi-ban',
+      acceptButtonProps: { severity: 'danger' },
+      rejectButtonProps: { severity: 'secondary', outlined: true },
+      accept: () => void this.cambiarEstado(fila, false),
+    });
+  }
+
+  /** Reactivar es directo (no destruye nada) y avisa con un toast. */
+  protected reactivar(fila: FilaCliente): void {
+    void this.cambiarEstado(fila, true);
+  }
+
+  /** `PATCH /usuarios/{id}/estado`. La lista se vuelve a consultar: lo oficial es del servidor. */
+  async cambiarEstado(fila: FilaCliente, activo: boolean): Promise<void> {
+    if (this.cambiandoEstadoPara() !== null) {
+      return;
+    }
+    this.cambiandoEstadoPara.set(fila.id);
+    try {
+      await this.api.cambiarEstado(fila.id, activo);
+      this.avisos.add({
+        severity: 'success',
+        summary: activo ? 'Cuenta reactivada' : 'Cuenta desactivada',
+        detail: activo
+          ? `${fila.nombre} ya puede ingresar a la app.`
+          : `${fila.nombre} ya no puede ingresar a la app. Sus pedidos se conservan.`,
+        life: 4000,
+      });
+      void this.cargar();
+    } catch (error) {
+      this.avisos.add({
+        severity: 'error',
+        summary: activo ? MENSAJE_NO_SE_REACTIVO : MENSAJE_NO_SE_DESACTIVO,
+        detail: mensajeDeErrorAlCambiarEstado(error),
+        life: 6000,
+      });
+      if (error instanceof ErrorApi && error.estado === 404) {
+        void this.cargar(); // El cliente ya no existe: se actualiza la lista.
+      }
+    } finally {
+      this.cambiandoEstadoPara.set(null);
     }
   }
 
