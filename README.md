@@ -174,6 +174,14 @@ Módulos previstos: `usuarios`, `productos`, `inventario`, `pedidos`, `pagos`,
   «sin hexadecimales en componentes»); el texto sobre el color se calcula igual que el servidor
   (blanco, `#1E293B`, `#0F172A`, negro: el primero con 4.5:1, RNF-11).
 
+## Productos e imágenes (RF-PRO-01 a RF-PRO-05, RF-INV-03, D-46, D-47)
+
+Sección **Productos** (`/productos`, módulo `src/app/productos/`), contra `docs/contrato-api/productos.md`:
+
+- `p-table` con paginación del servidor, búsqueda con retardo, filtros por marca y disponibilidad, miniatura, marca con su color, precio y disponibilidad con cambio rápido.
+- Crear y editar en un diálogo: marca (solo activas), precio como **texto** con 2 decimales (nunca `number`; se muestra «$12.50»), descripción, disponibilidad (RN-09) e imágenes (`p-fileupload`, máx. 5, 2 MB, JPG/PNG/WebP, validadas también en el cliente; la primera es la principal).
+- Las imágenes nuevas y el orden se aplican al guardar (POST multipart y PUT de orden); quitar una imagen guardada es inmediato y pide confirmación. Eliminar un producto pide confirmación (RNF-12).
+- Sin marcas, el guard de «Configura tu negocio» (D-48) redirige.
 ### Regla de dependencias
 
 ```text

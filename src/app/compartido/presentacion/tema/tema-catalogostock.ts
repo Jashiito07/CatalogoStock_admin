@@ -197,6 +197,19 @@ export const TemaCatalogoStock = definePreset(Aura, {
           activeColor: segunModo(sobreColor, COLORES_OSCURO.texto),
           focusRing: { color: segunModo(secundario[500], secundario[300]), shadow: 'none' },
         },
+        // Peligro («Eliminar», «Quitar»): el blanco sobre rojo 500 de Aura da 3.8:1 (RNF-11);
+        // en claro se usa el rojo 700 con texto blanco; en oscuro, el de Aura (rojo 400, texto oscuro).
+        danger: {
+          background: segunModo('{red.700}', '{red.400}'),
+          hoverBackground: segunModo('{red.800}', '{red.300}'),
+          activeBackground: segunModo('{red.900}', '{red.200}'),
+          borderColor: segunModo('{red.700}', '{red.400}'),
+          hoverBorderColor: segunModo('{red.800}', '{red.300}'),
+          activeBorderColor: segunModo('{red.900}', '{red.200}'),
+          color: segunModo(sobreColor, '{surface.950}'),
+          hoverColor: segunModo(sobreColor, '{surface.950}'),
+          activeColor: segunModo(sobreColor, '{surface.950}'),
+        },
         // El Acento lleva texto oscuro: el blanco sobre naranja no cumple 4.5:1.
         warn: {
           background: acento[500],
@@ -212,6 +225,11 @@ export const TemaCatalogoStock = definePreset(Aura, {
         },
       },
       outlined: {
+        // «Eliminar»: el rojo 500 de Aura sobre blanco queda en 3.8:1 (RNF-11); 700 en claro, 300 en oscuro.
+        danger: {
+          color: segunModo('{red.700}', '{red.300}'),
+          borderColor: segunModo('{red.700}', '{red.300}'),
+        },
         secondary: {
           hoverBackground: segunModo(
             secundario[50],
@@ -226,6 +244,9 @@ export const TemaCatalogoStock = definePreset(Aura, {
         },
       },
       text: {
+        danger: {
+          color: segunModo('{red.700}', '{red.300}'),
+        },
         secondary: {
           hoverBackground: segunModo(
             secundario[50],
@@ -259,6 +280,30 @@ export const TemaCatalogoStock = definePreset(Aura, {
       },
       content: {
         checkedBackground: segunModo('{surface.0}', secundario[500]),
+      },
+    },
+    // Etiquetas de estado (disponibilidad, activa/inactiva): fondo suave y texto oscuro en claro,
+    // fondo profundo y texto claro en oscuro. El blanco sobre verde 500 de Aura no llega a 4.5:1.
+    tag: {
+      success: {
+        background: segunModo('{green.100}', '{green.900}'),
+        color: segunModo('{green.800}', '{green.200}'),
+      },
+      danger: {
+        background: segunModo('{red.100}', '{red.900}'),
+        color: segunModo('{red.800}', '{red.200}'),
+      },
+      warn: {
+        background: segunModo('{yellow.100}', '{yellow.900}'),
+        color: segunModo('{yellow.800}', '{yellow.200}'),
+      },
+      info: {
+        background: segunModo('{blue.100}', '{blue.900}'),
+        color: segunModo('{blue.800}', '{blue.200}'),
+      },
+      secondary: {
+        background: segunModo('{surface.100}', '{surface.700}'),
+        color: segunModo('{surface.700}', '{surface.100}'),
       },
     },
     message: mensajesLegibles,

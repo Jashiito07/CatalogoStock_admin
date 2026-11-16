@@ -55,7 +55,12 @@ export function crearSeccionesPanel(sinMarcas = false): MenuItem[] {
           icon: 'pi pi-users',
           routerLink: '/clientes',
         },
-        proximamente('Productos', 'pi pi-box', 'productos'),
+        {
+          id: 'productos',
+          label: 'Productos',
+          icon: 'pi pi-box',
+          routerLink: '/productos',
+        },
         proximamente('Inventario', 'pi pi-warehouse', 'inventario'),
         proximamente('Pedidos', 'pi pi-shopping-cart', 'pedidos'),
         proximamente('Pagos', 'pi pi-wallet', 'pagos'),
