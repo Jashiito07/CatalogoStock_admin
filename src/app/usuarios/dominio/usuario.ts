@@ -15,6 +15,8 @@ export interface Usuario {
   readonly rol: Rol;
   readonly privacidadAceptadaEn: string | null;
   readonly versionPrivacidad: string | null;
+  /** `null` mientras el correo no se verifique con el código enviado (D-50, correo.md). */
+  readonly correoVerificadoEn: string | null;
   readonly creadoEn: string;
 }
 

@@ -5,6 +5,7 @@ import { Mock } from 'vitest';
 import { ErrorApi } from '../../../compartido/aplicacion/error-api';
 import {
   MENSAJE_CLIENTE_NO_ENCONTRADO,
+  MENSAJE_NO_SE_PUEDE_DESACTIVAR_VENDEDOR,
   MENSAJE_CUENTA_INACTIVA,
   MENSAJE_SIN_PERMISO,
   mensajeDeErrorAlGenerarCodigo,
@@ -14,9 +15,17 @@ import {
   Cliente,
   CodigoRecuperacion,
   ConsultaClientes,
+  EstadoClienteActualizado,
   PaginaClientes,
 } from '../../dominio/cliente';
-import { aFilaCliente, Clientes, MENSAJE_NO_SE_GENERO, RETARDO_BUSQUEDA_MS } from './clientes';
+import {
+  aFilaCliente,
+  Clientes,
+  MENSAJE_NO_SE_DESACTIVO,
+  MENSAJE_NO_SE_GENERO,
+  MENSAJE_NO_SE_REACTIVO,
+  RETARDO_BUSQUEDA_MS,
+} from './clientes';
 
 const ID_MARIA = '6f1c0000-0000-4000-8000-000000000001';
 
@@ -46,6 +55,7 @@ const CODIGO: CodigoRecuperacion = {
 describe('Clientes (RF-USU-05)', () => {
   let listar: Mock<(consulta: ConsultaClientes) => Promise<PaginaClientes>>;
   let generar: Mock<(id: string) => Promise<CodigoRecuperacion>>;
+  let cambiarEstado: Mock<(id: string, activo: boolean) => Promise<EstadoClienteActualizado>>;
   let fixture: ComponentFixture<Clientes>;
   let elemento: HTMLElement;
   let avisos: MessageService;
@@ -72,11 +82,15 @@ describe('Clientes (RF-USU-05)', () => {
       ),
     );
     generar = vi.fn().mockResolvedValue(CODIGO);
+    cambiarEstado = vi.fn().mockResolvedValue({ id: ID_MARIA, activo: false });
     await TestBed.configureTestingModule({
       imports: [Clientes],
       providers: [
         MessageService,
-        { provide: ApiClientes, useValue: { listar, generarCodigoRecuperacion: generar } },
+        {
+          provide: ApiClientes,
+          useValue: { listar, generarCodigoRecuperacion: generar, cambiarEstado },
+        },
         { provide: Portapapeles, useValue: { copiar: vi.fn().mockResolvedValue(undefined) } },
       ],
     }).compileComponents();
@@ -109,15 +123,142 @@ describe('Clientes (RF-USU-05)', () => {
     expect(texto).toContain('099 123 4567');
     expect(texto).toContain('05/11/2026');
     expect(texto).toContain('Sin código vigente');
-    expect(filas()[1]?.textContent).toContain('Cuenta inactiva');
+    expect(filas()[1]?.textContent).toContain('No disponible');
   });
 
-  it('un cliente inactivo no permite generar código', () => {
-    const botones = filas().map((fila) =>
-      fila.querySelector<HTMLButtonElement>('[data-prueba="generar-codigo"] button'),
+  it('D-53: la columna «Estado» muestra Activo o Desactivado con p-tag', () => {
+    const estados = filas().map((fila) =>
+      fila.querySelector('[data-prueba="estado-cuenta"] p-tag')?.textContent?.trim(),
     );
-    expect(botones[0]?.disabled).toBe(false);
-    expect(botones[1]?.disabled).toBe(true);
+    expect(estados).toEqual(['Activo', 'Desactivado']);
+  });
+
+  it('una cuenta desactivada no ofrece generar código (CUENTA_INACTIVA) y no hay «Eliminar»', () => {
+    const [activa, desactivada] = filas();
+    expect(activa?.querySelector('[data-prueba="generar-codigo"]')).not.toBeNull();
+    expect(desactivada?.querySelector('[data-prueba="generar-codigo"]')).toBeNull();
+    expect(elemento.textContent).not.toContain('Eliminar');
+  });
+
+  it('D-53: cada cuenta ofrece la acción contraria a su estado', () => {
+    const [activa, desactivada] = filas();
+    expect(activa?.querySelector('[data-prueba="desactivar"]')).not.toBeNull();
+    expect(activa?.querySelector('[data-prueba="reactivar"]')).toBeNull();
+    expect(desactivada?.querySelector('[data-prueba="reactivar"]')).not.toBeNull();
+    expect(desactivada?.querySelector('[data-prueba="desactivar"]')).toBeNull();
+  });
+
+  it.each([
+    ['activos', true],
+    ['desactivados', false],
+  ] as const)('D-53: el filtro «%s» consulta con ?activo=%s y vuelve a la página 1', async (filtro, activo) => {
+    componente()['alCargarPagina']({ first: 40, rows: 20 });
+    await estable();
+    componente()['filtroEstado'].setValue(filtro);
+    await estable();
+    expect(ultimaConsulta()).toEqual({ pagina: 1, tamanio: 20, activo });
+  });
+
+  it('CA-11: un filtro sin resultados ofrece «Limpiar filtros» y vuelve a todos', async () => {
+    listar.mockResolvedValue(pagina([]));
+    componente()['filtroEstado'].setValue('desactivados');
+    await estable();
+    const vacio = elemento.querySelector('[data-prueba="clientes-vacio"]');
+    expect(vacio?.textContent).toContain('No hay clientes con ese estado.');
+
+    vacio?.querySelector('button')?.click();
+    await estable();
+    expect(componente()['filtroEstado'].value).toBe('todos');
+    expect(ultimaConsulta()).toEqual({ pagina: 1, tamanio: 20 });
+  });
+
+  const botonDe = (indice: number, accion: string) =>
+    filas()[indice]?.querySelector<HTMLButtonElement>(`[data-prueba="${accion}"] button`);
+  const botonConfirmacion = (texto: string) =>
+    Array.from(document.body.querySelectorAll<HTMLButtonElement>('.p-confirmdialog button')).find(
+      (boton) => boton.textContent?.includes(texto),
+    );
+
+  it('D-53: desactivar pide confirmación con el texto del contrato y no cambia nada si se cancela', async () => {
+    botonDe(0, 'desactivar')?.click();
+    await estable();
+    expect(document.body.textContent).toContain(
+      'El cliente no podrá ingresar a la app. Sus pedidos se conservan.',
+    );
+    botonConfirmacion('Cancelar')?.click();
+    await estable();
+    expect(cambiarEstado).not.toHaveBeenCalled();
+  });
+
+  it('D-53: al confirmar desactiva (activo=false), avisa con un toast y recarga la lista', async () => {
+    const agregar = vi.spyOn(avisos, 'add');
+    botonDe(0, 'desactivar')?.click();
+    await estable();
+    botonConfirmacion('Desactivar')?.click();
+    await estable();
+
+    expect(cambiarEstado).toHaveBeenCalledWith(ID_MARIA, false);
+    expect(agregar).toHaveBeenCalledWith(
+      expect.objectContaining({ severity: 'success', summary: 'Cuenta desactivada' }),
+    );
+    expect(listar).toHaveBeenCalledTimes(2);
+  });
+
+  it('D-53: reactivar es directo (sin confirmación), con toast, y recarga la lista', async () => {
+    const agregar = vi.spyOn(avisos, 'add');
+    botonDe(1, 'reactivar')?.click();
+    await estable();
+
+    expect(document.body.querySelector('.p-confirmdialog')).toBeNull();
+    expect(cambiarEstado).toHaveBeenCalledWith('b', true);
+    expect(agregar).toHaveBeenCalledWith(
+      expect.objectContaining({ severity: 'success', summary: 'Cuenta reactivada' }),
+    );
+    expect(listar).toHaveBeenCalledTimes(2);
+  });
+
+  it.each([
+    [new ErrorApi('NO_AUTORIZADO', 'No tiene permiso.', 403), MENSAJE_SIN_PERMISO],
+    [new ErrorApi('USUARIO_NO_ENCONTRADO', 'No existe.', 404), MENSAJE_CLIENTE_NO_ENCONTRADO],
+    [
+      new ErrorApi('OPERACION_NO_PERMITIDA', 'No permitida.', 422),
+      MENSAJE_NO_SE_PUEDE_DESACTIVAR_VENDEDOR,
+    ],
+  ])('D-53: un error al desactivar (%s) se avisa con un mensaje claro', async (error, mensaje) => {
+    cambiarEstado.mockRejectedValue(error);
+    const agregar = vi.spyOn(avisos, 'add');
+
+    await componente().cambiarEstado(aFilaCliente(cliente(), new Date()), false);
+    await estable();
+
+    expect(agregar).toHaveBeenCalledWith(
+      expect.objectContaining({
+        severity: 'error',
+        summary: MENSAJE_NO_SE_DESACTIVO,
+        detail: mensaje,
+      }),
+    );
+  });
+
+  it('D-53: un 404 al cambiar el estado actualiza la lista; un 403 no', async () => {
+    cambiarEstado.mockRejectedValueOnce(new ErrorApi('USUARIO_NO_ENCONTRADO', 'x', 404));
+    await componente().cambiarEstado(aFilaCliente(cliente(), new Date()), false);
+    await estable();
+    expect(listar).toHaveBeenCalledTimes(2);
+
+    cambiarEstado.mockRejectedValueOnce(new ErrorApi('NO_AUTORIZADO', 'x', 403));
+    await componente().cambiarEstado(aFilaCliente(cliente(), new Date()), false);
+    await estable();
+    expect(listar).toHaveBeenCalledTimes(2);
+  });
+
+  it('D-53: un error de red al reactivar muestra el mensaje de la API sin detalles técnicos', async () => {
+    cambiarEstado.mockRejectedValue(new ErrorApi('SIN_CONEXION', 'No se pudo conectar con el servidor.', 0));
+    const agregar = vi.spyOn(avisos, 'add');
+    await componente().cambiarEstado(aFilaCliente(cliente({ activo: false }), new Date()), true);
+    expect(agregar).toHaveBeenCalledWith(
+      expect.objectContaining({ summary: MENSAJE_NO_SE_REACTIVO, detail: 'No se pudo conectar con el servidor.' }),
+    );
   });
 
   it('pagina en el servidor: la página 3 de 20 pide pagina=3', async () => {

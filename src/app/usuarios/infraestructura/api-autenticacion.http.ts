@@ -3,7 +3,11 @@ import { inject, Injectable } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 
 import { URL_API } from '../../compartido/infraestructura/http/url-api';
-import { ApiAutenticacion, SolicitudCambioClave } from '../aplicacion/puertos';
+import {
+  ApiAutenticacion,
+  SolicitudCambioClave,
+  SolicitudRestablecerClave,
+} from '../aplicacion/puertos';
 import { Sesion, Usuario } from '../dominio/usuario';
 
 /** Rutas de autenticación del contrato de usuarios, relativas a `URL_API`. */
@@ -13,12 +17,21 @@ export const RUTAS_AUTENTICACION = {
   salida: '/autenticacion/salida',
   usuarioActual: '/usuarios/yo',
   cambioClave: '/usuarios/yo/clave',
+  verificacionCorreo: '/usuarios/yo/correo/verificacion',
+  confirmacionCorreo: '/usuarios/yo/correo/confirmacion',
+  solicitudRecuperacion: '/autenticacion/recuperacion/solicitud',
+  recuperacion: '/autenticacion/recuperacion',
 } as const;
 
-/** Rutas públicas: el interceptor no les adjunta el token ni intenta renovar ante un 401. */
+/**
+ * Rutas públicas: el interceptor no les adjunta el token ni intenta renovar ante un 401.
+ * La coincidencia es exacta: las dos de recuperación (D-50) se declaran una por una.
+ */
 export const RUTAS_PUBLICAS_AUTENTICACION: readonly string[] = [
   RUTAS_AUTENTICACION.ingresoVendedor,
   RUTAS_AUTENTICACION.renovacion,
+  RUTAS_AUTENTICACION.solicitudRecuperacion,
+  RUTAS_AUTENTICACION.recuperacion,
 ];
 
 /** Adaptador HTTP de `ApiAutenticacion` (docs/contrato-api/usuarios.md). */
@@ -51,6 +64,26 @@ export class ApiAutenticacionHttp extends ApiAutenticacion {
 
   async cambiarClave(solicitud: SolicitudCambioClave): Promise<void> {
     await firstValueFrom(this.http.post<null>(this.url(RUTAS_AUTENTICACION.cambioClave), solicitud));
+  }
+
+  async solicitarVerificacionCorreo(): Promise<void> {
+    await firstValueFrom(this.http.post<null>(this.url(RUTAS_AUTENTICACION.verificacionCorreo), null));
+  }
+
+  async confirmarVerificacionCorreo(codigo: string): Promise<void> {
+    await firstValueFrom(
+      this.http.post<null>(this.url(RUTAS_AUTENTICACION.confirmacionCorreo), { codigo }),
+    );
+  }
+
+  async solicitarRecuperacionPorCorreo(correo: string): Promise<void> {
+    await firstValueFrom(
+      this.http.post<null>(this.url(RUTAS_AUTENTICACION.solicitudRecuperacion), { correo }),
+    );
+  }
+
+  async restablecerClave(solicitud: SolicitudRestablecerClave): Promise<void> {
+    await firstValueFrom(this.http.post<null>(this.url(RUTAS_AUTENTICACION.recuperacion), solicitud));
   }
 
   private url(ruta: string): string {

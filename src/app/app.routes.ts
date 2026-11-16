@@ -24,6 +24,13 @@ export const routes: Routes = [
       import('./usuarios/presentacion/ingreso/ingreso').then((m) => m.Ingreso),
   },
   {
+    path: 'recuperar-clave',
+    title: 'Recuperar mi clave · CatálogoStock',
+    canActivate: [soloSinSesion],
+    loadComponent: () =>
+      import('./usuarios/presentacion/recuperar-clave/recuperar-clave').then((m) => m.RecuperarClave),
+  },
+  {
     path: '',
     canActivate: [soloVendedor],
     canActivateChild: [soloVendedor],

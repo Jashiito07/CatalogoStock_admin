@@ -23,6 +23,31 @@ export abstract class ApiAutenticacion {
    * Con `tokenRenovacionActual` la API conserva esta sesión y revoca las demás.
    */
   abstract cambiarClave(solicitud: SolicitudCambioClave): Promise<void>;
+
+  /**
+   * POST /usuarios/yo/correo/verificacion (RF-USU-05, D-50, correo.md): envía el código al
+   * correo registrado de la cuenta. 204. Errores: 409, 429, 503.
+   */
+  abstract solicitarVerificacionCorreo(): Promise<void>;
+
+  /** POST /usuarios/yo/correo/confirmacion `{ codigo }`: 204. Errores: 400, 422 `CODIGO_INVALIDO`, 429. */
+  abstract confirmarVerificacionCorreo(codigo: string): Promise<void>;
+
+  /**
+   * POST /autenticacion/recuperacion/solicitud `{ correo }` (público): responde 204 siempre,
+   * exista o no la cuenta (correo.md, principio 2). Errores: 400, 429.
+   */
+  abstract solicitarRecuperacionPorCorreo(correo: string): Promise<void>;
+
+  /** POST /autenticacion/recuperacion (público): 204; 422 `CODIGO_INVALIDO`; 429. */
+  abstract restablecerClave(solicitud: SolicitudRestablecerClave): Promise<void>;
+}
+
+/** Cuerpo de `POST /autenticacion/recuperacion`. Nunca se guarda ni se escribe en registros. */
+export interface SolicitudRestablecerClave {
+  readonly correo: string;
+  readonly codigo: string;
+  readonly claveNueva: string;
 }
 
 /** Cuerpo de `POST /usuarios/yo/clave`. Nunca se guarda ni se escribe en registros. */

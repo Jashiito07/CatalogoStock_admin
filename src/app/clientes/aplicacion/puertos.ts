@@ -1,4 +1,9 @@
-import { CodigoRecuperacion, ConsultaClientes, PaginaClientes } from '../dominio/cliente';
+import {
+  CodigoRecuperacion,
+  ConsultaClientes,
+  EstadoClienteActualizado,
+  PaginaClientes,
+} from '../dominio/cliente';
 
 /**
  * Puerto hacia la API de clientes (contrato recuperacion-clave.md, solo Vendedor).
@@ -10,6 +15,12 @@ export abstract class ApiClientes {
 
   /** POST /usuarios/{id}/codigo-recuperacion: genera un código e invalida el anterior. */
   abstract generarCodigoRecuperacion(idCliente: string): Promise<CodigoRecuperacion>;
+
+  /**
+   * PATCH /usuarios/{id}/estado (D-53, contrato usuarios-gestion.md): desactiva o reactiva
+   * la cuenta. Desactivar cierra sus sesiones; sus pedidos se conservan. No hay borrado.
+   */
+  abstract cambiarEstado(idCliente: string, activo: boolean): Promise<EstadoClienteActualizado>;
 }
 
 /** Copia texto al portapapeles del dispositivo. Falla si el navegador no lo permite. */

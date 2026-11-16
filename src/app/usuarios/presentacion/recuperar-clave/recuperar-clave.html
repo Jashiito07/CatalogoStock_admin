@@ -1,0 +1,199 @@
+<main class="cs-recuperar">
+  <p-card class="cs-recuperar__tarjeta">
+    <ng-template #title>
+      <div class="cs-recuperar__encabezado">
+        <img class="cs-recuperar__logo" [src]="logo()" alt="CatálogoStock" width="318" height="60" />
+        <h1 class="cs-recuperar__titulo">Recuperar mi clave</h1>
+      </div>
+    </ng-template>
+
+    @if (paso() === 'correo') {
+      <form
+        class="cs-recuperar__formulario"
+        [formGroup]="formularioCorreo"
+        (ngSubmit)="enviarCodigo()"
+        novalidate
+      >
+        <p class="cs-recuperar__texto">
+          Escribe el correo de tu cuenta. Si ya lo verificaste, te enviaremos un código de 6
+          dígitos.
+        </p>
+
+        <div class="cs-campo">
+          <label for="correo-recuperacion" class="cs-campo__etiqueta">Correo</label>
+          <input
+            pInputText
+            id="correo-recuperacion"
+            type="email"
+            formControlName="correo"
+            autocomplete="username"
+            inputmode="email"
+            class="cs-campo__control"
+            [invalid]="correoInvalido()"
+            [attr.aria-invalid]="correoInvalido()"
+            [attr.aria-describedby]="correoInvalido() ? 'correo-recuperacion-error' : null"
+          />
+          @if (correoInvalido()) {
+            <p-message
+              id="correo-recuperacion-error"
+              severity="error"
+              variant="simple"
+              size="small"
+              data-prueba="error-correo"
+            >
+              Ingresa un correo válido.
+            </p-message>
+          }
+        </div>
+
+        @if (errorSolicitud(); as mensaje) {
+          <p-message severity="error" icon="pi pi-times-circle" role="alert" data-prueba="error-solicitud">
+            {{ mensaje }}
+          </p-message>
+        }
+
+        <p-button
+          type="submit"
+          label="Enviar código a mi correo"
+          icon="pi pi-send"
+          [fluid]="true"
+          [loading]="solicitando()"
+          [disabled]="solicitando() || espera.segundos() > 0"
+          data-prueba="enviar-codigo"
+        />
+        @if (espera.segundos() > 0) {
+          <p class="cs-recuperar__ayuda" role="status" data-prueba="espera">
+            Podrás pedir otro código en {{ formatearEspera(espera.segundos()) }}.
+          </p>
+        }
+      </form>
+    } @else {
+      <form
+        class="cs-recuperar__formulario"
+        [formGroup]="formulario"
+        (ngSubmit)="cambiarClave()"
+        novalidate
+      >
+        <!-- Mismo mensaje exista o no la cuenta: no revela qué correos están registrados. -->
+        <p-message severity="info" icon="pi pi-envelope" role="status" data-prueba="mensaje-neutro">
+          {{ mensajeNeutro }}
+        </p-message>
+
+        <div class="cs-campo">
+          <label for="codigo-recuperacion" class="cs-campo__etiqueta">Código de 6 dígitos</label>
+          <input
+            pInputText
+            id="codigo-recuperacion"
+            type="text"
+            inputmode="numeric"
+            autocomplete="one-time-code"
+            maxlength="6"
+            placeholder="000000"
+            formControlName="codigo"
+            class="cs-campo__control cs-campo__control--codigo"
+            [invalid]="errorDe('codigo') !== null"
+          />
+          @if (errorDe('codigo'); as texto) {
+            <p-message severity="error" variant="simple" size="small" data-prueba="error-codigo">
+              {{ texto }}
+            </p-message>
+          }
+        </div>
+
+        <div class="cs-campo">
+          <label for="clave-nueva-recuperacion" class="cs-campo__etiqueta">Clave nueva</label>
+          <p-password
+            inputId="clave-nueva-recuperacion"
+            formControlName="claveNueva"
+            autocomplete="new-password"
+            [feedback]="false"
+            [toggleMask]="true"
+            [fluid]="true"
+            [invalid]="errorDe('claveNueva') !== null"
+          />
+          <small class="cs-recuperar__ayuda">De 8 a 72 caracteres, con letras y números.</small>
+          @if (errorDe('claveNueva'); as texto) {
+            <p-message severity="error" variant="simple" size="small" data-prueba="error-clave-nueva">
+              {{ texto }}
+            </p-message>
+          }
+        </div>
+
+        <div class="cs-campo">
+          <label for="confirmacion-recuperacion" class="cs-campo__etiqueta">Repite la clave nueva</label>
+          <p-password
+            inputId="confirmacion-recuperacion"
+            formControlName="confirmacion"
+            autocomplete="new-password"
+            [feedback]="false"
+            [toggleMask]="true"
+            [fluid]="true"
+            [invalid]="errorDe('confirmacion') !== null"
+          />
+          @if (errorDe('confirmacion'); as texto) {
+            <p-message severity="error" variant="simple" size="small" data-prueba="error-confirmacion">
+              {{ texto }}
+            </p-message>
+          }
+        </div>
+
+        @if (errorGeneral(); as mensaje) {
+          <p-message severity="error" icon="pi pi-times-circle" role="alert" data-prueba="error-general">
+            {{ mensaje }}
+          </p-message>
+        }
+
+        <p-button
+          type="submit"
+          label="Restablecer clave"
+          icon="pi pi-key"
+          [fluid]="true"
+          [loading]="restableciendo()"
+          [disabled]="restableciendo()"
+          data-prueba="restablecer"
+        />
+
+        <p-button
+          type="button"
+          [label]="espera.segundos() > 0 ? 'Reenviar código en ' + formatearEspera(espera.segundos()) : 'Reenviar código'"
+          icon="pi pi-refresh"
+          severity="secondary"
+          [outlined]="true"
+          [fluid]="true"
+          [disabled]="solicitando() || espera.segundos() > 0"
+          data-prueba="reenviar-codigo"
+          (onClick)="enviarCodigo()"
+        />
+        @if (errorSolicitud(); as mensaje) {
+          <p-message severity="error" icon="pi pi-times-circle" role="alert" data-prueba="error-solicitud">
+            {{ mensaje }}
+          </p-message>
+        }
+        <p-button
+          type="button"
+          label="Usar otro correo"
+          severity="secondary"
+          [text]="true"
+          [fluid]="true"
+          (onClick)="usarOtroCorreo()"
+        />
+      </form>
+    }
+
+    <ng-template #footer>
+      <p class="cs-recuperar__nota" data-prueba="nota-comando">
+        Si tu correo no está verificado, el código no se envía: la clave se restablece con el
+        comando del servidor, <code>{{ comando }}</code
+        >.
+      </p>
+      <p-button
+        type="button"
+        label="Volver al ingreso"
+        icon="pi pi-arrow-left"
+        [link]="true"
+        data-prueba="volver-ingreso"
+        (onClick)="volverAlIngreso()"
+      />
+    </ng-template>
+  </p-card>
+</main>

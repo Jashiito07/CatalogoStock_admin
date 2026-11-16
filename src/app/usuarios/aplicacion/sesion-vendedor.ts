@@ -125,6 +125,16 @@ export class SesionVendedor {
     });
   }
 
+  /**
+   * Reemplaza el usuario de la sesión (por ejemplo, tras verificar el correo, D-50). No toca
+   * los tokens y solo acepta al Vendedor con sesión iniciada.
+   */
+  actualizarUsuario(usuario: Usuario): void {
+    if (this.tokenAcceso !== null && puedeUsarElPanel(usuario)) {
+      this.usuarioActual.set(usuario);
+    }
+  }
+
   /** Borra la sesión local (tokens y usuario) sin llamar a la API. */
   descartar(): void {
     this.tokenAcceso = null;

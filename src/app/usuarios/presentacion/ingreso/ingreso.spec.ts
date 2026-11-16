@@ -61,6 +61,19 @@ describe('Ingreso del Vendedor (RF-USU-01, RF-USU-03, D-19)', () => {
     await fixture.whenStable();
   }
 
+  it('D-50: ofrece «¿Olvidaste tu clave?» que lleva a /recuperar-clave; el error de ingreso no cambia (D-19)', async () => {
+    const navegar = vi.spyOn(TestBed.inject(Router), 'navigateByUrl').mockResolvedValue(true);
+    elemento.querySelector<HTMLButtonElement>('[data-prueba="olvide-clave"] button')?.click();
+    expect(navegar).toHaveBeenCalledWith('/recuperar-clave');
+    expect(errorCredenciales().mensaje).toBe('Correo o clave incorrectos.');
+  });
+
+  it('D-50: con ?motivo=clave-restablecida muestra el aviso de clave cambiada', async () => {
+    fixture.componentRef.setInput('motivo', 'clave-restablecida');
+    await fixture.whenStable();
+    expect(elemento.textContent).toContain('Tu clave se cambió. Inicia sesión con tu nueva clave.');
+  });
+
   it('muestra el formulario con etiquetas, la nota para clientes y el botón Ingresar', () => {
     expect(elemento.querySelector('label[for="correo"]')?.textContent).toContain('Correo');
     expect(elemento.querySelector('label[for="clave"]')?.textContent).toContain('Clave');

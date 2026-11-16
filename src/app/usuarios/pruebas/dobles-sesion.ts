@@ -9,6 +9,7 @@ import {
   AlmacenTokenRenovacion,
   ApiAutenticacion,
   SolicitudCambioClave,
+  SolicitudRestablecerClave,
 } from '../aplicacion/puertos';
 import { Rol, Sesion, Usuario } from '../dominio/usuario';
 
@@ -21,6 +22,7 @@ export function crearUsuario(rol: Rol = 'VENDEDOR', nombre = 'Rosa Vendedora'): 
     rol,
     privacidadAceptadaEn: null,
     versionPrivacidad: null,
+    correoVerificadoEn: null,
     creadoEn: '2026-11-05T15:00:00.000Z',
   };
 }
@@ -45,6 +47,10 @@ export interface ApiAutenticacionFalsa {
   salir: Mock<(tokenRenovacion: string) => Promise<void>>;
   obtenerUsuarioActual: Mock<() => Promise<Usuario>>;
   cambiarClave: Mock<(solicitud: SolicitudCambioClave) => Promise<void>>;
+  solicitarVerificacionCorreo: Mock<() => Promise<void>>;
+  confirmarVerificacionCorreo: Mock<(codigo: string) => Promise<void>>;
+  solicitarRecuperacionPorCorreo: Mock<(correo: string) => Promise<void>>;
+  restablecerClave: Mock<(solicitud: SolicitudRestablecerClave) => Promise<void>>;
 }
 
 export function crearApiFalsa(): ApiAutenticacionFalsa & ApiAutenticacion {
@@ -54,6 +60,10 @@ export function crearApiFalsa(): ApiAutenticacionFalsa & ApiAutenticacion {
     salir: vi.fn().mockResolvedValue(undefined),
     obtenerUsuarioActual: vi.fn(),
     cambiarClave: vi.fn().mockResolvedValue(undefined),
+    solicitarVerificacionCorreo: vi.fn().mockResolvedValue(undefined),
+    confirmarVerificacionCorreo: vi.fn().mockResolvedValue(undefined),
+    solicitarRecuperacionPorCorreo: vi.fn().mockResolvedValue(undefined),
+    restablecerClave: vi.fn().mockResolvedValue(undefined),
   };
   return api as ApiAutenticacionFalsa & ApiAutenticacion;
 }

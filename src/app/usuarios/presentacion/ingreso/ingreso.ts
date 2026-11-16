@@ -19,11 +19,14 @@ import { MENSAJE_SESION_TERMINADA, SesionVendedor } from '../../aplicacion/sesio
 import { RUTA_INICIO_PANEL } from '../guardias';
 
 export const MENSAJE_SALIDA = 'Cerraste sesión. ¡Hasta pronto!';
+export const MENSAJE_CLAVE_RESTABLECIDA =
+  'Tu clave se cambió. Inicia sesión con tu nueva clave.';
 
 const AVISOS_POR_MOTIVO: Readonly<Record<string, string>> = {
   [MOTIVOS_INGRESO.sesionTerminada]: MENSAJE_SESION_TERMINADA,
   [MOTIVOS_INGRESO.sinConexion]: MENSAJE_SIN_CONEXION,
   [MOTIVOS_INGRESO.salida]: MENSAJE_SALIDA,
+  [MOTIVOS_INGRESO.claveRestablecida]: MENSAJE_CLAVE_RESTABLECIDA,
 };
 
 export const MENSAJE_CORREO_INVALIDO = 'Ingresa un correo válido.';
@@ -94,6 +97,10 @@ export class Ingreso {
   protected campoInvalido(campo: 'correo' | 'clave'): boolean {
     const control = this.formulario.controls[campo];
     return control.invalid && (control.touched || this.intentoEnviar());
+  }
+
+  protected async olvidoClave(): Promise<void> {
+    await this.router.navigateByUrl('/recuperar-clave');
   }
 
   protected async ingresar(): Promise<void> {

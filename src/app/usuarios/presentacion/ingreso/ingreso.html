@@ -81,6 +81,14 @@
         [loading]="enviando()"
         [fluid]="true"
       />
+      <p-button
+        type="button"
+        label="¿Olvidaste tu clave?"
+        [link]="true"
+        [fluid]="true"
+        data-prueba="olvide-clave"
+        (onClick)="olvidoClave()"
+      />
     </form>
 
     <ng-template #footer>

@@ -9,4 +9,6 @@ export const MOTIVOS_INGRESO = {
   sinConexion: 'sin-conexion',
   /** El Vendedor cerró sesión. */
   salida: 'salida',
+  /** Restableció su clave con el código del correo (D-50). */
+  claveRestablecida: 'clave-restablecida',
 } as const;

@@ -4,7 +4,12 @@ import { firstValueFrom } from 'rxjs';
 
 import { URL_API } from '../../compartido/infraestructura/http/url-api';
 import { ApiClientes, Portapapeles } from '../aplicacion/puertos';
-import { CodigoRecuperacion, ConsultaClientes, PaginaClientes } from '../dominio/cliente';
+import {
+  CodigoRecuperacion,
+  ConsultaClientes,
+  EstadoClienteActualizado,
+  PaginaClientes,
+} from '../dominio/cliente';
 import { PortapapelesNavegador } from './portapapeles.navegador';
 
 export const RUTA_USUARIOS = '/usuarios';
@@ -22,6 +27,9 @@ export class ApiClientesHttp extends ApiClientes {
     if (consulta.busqueda) {
       params = params.set('busqueda', consulta.busqueda);
     }
+    if (consulta.activo !== undefined) {
+      params = params.set('activo', String(consulta.activo));
+    }
     return firstValueFrom(
       this.http.get<PaginaClientes>(`${this.urlApi}${RUTA_USUARIOS}`, { params }),
     );
@@ -31,6 +39,12 @@ export class ApiClientesHttp extends ApiClientes {
   generarCodigoRecuperacion(idCliente: string): Promise<CodigoRecuperacion> {
     const url = `${this.urlApi}${RUTA_USUARIOS}/${encodeURIComponent(idCliente)}/codigo-recuperacion`;
     return firstValueFrom(this.http.post<CodigoRecuperacion>(url, null));
+  }
+
+  /** `{ "activo": boolean }` (contrato usuarios-gestion.md, D-53). */
+  cambiarEstado(idCliente: string, activo: boolean): Promise<EstadoClienteActualizado> {
+    const url = `${this.urlApi}${RUTA_USUARIOS}/${encodeURIComponent(idCliente)}/estado`;
+    return firstValueFrom(this.http.patch<EstadoClienteActualizado>(url, { activo }));
   }
 }
 
