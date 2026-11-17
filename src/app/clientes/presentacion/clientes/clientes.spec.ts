@@ -56,6 +56,7 @@ describe('Clientes (RF-USU-05)', () => {
   let listar: Mock<(consulta: ConsultaClientes) => Promise<PaginaClientes>>;
   let generar: Mock<(id: string) => Promise<CodigoRecuperacion>>;
   let cambiarEstado: Mock<(id: string, activo: boolean) => Promise<EstadoClienteActualizado>>;
+  let contarSinVerificar: Mock<() => Promise<number>>;
   let fixture: ComponentFixture<Clientes>;
   let elemento: HTMLElement;
   let avisos: MessageService;
@@ -83,13 +84,19 @@ describe('Clientes (RF-USU-05)', () => {
     );
     generar = vi.fn().mockResolvedValue(CODIGO);
     cambiarEstado = vi.fn().mockResolvedValue({ id: ID_MARIA, activo: false });
+    contarSinVerificar = vi.fn().mockResolvedValue(0);
     await TestBed.configureTestingModule({
       imports: [Clientes],
       providers: [
         MessageService,
         {
           provide: ApiClientes,
-          useValue: { listar, generarCodigoRecuperacion: generar, cambiarEstado },
+          useValue: {
+            listar,
+            generarCodigoRecuperacion: generar,
+            cambiarEstado,
+            contarSinCorreoVerificado: contarSinVerificar,
+          },
         },
         { provide: Portapapeles, useValue: { copiar: vi.fn().mockResolvedValue(undefined) } },
       ],
@@ -346,6 +353,145 @@ describe('Clientes (RF-USU-05)', () => {
       expect.objectContaining({ severity: 'error', summary: MENSAJE_NO_SE_GENERO, detail: mensaje }),
     );
     expect(componente()['codigoGenerado']()).toBeNull();
+  });
+
+  describe('Correo verificado (contrato usuarios-gestion, RF-USU-05)', () => {
+    const celdaCorreo = (indice: number) => filas()[indice]?.querySelector('.cs-clientes__correo');
+    const aviso = () => elemento.querySelector('[data-prueba="aviso-sin-verificar"]');
+
+    async function recargarCon(elementos: Cliente[], sinVerificar = 0): Promise<void> {
+      listar.mockResolvedValue(pagina(elementos));
+      contarSinVerificar.mockResolvedValue(sinVerificar);
+      await componente().cargar();
+      await estable();
+    }
+
+    it('muestra «Verificado» (success) o «Sin verificar» (warn) según correoVerificadoEn', async () => {
+      await recargarCon([
+        cliente({ correoVerificadoEn: '2026-11-10T12:00:00Z' }),
+        cliente({ id: 'b', correoVerificadoEn: null }),
+      ]);
+      const verificado = celdaCorreo(0)?.querySelector('[data-prueba="correo-verificado"]');
+      expect(verificado?.textContent?.trim()).toBe('Verificado');
+      expect(verificado?.matches('.p-tag-success, :has(.p-tag-success)')).toBe(true);
+      const sin = celdaCorreo(1)?.querySelector('[data-prueba="correo-sin-verificar"]');
+      expect(sin?.textContent).toContain('Sin verificar');
+      expect(sin?.matches('.p-tag-warn, :has(.p-tag-warn)')).toBe(true);
+    });
+
+    it('la etiqueta «Sin verificar» es enfocable y lleva la ayuda para lectores de pantalla', async () => {
+      await recargarCon([cliente({ correoVerificadoEn: null })]);
+      const sin = celdaCorreo(0)?.querySelector('[data-prueba="correo-sin-verificar"]');
+      expect(sin?.getAttribute('tabindex')).toBe('0');
+      const idAyuda = sin?.getAttribute('aria-describedby') ?? '';
+      expect(celdaCorreo(0)?.querySelector(`[id="${idAyuda}"]`)?.textContent).toContain(
+        'Aún no confirmó su correo. No podrá recuperar su clave por correo; solo con tu ayuda.',
+      );
+    });
+
+    it('API antigua: sin el campo no hay etiqueta (ni «Sin verificar» falso)', async () => {
+      await recargarCon([cliente()]);
+      expect(celdaCorreo(0)?.textContent).toContain('maria.zambrano@correo.com');
+      expect(celdaCorreo(0)?.querySelector('p-tag')).toBeNull();
+      expect(elemento.textContent).not.toContain('Sin verificar');
+    });
+
+    it.each([
+      ['verificados', true],
+      ['sin-verificar', false],
+    ] as const)('el filtro «%s» consulta con ?correoVerificado=%s y vuelve a la página 1', async (filtro, valor) => {
+      componente()['alCargarPagina']({ first: 40, rows: 20 });
+      await estable();
+      componente()['filtroCorreo'].setValue(filtro);
+      await estable();
+      expect(ultimaConsulta()).toEqual({ pagina: 1, tamanio: 20, correoVerificado: valor });
+    });
+
+    it('el filtro de correo se combina con el de estado y la búsqueda', async () => {
+      componente()['busquedaAplicada'].set('ana');
+      componente()['filtroEstado'].setValue('activos');
+      await estable();
+      componente()['filtroCorreo'].setValue('sin-verificar');
+      await estable();
+      expect(ultimaConsulta()).toEqual({
+        pagina: 1,
+        tamanio: 20,
+        busqueda: 'ana',
+        activo: true,
+        correoVerificado: false,
+      });
+    });
+
+    it('«Todos» no envía el parámetro', async () => {
+      componente()['filtroCorreo'].setValue('sin-verificar');
+      await estable();
+      componente()['filtroCorreo'].setValue('todos');
+      await estable();
+      expect(ultimaConsulta()).toEqual({ pagina: 1, tamanio: 20 });
+    });
+
+    it('CA-11: sin resultados con el filtro de correo ofrece «Limpiar filtros» y restablece ambos', async () => {
+      listar.mockResolvedValue(pagina([]));
+      componente()['filtroCorreo'].setValue('sin-verificar');
+      await estable();
+      const vacio = elemento.querySelector('[data-prueba="clientes-vacio"]');
+      expect(vacio?.textContent).toContain('No hay clientes con ese estado de correo.');
+      vacio?.querySelector('button')?.click();
+      await estable();
+      expect(componente()['filtroCorreo'].value).toBe('todos');
+      expect(ultimaConsulta()).toEqual({ pagina: 1, tamanio: 20 });
+    });
+
+    it('el aviso muestra «N clientes tienen el correo sin verificar» con el total del servidor', async () => {
+      await recargarCon([cliente({ correoVerificadoEn: null })], 3);
+      expect(aviso()?.textContent).toContain('3 clientes tienen el correo sin verificar');
+      expect(aviso()?.matches('.p-message-warn, :has(.p-message-warn)')).toBe(true);
+    });
+
+    it('el aviso usa el singular con 1 cliente', async () => {
+      await recargarCon([cliente({ correoVerificadoEn: null })], 1);
+      expect(aviso()?.textContent).toContain('1 cliente tiene el correo sin verificar');
+    });
+
+    it('el aviso se oculta si no hay clientes sin verificar', async () => {
+      await recargarCon([cliente({ correoVerificadoEn: '2026-11-10T12:00:00Z' })], 0);
+      expect(aviso()).toBeNull();
+    });
+
+    it('si falla la consulta del aviso, se oculta y la tabla sigue funcionando', async () => {
+      await recargarCon([cliente()], 2);
+      expect(aviso()).not.toBeNull();
+      contarSinVerificar.mockRejectedValue(new ErrorApi('SIN_CONEXION', 'No se pudo conectar.', 0));
+      await componente().cargar();
+      await estable();
+      expect(aviso()).toBeNull();
+      expect(filas()).toHaveLength(1);
+      expect(elemento.querySelector('p-message[severity="error"]')).toBeNull();
+    });
+
+    it('el aviso se actualiza tras un cambio (reactivar) con el total oficial', async () => {
+      await recargarCon([cliente({ activo: false })], 2);
+      contarSinVerificar.mockResolvedValue(1);
+      botonDe(0, 'reactivar')?.click();
+      await estable();
+      expect(aviso()?.textContent).toContain('1 cliente tiene el correo sin verificar');
+    });
+
+    it('«Ver solo estos» aplica el filtro Sin verificar y desaparece del aviso', async () => {
+      await recargarCon([cliente({ correoVerificadoEn: null })], 2);
+      elemento.querySelector<HTMLButtonElement>('[data-prueba="ver-sin-verificar"] button')?.click();
+      await estable();
+      expect(componente()['filtroCorreo'].value).toBe('sin-verificar');
+      expect(ultimaConsulta()).toEqual({ pagina: 1, tamanio: 20, correoVerificado: false });
+      expect(elemento.querySelector('[data-prueba="ver-sin-verificar"]')).toBeNull();
+    });
+
+    it('aFilaCliente: estado del correo verificado, sin verificar o desconocido', () => {
+      const ahora = new Date();
+      expect(aFilaCliente(cliente({ correoVerificadoEn: '2026-11-10T12:00:00Z' }), ahora).estadoCorreo).toBe('verificado');
+      expect(aFilaCliente(cliente({ correoVerificadoEn: null }), ahora).estadoCorreo).toBe('sin-verificar');
+      expect(aFilaCliente(cliente(), ahora).estadoCorreo).toBe('desconocido');
+    });
   });
 
   it('CA-02: un 403 al listar muestra «No tienes permiso» y permite reintentar', async () => {

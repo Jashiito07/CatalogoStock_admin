@@ -1,5 +1,12 @@
 import { DatePipe } from '@angular/common';
-import { ChangeDetectionStrategy, Component, DestroyRef, inject, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  DestroyRef,
+  inject,
+  signal,
+} from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { ConfirmationService, MessageService } from 'primeng/api';
@@ -12,6 +19,7 @@ import { MessageModule } from 'primeng/message';
 import { SelectModule } from 'primeng/select';
 import { TableLazyLoadEvent, TableModule } from 'primeng/table';
 import { TagModule } from 'primeng/tag';
+import { TooltipModule } from 'primeng/tooltip';
 import { debounceTime, distinctUntilChanged, map } from 'rxjs';
 
 import { ErrorApi } from '../../../compartido/aplicacion/error-api';
@@ -24,16 +32,25 @@ import {
 import { ApiClientes } from '../../aplicacion/puertos';
 import {
   activoDeFiltro,
+  AYUDA_CORREO_SIN_VERIFICAR,
   Cliente,
   CodigoRecuperacion,
   construirConsultaClientes,
+  correoVerificadoDeFiltro,
+  EstadoCorreo,
+  estadoCorreoDe,
   etiquetaEstado,
+  ETIQUETA_CORREO_SIN_VERIFICAR,
+  ETIQUETA_CORREO_VERIFICADO,
+  FiltroCorreoCliente,
   FiltroEstadoCliente,
   formatearTelefono,
   LONGITUD_MAXIMA_BUSQUEDA,
+  OPCIONES_FILTRO_CORREO,
   OPCIONES_FILTRO_ESTADO,
   paginaDesdeIndice,
   TAMANIO_PAGINA_CLIENTES,
+  textoAvisoSinVerificar,
   tieneCodigoVigente,
 } from '../../dominio/cliente';
 import { DialogoCodigo } from '../dialogo-codigo/dialogo-codigo';
@@ -63,6 +80,8 @@ export interface FilaCliente {
   /** UTC tal como llega de la API; la vista lo muestra en hora de Ecuador. */
   readonly creadoEn: string;
   readonly estadoCodigo: EstadoCodigoFila;
+  /** `desconocido` si la API no envió `correoVerificadoEn`: no se muestra etiqueta. */
+  readonly estadoCorreo: EstadoCorreo;
 }
 
 export function aFilaCliente(cliente: Cliente, ahora: Date): FilaCliente {
@@ -81,6 +100,7 @@ export function aFilaCliente(cliente: Cliente, ahora: Date): FilaCliente {
     etiquetaEstado: etiquetaEstado(cliente.activo),
     creadoEn: cliente.creadoEn,
     estadoCodigo,
+    estadoCorreo: estadoCorreoDe(cliente),
   };
 }
 
@@ -102,6 +122,7 @@ export function aFilaCliente(cliente: Cliente, ahora: Date): FilaCliente {
     TagModule,
     MessageModule,
     SelectModule,
+    TooltipModule,
     ConfirmDialogModule,
     DialogoCodigo,
   ],
@@ -124,6 +145,13 @@ export class Clientes {
     nonNullable: true,
   });
   protected readonly opcionesEstado = OPCIONES_FILTRO_ESTADO;
+  protected readonly filtroCorreo = new FormControl<FiltroCorreoCliente>('todos', {
+    nonNullable: true,
+  });
+  protected readonly opcionesCorreo = OPCIONES_FILTRO_CORREO;
+  protected readonly etiquetaVerificado = ETIQUETA_CORREO_VERIFICADO;
+  protected readonly etiquetaSinVerificar = ETIQUETA_CORREO_SIN_VERIFICAR;
+  protected readonly ayudaSinVerificar = AYUDA_CORREO_SIN_VERIFICAR;
 
   protected readonly filas = signal<FilaCliente[]>([]);
   protected readonly total = signal(0);
@@ -136,11 +164,25 @@ export class Clientes {
   /** Cliente cuyo estado se está cambiando (evita dobles clics). */
   protected readonly cambiandoEstadoPara = signal<string | null>(null);
   protected readonly filtroAplicado = signal<FiltroEstadoCliente>('todos');
+  protected readonly filtroCorreoAplicado = signal<FiltroCorreoCliente>('todos');
+  /** Clientes con el correo sin verificar (0 = aviso oculto, también si la consulta falla). */
+  protected readonly sinVerificar = signal(0);
+  protected readonly textoAviso = computed(() => textoAvisoSinVerificar(this.sinVerificar()));
+  /** Texto de «sin resultados» según los filtros activos. */
+  protected readonly textoVacioFiltros = computed(() => {
+    const estado = this.filtroAplicado() !== 'todos';
+    const correo = this.filtroCorreoAplicado() !== 'todos';
+    if (estado && correo) {
+      return 'No hay clientes con esos filtros.';
+    }
+    return correo ? 'No hay clientes con ese estado de correo.' : 'No hay clientes con ese estado.';
+  });
   /** Código recién generado. Solo en memoria mientras el diálogo está abierto. */
   protected readonly codigoGenerado = signal<CodigoRecuperacion | null>(null);
 
   /** Evita que una respuesta lenta reemplace a una más reciente. */
   private consultaActual = 0;
+  private consultaAviso = 0;
 
   constructor() {
     this.busqueda.valueChanges
@@ -159,6 +201,19 @@ export class Clientes {
         this.primero.set(0);
         void this.cargar();
       });
+
+    this.filtroCorreo.valueChanges
+      .pipe(takeUntilDestroyed(inject(DestroyRef)))
+      .subscribe((filtro) => {
+        this.filtroCorreoAplicado.set(filtro);
+        this.primero.set(0);
+        void this.cargar();
+      });
+  }
+
+  /** Atajo del aviso: muestra solo los clientes con el correo sin verificar. */
+  protected verSinVerificar(): void {
+    this.filtroCorreo.setValue('sin-verificar');
   }
 
   /** La tabla pide una página (al iniciar, al paginar o al cambiar las filas por página). */
@@ -173,6 +228,8 @@ export class Clientes {
     this.busqueda.setValue('', { emitEvent: false });
     this.filtroEstado.setValue('todos', { emitEvent: false });
     this.filtroAplicado.set('todos');
+    this.filtroCorreo.setValue('todos', { emitEvent: false });
+    this.filtroCorreoAplicado.set('todos');
     this.aplicarBusqueda('');
   }
 
@@ -189,7 +246,9 @@ export class Clientes {
       paginaDesdeIndice(this.primero(), this.tamanio()),
       this.tamanio(),
       activoDeFiltro(this.filtroAplicado()),
+      correoVerificadoDeFiltro(this.filtroCorreoAplicado()),
     );
+    void this.actualizarAviso();
     const numero = ++this.consultaActual;
     this.error.set(null);
     this.cargando.set(true);
@@ -212,6 +271,21 @@ export class Clientes {
       if (numero === this.consultaActual) {
         this.cargando.set(false);
       }
+    }
+  }
+
+  /**
+   * Cuenta los clientes sin correo verificado (todos, sin importar los filtros). Si la
+   * consulta falla, el aviso se oculta: no es crítico y no debe tapar la tabla.
+   */
+  private async actualizarAviso(): Promise<void> {
+    const numero = ++this.consultaAviso;
+    const cantidad = await this.api.contarSinCorreoVerificado().then(
+      (total) => (Number.isInteger(total) && total > 0 ? total : 0),
+      () => 0,
+    );
+    if (numero === this.consultaAviso) {
+      this.sinVerificar.set(cantidad);
     }
   }
 

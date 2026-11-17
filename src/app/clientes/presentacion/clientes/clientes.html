@@ -39,7 +39,45 @@
         data-prueba="filtro-estado"
       />
     </div>
+
+    <div class="cs-clientes__busqueda">
+      <label for="filtro-correo-clientes" class="cs-clientes__etiqueta">Correo</label>
+      <p-select
+        inputId="filtro-correo-clientes"
+        [options]="opcionesCorreo"
+        optionLabel="etiqueta"
+        optionValue="valor"
+        [formControl]="filtroCorreo"
+        [fluid]="true"
+        ariaLabel="Filtrar clientes por correo verificado"
+        data-prueba="filtro-correo"
+      />
+    </div>
   </div>
+
+  @if (sinVerificar() > 0) {
+    <p-message
+      severity="warn"
+      icon="pi pi-envelope"
+      role="status"
+      class="cs-clientes__mensaje"
+      data-prueba="aviso-sin-verificar"
+    >
+      <span class="cs-clientes__texto-error">
+        {{ textoAviso() }}. No podrán recuperar su clave por correo; solo con tu ayuda.
+      </span>
+      @if (filtroCorreoAplicado() !== 'sin-verificar') {
+        <p-button
+          label="Ver solo estos"
+          icon="pi pi-filter"
+          [text]="true"
+          size="small"
+          data-prueba="ver-sin-verificar"
+          (onClick)="verSinVerificar()"
+        />
+      }
+    </p-message>
+  }
 
   @if (error(); as textoError) {
     <p-message severity="error" icon="pi pi-times-circle" role="alert" class="cs-clientes__mensaje">
@@ -85,7 +123,35 @@
     <ng-template #body let-fila>
       <tr data-prueba="fila-cliente">
         <td class="cs-clientes__nombre">{{ fila.nombre }}</td>
-        <td class="cs-clientes__correo">{{ fila.correo }}</td>
+        <td class="cs-clientes__correo">
+          <span class="cs-clientes__direccion">{{ fila.correo }}</span>
+          @switch (fila.estadoCorreo) {
+            @case ('verificado') {
+              <p-tag
+                [value]="etiquetaVerificado"
+                severity="success"
+                icon="pi pi-check-circle"
+                data-prueba="correo-verificado"
+              />
+            }
+            @case ('sin-verificar') {
+              <!-- Enfocable: la ayuda emergente también aparece con el teclado y la lee el lector. -->
+              <p-tag
+                class="cs-clientes__ayuda"
+                [value]="etiquetaSinVerificar"
+                severity="warn"
+                icon="pi pi-exclamation-triangle"
+                tabindex="0"
+                [pTooltip]="ayudaSinVerificar"
+                tooltipEvent="both"
+                tooltipPosition="top"
+                [attr.aria-describedby]="'ayuda-correo-' + fila.id"
+                data-prueba="correo-sin-verificar"
+              />
+              <span class="cs-solo-lector" [id]="'ayuda-correo-' + fila.id">{{ ayudaSinVerificar }}</span>
+            }
+          }
+        </td>
         <td data-prueba="estado-cuenta">
           <p-tag
             [value]="fila.etiquetaEstado"
@@ -174,8 +240,8 @@
                 [outlined]="true"
                 (onClick)="limpiarFiltros()"
               />
-            } @else if (filtroAplicado() !== 'todos' && !error()) {
-              <span>No hay clientes con ese estado.</span>
+            } @else if ((filtroAplicado() !== 'todos' || filtroCorreoAplicado() !== 'todos') && !error()) {
+              <span>{{ textoVacioFiltros() }}</span>
               <p-button
                 label="Limpiar filtros"
                 icon="pi pi-filter-slash"

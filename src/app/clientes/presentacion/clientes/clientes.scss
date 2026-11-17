@@ -55,6 +55,22 @@
   word-break: break-word;
 }
 
+// La etiqueta de verificación va debajo de la dirección.
+.cs-clientes__direccion {
+  display: block;
+  margin-bottom: 0.25rem;
+}
+
+// Enfocable con el teclado para que la ayuda emergente también se lea sin ratón.
+.cs-clientes__ayuda {
+  cursor: help;
+}
+
+.cs-clientes__ayuda:focus-visible {
+  outline: 2px solid var(--cs-primario);
+  outline-offset: 2px;
+}
+
 .cs-clientes__numero {
   white-space: nowrap;
   font-variant-numeric: tabular-nums;

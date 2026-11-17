@@ -13,6 +13,12 @@ export abstract class ApiClientes {
   /** GET /usuarios: clientes paginados, con búsqueda opcional. */
   abstract listar(consulta: ConsultaClientes): Promise<PaginaClientes>;
 
+  /**
+   * Cuántos clientes tienen el correo sin verificar: `total` de
+   * `GET /usuarios?correoVerificado=false&tamanio=1` (contrato usuarios-gestion.md).
+   */
+  abstract contarSinCorreoVerificado(): Promise<number>;
+
   /** POST /usuarios/{id}/codigo-recuperacion: genera un código e invalida el anterior. */
   abstract generarCodigoRecuperacion(idCliente: string): Promise<CodigoRecuperacion>;
 

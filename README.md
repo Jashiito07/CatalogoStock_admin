@@ -202,6 +202,13 @@ infraestructura┘
   app. Sus pedidos se conservan.»); «Reactivar» es directa, con aviso. No existe «Eliminar». Una cuenta
   desactivada no ofrece «Generar código» (la API respondería 422 `CUENTA_INACTIVA`). Errores 403, 404 y
   422 `OPERACION_NO_PERMITIDA` (la cuenta del Vendedor) se avisan con mensajes claros.
+- **Correo de los clientes**: la columna «Correo» añade `p-tag` «Verificado» o «Sin verificar» (con ayuda
+  emergente, también con el teclado) según `correoVerificadoEn` de `GET /usuarios`; si la API no envía
+  el campo no se muestra etiqueta. El filtro «Correo» (Todos, Verificados, Sin verificar →
+  `?correoVerificado=true|false`) se combina con el de estado y la búsqueda. Un aviso sobre la tabla
+  («N clientes tienen el correo sin verificar») usa `?correoVerificado=false&tamanio=1` y su `total`; se
+  oculta si es 0, si la consulta falla o si la API ignora el filtro. Contrato:
+  `docs/contrato-api/usuarios-gestion.md`.
 - **Verifica tu correo** (Inicio): mientras `correoVerificadoEn` sea `null`, «Enviar código»
   (`POST /usuarios/yo/correo/verificacion`), campo de 6 dígitos y «Confirmar»
   (`/correo/confirmacion`), con cuenta regresiva de reenvío y avisos para 409, 422, 429 y 503.
