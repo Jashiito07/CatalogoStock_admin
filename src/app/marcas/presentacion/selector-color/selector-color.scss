@@ -27,6 +27,21 @@
   box-shadow: 0 0 0 1px var(--cs-texto-secundario);
 }
 
+// Color fijo (D-56): PrimeNG atenúa los campos deshabilitados (opacity .6), lo que baja el
+// contraste del código hexadecimal; se mantiene el texto legible (RNF-11) y se distingue por
+// el fondo y el cursor.
+.cs-selector-color__hex:disabled {
+  opacity: 1;
+  color: var(--cs-texto);
+  background: var(--cs-superficie);
+  cursor: not-allowed;
+}
+
+.cs-selector-color ::ng-deep .p-colorpicker-preview:disabled {
+  opacity: 1;
+  cursor: not-allowed;
+}
+
 // El error usa los colores de estado de PrimeNG (contraste en claro y oscuro).
 .cs-selector-color__error {
   color: var(--p-red-700);

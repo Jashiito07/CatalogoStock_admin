@@ -92,27 +92,70 @@ describe('ConfiguraNegocio (D-48, RF-PRO-06)', () => {
     expect(continuar()?.disabled).toBe(false);
   });
 
-  it('cambiar el color por el campo hexadecimal actualiza el contraste', async () => {
-    const hex = tarjetas()[0]?.querySelector<HTMLInputElement>('[data-prueba="selector-hex"]');
+  it('D-56: los colores de las sugeridas están bloqueados (sin selector) y con nota', () => {
+    for (const tarjeta of tarjetas()) {
+      expect(tarjeta.querySelector('[data-prueba="selector-hex"]')).toBeNull();
+      expect(tarjeta.querySelector('[data-prueba="selector-visual"]')).toBeNull();
+      expect(tarjeta.querySelector('[data-prueba="nota-color-fijo"]')?.textContent).toContain(
+        'son fijos',
+      );
+    }
+    expect(tarjetas()[1]?.querySelector('[data-prueba="nota-color-fijo"]')?.textContent).toContain(
+      'Los colores de Avon son fijos.',
+    );
+    expect(tarjetas()[2]?.querySelector('[data-prueba="chip-acento"]')).not.toBeNull();
+  });
+
+  async function agregarPropia(texto: string): Promise<void> {
+    const nombre = elemento.querySelector<HTMLInputElement>('[data-prueba="nombre-propia"]');
+    nombre!.value = texto;
+    nombre!.dispatchEvent(new Event('input'));
+    await estable();
+  }
+
+  it('la marca propia conserva colores libres: el hexadecimal actualiza el contraste', async () => {
+    await agregarPropia('Natura');
+    elemento.querySelector<HTMLButtonElement>('[data-prueba="agregar-propia"] button')?.click();
+    await estable();
+    const hex = tarjetas()[3]?.querySelector<HTMLInputElement>('[data-prueba="selector-hex"]');
+    expect(tarjetas()[3]?.querySelector('[data-prueba="nota-color-fijo"]')).toBeNull();
     hex!.value = 'ffffff';
     hex!.dispatchEvent(new Event('input'));
     await estable();
-    expect(tarjetas()[0]?.querySelector('[data-prueba="contraste-principal"]')?.textContent).toContain(
-      '#1E293B',
-    );
+    expect(
+      tarjetas()[3]?.querySelector('[data-prueba="contraste-principal"]')?.textContent,
+    ).toContain('#1E293B');
     expect(hex?.value).toBe('#FFFFFF');
   });
 
-  it('un color inválido deshabilita «Continuar» y muestra el error', async () => {
-    await elegir(0);
-    const hex = tarjetas()[0]?.querySelector<HTMLInputElement>('[data-prueba="selector-hex"]');
+  it('un color inválido de una marca propia deshabilita «Continuar» y muestra el error', async () => {
+    await agregarPropia('Natura');
+    elemento.querySelector<HTMLButtonElement>('[data-prueba="agregar-propia"] button')?.click();
+    await estable();
+    const hex = tarjetas()[3]?.querySelector<HTMLInputElement>('[data-prueba="selector-hex"]');
     hex!.value = '#12';
     hex!.dispatchEvent(new Event('input'));
     await estable();
-    expect(tarjetas()[0]?.querySelector('[data-prueba="error-color"]')).not.toBeNull();
+    expect(tarjetas()[3]?.querySelector('[data-prueba="error-color"]')).not.toBeNull();
     expect(continuar()?.disabled).toBe(true);
   });
 
+  it('D-56: una marca propia no puede llamarse como una conocida (L´Bel, avón…)', async () => {
+    await agregarPropia('Avón');
+    expect(elemento.querySelector('[data-prueba="error-propia"]')?.textContent).toContain(
+      'ya está en la lista',
+    );
+  });
+
+  it('422 COLOR_MARCA_FIJO se muestra con un mensaje claro en la tarjeta', async () => {
+    crear.mockRejectedValue(new ErrorApi('COLOR_MARCA_FIJO', 'x', 422));
+    await elegir(1);
+    continuar()?.click();
+    await estable();
+    expect(tarjetas()[1]?.querySelector('[data-prueba="error-marca"]')?.textContent).toContain(
+      'colores de una marca conocida no se pueden cambiar',
+    );
+  });
   it('crea con POST solo las elegidas (con su acento) y lleva a /marcas con un aviso', async () => {
     const agregar = vi.spyOn(avisos, 'add');
     await elegir(0);
@@ -121,7 +164,11 @@ describe('ConfiguraNegocio (D-48, RF-PRO-06)', () => {
     await estable();
 
     expect(crear).toHaveBeenCalledTimes(2);
-    expect(crear).toHaveBeenNthCalledWith(1, { nombre: 'Yanbal', color: '#FC5823', colorAcento: null });
+    expect(crear).toHaveBeenNthCalledWith(1, {
+      nombre: 'Yanbal',
+      color: '#FC5823',
+      colorAcento: null,
+    });
     expect(crear).toHaveBeenNthCalledWith(2, {
       nombre: 'Leonisa',
       color: '#222221',

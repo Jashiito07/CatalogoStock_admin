@@ -26,9 +26,11 @@ import {
 import {
   CambiosMarca,
   COLOR_MARCA_PREDETERMINADO,
+  buscarMarcaConocida,
   esColorValido,
   LONGITUD_MAXIMA_NOMBRE,
   Marca,
+  mismaMarcaConocida,
   nombreRepetido,
   validarNombre,
 } from '../../dominio/marca';
@@ -75,10 +77,39 @@ export class DialogoMarca {
 
   protected readonly titulo = computed(() => (this.marca() ? 'Editar marca' : 'Nueva marca'));
 
+  /** Id de la nota que explica por qué los colores están bloqueados (ria-describedby). */
+  protected readonly idNotaColores = 'nota-colores-fijos';
+
+  /** Marca conocida a la que pertenece la marca que se edita (sus colores no cambian, D-56). */
+  private readonly conocidaOriginal = computed(() => {
+    const existente = this.marca();
+    return existente ? buscarMarcaConocida(existente.nombre, this.estado.sugeridas()) : null;
+  });
+
+  /**
+   * Marca conocida que corresponde al formulario (D-56): la del nombre escrito o, al editar una
+   * conocida, la propia marca aunque el nombre esté a medio escribir. 
+ull: marca propia.
+   */
+  protected readonly conocida = computed(
+    () => buscarMarcaConocida(this.nombre(), this.estado.sugeridas()) ?? this.conocidaOriginal(),
+  );
+  protected readonly bloqueada = computed(() => this.conocida() !== null);
+
+  /** Colores que se muestran y se envían: los oficiales si es conocida; si no, los elegidos. */
+  protected readonly colorMostrado = computed(() => this.conocida()?.color ?? this.color());
+  protected readonly acentoMostrado = computed(() =>
+    this.conocida() ? (this.conocida()?.colorAcento ?? null) : this.colorAcento(),
+  );
+
   protected readonly errorNombre = computed(() => {
     const local = validarNombre(this.nombre());
     if (local !== null) {
       return this.nombreTocado() ? local : null;
+    }
+    const original = this.conocidaOriginal();
+    if (original !== null && !mismaMarcaConocida(this.nombre(), original.nombre)) {
+      return `El nombre de ${original.nombre} no se puede cambiar por otro; solo puedes corregir mayúsculas o tildes.`;
     }
     const otros = this.estado
       .marcas()
@@ -94,8 +125,8 @@ export class DialogoMarca {
     () =>
       validarNombre(this.nombre()) === null &&
       this.errorNombre() === null &&
-      esColorValido(this.color()) &&
-      (this.colorAcento() === null || esColorValido(this.colorAcento() ?? '')) &&
+      esColorValido(this.colorMostrado()) &&
+      (this.acentoMostrado() === null || esColorValido(this.acentoMostrado() ?? '')) &&
       (this.marca() === null || (this.orden() !== null && this.orden() !== undefined)),
   );
 
@@ -106,6 +137,7 @@ export class DialogoMarca {
         return;
       }
       const marca = untracked(() => this.marca());
+      void untracked(() => this.estado.cargarSugeridas());
       this.nombre.set(marca?.nombre ?? '');
       this.color.set(marca?.color ?? COLOR_MARCA_PREDETERMINADO);
       this.colorAcento.set(marca?.colorAcento ?? null);
@@ -140,15 +172,17 @@ export class DialogoMarca {
       const existente = this.marca();
       if (existente === null) {
         const creada = await this.estado.crear({
-          nombre: this.nombre().trim(),
-          color: this.color(),
-          colorAcento: this.colorAcento(),
+          nombre: this.conocida()?.nombre ?? this.nombre().trim(),
+          color: this.colorMostrado(),
+          colorAcento: this.acentoMostrado(),
         });
         this.guardada.emit(creada);
       } else {
         const cambios = this.cambiosDe(existente);
         const actualizada =
-          Object.keys(cambios).length > 0 ? await this.estado.actualizar(existente.id, cambios) : null;
+          Object.keys(cambios).length > 0
+            ? await this.estado.actualizar(existente.id, cambios)
+            : null;
         this.guardada.emit(actualizada);
       }
       this.visible.set(false);
@@ -163,15 +197,18 @@ export class DialogoMarca {
   /** PATCH parcial: solo los campos que cambiaron. */
   private cambiosDe(existente: Marca): CambiosMarca {
     const cambios: { -readonly [K in keyof CambiosMarca]: CambiosMarca[K] } = {};
-    const nombre = this.nombre().trim();
+    // Una marca propia que pasa a llamarse como una conocida toma el nombre oficial; una
+    // conocida conserva lo que escribió el Vendedor (solo mayúsculas o tildes).
+    const oficial = this.conocidaOriginal() === null ? this.conocida()?.nombre : undefined;
+    const nombre = oficial ?? this.nombre().trim();
     if (nombre !== existente.nombre) {
       cambios.nombre = nombre;
     }
-    if (this.color() !== existente.color) {
-      cambios.color = this.color();
+    if (this.colorMostrado() !== existente.color) {
+      cambios.color = this.colorMostrado();
     }
-    if (this.colorAcento() !== existente.colorAcento) {
-      cambios.colorAcento = this.colorAcento();
+    if (this.acentoMostrado() !== existente.colorAcento) {
+      cambios.colorAcento = this.acentoMostrado();
     }
     const orden = this.orden();
     if (orden !== null && orden !== existente.orden) {

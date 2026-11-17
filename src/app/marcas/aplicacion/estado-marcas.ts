@@ -4,6 +4,7 @@ import {
   CambiosMarca,
   cambiosAlMover,
   Marca,
+  MarcaSugerida,
   NuevaMarca,
   ordenarMarcas,
 } from '../dominio/marca';
@@ -26,6 +27,33 @@ export class EstadoMarcas {
   readonly cargada = computed(() => this.lista() !== null);
   /** `true` solo cuando la API confirmó que no hay marcas (D-48). */
   readonly sinMarcas = computed(() => this.lista()?.length === 0);
+
+  private readonly listaSugeridas = signal<readonly MarcaSugerida[]>([]);
+  private sugeridasEnCurso: Promise<readonly MarcaSugerida[]> | null = null;
+
+  /**
+   * Marcas conocidas (`GET /marcas/sugeridas`, D-56): fuente de sus colores fijos. Vacía hasta
+   * que se consulta; sin ella el panel no bloquea nada y el servidor sigue imponiendo la regla.
+   */
+  readonly sugeridas = computed(() => this.listaSugeridas());
+
+  /** Consulta `GET /marcas/sugeridas` una sola vez; si falla, devuelve lo que haya (vacío). */
+  cargarSugeridas(): Promise<readonly MarcaSugerida[]> {
+    if (this.listaSugeridas().length > 0) {
+      return Promise.resolve(this.listaSugeridas());
+    }
+    this.sugeridasEnCurso ??= Promise.resolve()
+      .then(() => this.api.sugeridas())
+      .then((sugeridas) => {
+        this.listaSugeridas.set(sugeridas);
+        return sugeridas;
+      })
+      .catch(() => this.listaSugeridas())
+      .finally(() => {
+        this.sugeridasEnCurso = null;
+      });
+    return this.sugeridasEnCurso;
+  }
 
   /** Consulta `GET /marcas?incluirInactivas=true`. Las llamadas simultáneas comparten una. */
   cargar(): Promise<readonly Marca[]> {

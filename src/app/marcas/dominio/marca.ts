@@ -115,6 +115,35 @@ export function claveDeNombre(nombre: string): string {
     .toLowerCase();
 }
 
+/**
+ * Clave para reconocer una marca conocida (D-56): sin mayúsculas, tildes ni signos, de modo que
+ * `L'Bel`, `L´Bel`, `lbel` y `Ésika` (→ `esika`) coincidan con la lista oficial.
+ */
+export function claveDeMarcaConocida(nombre: string): string {
+  return nombre
+    .normalize('NFD')
+    .replace(/\p{Diacritic}/gu, '')
+    .toLowerCase()
+    .replace(/[^\p{L}\p{N}]/gu, '');
+}
+
+/** `true` si los dos nombres son la misma marca (variantes de mayúscula, tilde o signo). */
+export function mismaMarcaConocida(a: string, b: string): boolean {
+  const clave = claveDeMarcaConocida(a);
+  return clave !== '' && clave === claveDeMarcaConocida(b);
+}
+
+/**
+ * Marca conocida (de `GET /marcas/sugeridas`) cuyo nombre coincide con `nombre`; `null` si es
+ * una marca propia. Los colores oficiales salen de la lista, nunca se copian a mano (D-56).
+ */
+export function buscarMarcaConocida(
+  nombre: string,
+  sugeridas: readonly MarcaSugerida[],
+): MarcaSugerida | null {
+  return sugeridas.find((s) => mismaMarcaConocida(s.nombre, nombre)) ?? null;
+}
+
 export function nombreRepetido(nombre: string, existentes: readonly string[]): boolean {
   const clave = claveDeNombre(nombre);
   return existentes.some((otro) => claveDeNombre(otro) === clave);
