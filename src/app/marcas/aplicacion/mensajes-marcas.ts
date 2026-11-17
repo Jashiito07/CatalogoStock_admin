@@ -4,6 +4,10 @@ export const MENSAJE_SIN_PERMISO = 'No tienes permiso para esta acción.';
 export const MENSAJE_MARCA_DUPLICADA = 'Ya existe una marca con ese nombre.';
 export const MENSAJE_MARCA_NO_ENCONTRADA =
   'No encontramos esta marca. Actualiza la lista e inténtalo de nuevo.';
+export const MENSAJE_COLOR_MARCA_FIJO =
+  'Los colores de una marca conocida no se pueden cambiar. Cierra el formulario y vuelve a abrirlo para ver los colores oficiales.';
+export const MENSAJE_NOMBRE_MARCA_FIJO =
+  'El nombre de una marca conocida no se puede cambiar por otro. Solo puedes corregir mayúsculas o tildes.';
 export const MENSAJE_DATOS_INVALIDOS = 'Revisa los datos de la marca e inténtalo de nuevo.';
 export const MENSAJE_ERROR_INESPERADO = 'Ocurrió un error inesperado. Inténtalo de nuevo.';
 
@@ -20,6 +24,12 @@ export function mensajeDeErrorDeMarca(error: unknown): string {
   }
   if (error.codigo === 'MARCA_DUPLICADA') {
     return MENSAJE_MARCA_DUPLICADA;
+  }
+  if (error.codigo === 'COLOR_MARCA_FIJO') {
+    return MENSAJE_COLOR_MARCA_FIJO;
+  }
+  if (error.codigo === 'NOMBRE_MARCA_FIJO') {
+    return MENSAJE_NOMBRE_MARCA_FIJO;
   }
   if (error.codigo === 'DATOS_INVALIDOS') {
     return MENSAJE_DATOS_INVALIDOS;

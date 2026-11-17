@@ -37,11 +37,13 @@ describe('Marcas (RF-PRO-04, D-43)', () => {
   }
 
   beforeEach(async () => {
-    listar = vi.fn().mockResolvedValue([
-      marca('a', 'Yanbal', 0),
-      marca('b', 'Leonisa', 1, { color: '#222221', colorAcento: '#F36E21' }),
-      marca('c', 'Esika', 2, { activa: false }),
-    ]);
+    listar = vi
+      .fn()
+      .mockResolvedValue([
+        marca('a', 'Yanbal', 0),
+        marca('b', 'Leonisa', 1, { color: '#222221', colorAcento: '#F36E21' }),
+        marca('c', 'Esika', 2, { activa: false }),
+      ]);
     actualizar = vi.fn((id: string, c: CambiosMarca) =>
       Promise.resolve(marca(id, 'X', 0, { ...c })),
     );
@@ -52,7 +54,10 @@ describe('Marcas (RF-PRO-04, D-43)', () => {
         provideRouter([]),
         MessageService,
         EstadoMarcas,
-        { provide: ApiMarcas, useValue: { listar, actualizar, crear } },
+        {
+          provide: ApiMarcas,
+          useValue: { listar, actualizar, crear, sugeridas: () => Promise.resolve([]) },
+        },
       ],
     }).compileComponents();
     fixture = TestBed.createComponent(Marcas);
@@ -62,12 +67,13 @@ describe('Marcas (RF-PRO-04, D-43)', () => {
 
   afterEach(() => fixture.destroy());
 
-  const filas = () => Array.from(elemento.querySelectorAll<HTMLElement>('[data-prueba="fila-marca"]'));
+  const filas = () =>
+    Array.from(elemento.querySelectorAll<HTMLElement>('[data-prueba="fila-marca"]'));
   const boton = (fila: number, id: string) =>
     filas()[fila]?.querySelector<HTMLButtonElement>(`[data-prueba="${id}"] button`);
   const botonDeConfirmacion = (texto: string) =>
-    Array.from(document.body.querySelectorAll<HTMLButtonElement>('.p-confirmdialog button')).find((b) =>
-      b.textContent?.includes(texto),
+    Array.from(document.body.querySelectorAll<HTMLButtonElement>('.p-confirmdialog button')).find(
+      (b) => b.textContent?.includes(texto),
     );
 
   it('muestra color, nombre, acento, estado y orden de cada marca', () => {
@@ -126,15 +132,16 @@ describe('Marcas (RF-PRO-04, D-43)', () => {
     nombre!.value = 'Natura';
     nombre!.dispatchEvent(new Event('input'));
     await estable();
-    document.body
-      .querySelector<HTMLButtonElement>('[data-prueba="guardar"] button')
-      ?.click();
+    document.body.querySelector<HTMLButtonElement>('[data-prueba="guardar"] button')?.click();
     await estable();
 
     expect(crear).toHaveBeenCalledWith({ nombre: 'Natura', color: '#2563EB', colorAcento: null });
   });
 
-  it('editar envía solo los campos que cambiaron', async () => {
+  it('editar una marca propia envía solo los campos que cambiaron', async () => {
+    listar.mockResolvedValue([marca('a', 'Natura', 0)]);
+    await fixture.componentInstance.cargar();
+    await estable();
     boton(0, 'editar')?.click();
     await estable();
     const hex = document.body.querySelector<HTMLInputElement>('[data-prueba="selector-hex"]');

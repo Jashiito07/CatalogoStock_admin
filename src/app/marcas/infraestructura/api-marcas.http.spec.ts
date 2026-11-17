@@ -103,6 +103,34 @@ describe('ApiMarcasHttp (contrato productos.md, «Endpoints: marcas»)', () => {
     expect((await promesa).activa).toBe(false);
   });
 
+  it('D-56: POST con un nombre conocido devuelve los colores oficiales que impone el servidor', async () => {
+    const promesa = api.crear({ nombre: 'Avon', color: '#FF2469', colorAcento: null });
+    http
+      .expectOne(`${API}/marcas`)
+      .flush(
+        { ...MARCA, nombre: 'Avon', color: '#FF2469' },
+        { status: 201, statusText: 'Created' },
+      );
+    expect((await promesa).color).toBe('#FF2469');
+  });
+
+  it.each(['COLOR_MARCA_FIJO', 'NOMBRE_MARCA_FIJO'])(
+    'D-56: PATCH 422 %s llega como ErrorApi con su código',
+    async (codigo) => {
+      const promesa = api.actualizar(MARCA.id, { color: '#000000' });
+      http
+        .expectOne(`${API}/marcas/${MARCA.id}`)
+        .flush(
+          { codigo, mensaje: 'No se puede.' },
+          { status: 422, statusText: 'Unprocessable Entity' },
+        );
+      const error = await promesa.catch((e: unknown) => e);
+      expect(error).toBeInstanceOf(ErrorApi);
+      expect((error as ErrorApi).codigo).toBe(codigo);
+      expect((error as ErrorApi).estado).toBe(422);
+    },
+  );
+
   it('no existe DELETE: el adaptador no lo ofrece', () => {
     expect('eliminar' in api).toBe(false);
   });

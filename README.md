@@ -170,6 +170,13 @@ Módulos previstos: `usuarios`, `productos`, `inventario`, `pedidos`, `pagos`,
   (selector de color + campo `#RRGGBB`, acento opcional, vista previa de la cabecera con el texto
   calculado y «Contraste 4.9:1 ✔»); activar o desactivar (desactivar pide confirmación) y subir o
   bajar el orden. No existe eliminar: una marca se desactiva.
+- **Colores fijos de las marcas conocidas (D-56)**: Yanbal, Avon, L'Bel, Cyzone, Esika y Leonisa se
+  reconocen por `GET /marcas/sugeridas` (sin copiar colores en el panel) con una normalización sin
+  mayúsculas, tildes ni signos (`claveDeMarcaConocida`: `L´Bel`, `lbel`, `Ésika`). Al escribir su nombre en
+  «Nueva marca», o al editarla, los colores oficiales aparecen **bloqueados** con la nota «Los colores de
+  [marca] son fijos» (`aria-describedby`); en «Configura tu negocio» no hay selector para las sugeridas. La
+  marca propia mantiene colores libres. El servidor impone la regla: 422 `COLOR_MARCA_FIJO` y
+  `NOMBRE_MARCA_FIJO` se muestran con mensaje claro.
 - Los colores de cada marca vienen de la API y se aplican como estilos en línea (única excepción a
   «sin hexadecimales en componentes»); el texto sobre el color se calcula igual que el servidor
   (blanco, `#1E293B`, `#0F172A`, negro: el primero con 4.5:1, RNF-11).

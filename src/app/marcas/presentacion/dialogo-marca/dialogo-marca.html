@@ -9,9 +9,13 @@
 >
   <form class="cs-dialogo-marca" (ngSubmit)="guardar()" novalidate id="formulario-marca">
     @if (errorGeneral(); as mensaje) {
-      <p-message severity="error" icon="pi pi-times-circle" role="alert" data-prueba="error-general">{{
-        mensaje
-      }}</p-message>
+      <p-message
+        severity="error"
+        icon="pi pi-times-circle"
+        role="alert"
+        data-prueba="error-general"
+        >{{ mensaje }}</p-message
+      >
     }
 
     <div class="cs-dialogo-marca__campo">
@@ -30,32 +34,48 @@
         data-prueba="nombre"
       />
       @if (errorNombre(); as mensaje) {
-        <small class="cs-dialogo-marca__error" role="alert" data-prueba="error-nombre">{{ mensaje }}</small>
+        <small class="cs-dialogo-marca__error" role="alert" data-prueba="error-nombre">{{
+          mensaje
+        }}</small>
       }
     </div>
 
+    @if (conocida(); as oficial) {
+      <p class="cs-dialogo-marca__nota" [id]="idNotaColores" data-prueba="nota-color-fijo">
+        <i class="pi pi-lock" aria-hidden="true"></i>
+        Los colores de {{ oficial.nombre }} son fijos.
+      </p>
+    }
+
     <app-selector-color
       etiqueta="Color principal"
-      [(valor)]="color"
+      [valor]="colorMostrado()"
+      (valorChange)="color.set($event)"
+      [deshabilitado]="bloqueada()"
+      [descritoPor]="bloqueada() ? idNotaColores : null"
       [errorExterno]="erroresServidor()['color'] ?? null"
     />
 
-    @if (colorAcento(); as acento) {
+    @if (acentoMostrado(); as acento) {
       <app-selector-color
         etiqueta="Color de acento"
         [valor]="acento"
         (valorChange)="colorAcento.set($event)"
+        [deshabilitado]="bloqueada()"
+        [descritoPor]="bloqueada() ? idNotaColores : null"
         [errorExterno]="erroresServidor()['colorAcento'] ?? null"
       />
-      <p-button
-        label="Quitar color de acento"
-        icon="pi pi-minus"
-        severity="secondary"
-        [text]="true"
-        size="small"
-        data-prueba="quitar-acento"
-        (onClick)="quitarAcento()"
-      />
+      @if (!bloqueada()) {
+        <p-button
+          label="Quitar color de acento"
+          icon="pi pi-minus"
+          severity="secondary"
+          [text]="true"
+          size="small"
+          data-prueba="quitar-acento"
+          (onClick)="quitarAcento()"
+        />
+      }
     } @else {
       <p-button
         label="Agregar color de acento (opcional)"
@@ -63,6 +83,8 @@
         severity="secondary"
         [outlined]="true"
         size="small"
+        [disabled]="bloqueada()"
+        [attr.aria-describedby]="bloqueada() ? idNotaColores : null"
         data-prueba="agregar-acento"
         (onClick)="agregarAcento()"
       />
@@ -86,7 +108,11 @@
 
     <div class="cs-dialogo-marca__campo">
       <span class="cs-dialogo-marca__etiqueta">Vista previa de la cabecera</span>
-      <app-vista-previa-marca [nombre]="nombre()" [color]="color()" [colorAcento]="colorAcento()" />
+      <app-vista-previa-marca
+        [nombre]="nombre()"
+        [color]="colorMostrado()"
+        [colorAcento]="acentoMostrado()"
+      />
     </div>
   </form>
 

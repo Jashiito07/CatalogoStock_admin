@@ -25,6 +25,11 @@ export class SelectorColor {
   /** Mensaje del servidor para este campo (400 por campo). */
   readonly errorExterno = input<string | null>(null);
 
+  /** Color fijo de una marca conocida (D-56): selector y campo deshabilitados. */
+  readonly deshabilitado = input(false);
+  /** `id` de la nota que explica el bloqueo (`aria-describedby`). */
+  readonly descritoPor = input<string | null>(null);
+
   protected readonly idCampo = `color-marca-${++contador}`;
   protected readonly valido = computed(() => esColorValido(this.valor()));
   protected readonly valorDelSelector = computed(() =>

@@ -18,14 +18,12 @@ import { TagModule } from 'primeng/tag';
 
 import { EstadoMarcas } from '../../aplicacion/estado-marcas';
 import { ApiMarcas } from '../../aplicacion/puertos';
-import {
-  erroresPorCampo,
-  mensajeDeErrorDeMarca,
-} from '../../aplicacion/mensajes-marcas';
+import { erroresPorCampo, mensajeDeErrorDeMarca } from '../../aplicacion/mensajes-marcas';
 import {
   COLOR_MARCA_PREDETERMINADO,
   esColorValido,
   LONGITUD_MAXIMA_NOMBRE,
+  mismaMarcaConocida,
   nombreRepetido,
   validarNombre,
 } from '../../dominio/marca';
@@ -106,10 +104,10 @@ export class ConfiguraNegocio implements OnInit {
     if (local !== null) {
       return this.propiaTocada() ? local : null;
     }
-    return nombreRepetido(
-      nombre,
-      this.opciones().map((opcion) => opcion.nombre),
-    )
+    const existentes = this.opciones().map((opcion) => opcion.nombre);
+    // `L´Bel` o `lbel` son la marca conocida L'Bel (D-56): no se agregan como marca propia.
+    return nombreRepetido(nombre, existentes) ||
+      existentes.some((otro) => mismaMarcaConocida(otro, nombre))
       ? 'Esa marca ya está en la lista.'
       : null;
   });
@@ -156,10 +154,6 @@ export class ConfiguraNegocio implements OnInit {
 
   protected cambiarColor(clave: string, color: string): void {
     this.cambiar(clave, { color });
-  }
-
-  protected cambiarAcento(clave: string, colorAcento: string): void {
-    this.cambiar(clave, { colorAcento });
   }
 
   protected quitarPropia(clave: string): void {

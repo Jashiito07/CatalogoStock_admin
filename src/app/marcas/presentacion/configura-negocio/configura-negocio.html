@@ -2,15 +2,21 @@
   <header>
     <h2 id="titulo-negocio" class="cs-negocio__titulo">Configura tu negocio</h2>
     <p class="cs-negocio__descripcion">
-      Elige las marcas con las que vendes. Puedes ajustar el color de cada una y agregar una marca
-      propia. Después podrás cambiarlas desde la sección Marcas.
+      Elige las marcas con las que vendes. Las marcas conocidas tienen sus colores oficiales fijos;
+      en una marca propia puedes elegir el color. Después podrás cambiarlas desde la sección Marcas.
     </p>
   </header>
 
   @if (error(); as textoError) {
     <p-message severity="error" icon="pi pi-times-circle" role="alert">
       <span class="cs-negocio__texto-error">{{ textoError }}</span>
-      <p-button label="Reintentar" icon="pi pi-refresh" [text]="true" size="small" (onClick)="cargar()" />
+      <p-button
+        label="Reintentar"
+        icon="pi pi-refresh"
+        [text]="true"
+        size="small"
+        (onClick)="cargar()"
+      />
     </p-message>
   }
 
@@ -30,7 +36,9 @@
             [disabled]="opcion.yaCreada || guardando()"
             data-prueba="casilla"
           />
-          <label [for]="'elegir-' + opcion.clave" class="cs-negocio__nombre">{{ opcion.nombre }}</label>
+          <label [for]="'elegir-' + opcion.clave" class="cs-negocio__nombre">{{
+            opcion.nombre
+          }}</label>
           @if (opcion.yaCreada) {
             <p-tag value="Ya creada" severity="success" />
           }
@@ -56,24 +64,28 @@
         />
 
         @if (!opcion.yaCreada) {
-          <app-selector-color
-            etiqueta="Color principal"
-            [valor]="opcion.color"
-            (valorChange)="cambiarColor(opcion.clave, $event)"
-          />
-          @if (opcion.colorAcento; as acento) {
+          @if (opcion.propia) {
             <app-selector-color
-              etiqueta="Color de acento"
-              [valor]="acento"
-              (valorChange)="cambiarAcento(opcion.clave, $event)"
+              etiqueta="Color principal"
+              [valor]="opcion.color"
+              (valorChange)="cambiarColor(opcion.clave, $event)"
             />
+          } @else {
+            <p class="cs-negocio__nota" data-prueba="nota-color-fijo">
+              <i class="pi pi-lock" aria-hidden="true"></i>
+              Los colores de {{ opcion.nombre }} son fijos.
+            </p>
           }
         }
 
         @if (opcion.error; as mensaje) {
-          <p-message severity="error" icon="pi pi-times-circle" role="alert" data-prueba="error-marca">{{
-            mensaje
-          }}</p-message>
+          <p-message
+            severity="error"
+            icon="pi pi-times-circle"
+            role="alert"
+            data-prueba="error-marca"
+            >{{ mensaje }}</p-message
+          >
         }
       </p-card>
     }
@@ -95,7 +107,9 @@
           data-prueba="nombre-propia"
         />
         @if (errorPropia(); as mensaje) {
-          <small class="cs-negocio__error" role="alert" data-prueba="error-propia">{{ mensaje }}</small>
+          <small class="cs-negocio__error" role="alert" data-prueba="error-propia">{{
+            mensaje
+          }}</small>
         }
       </div>
       <app-selector-color etiqueta="Color de la marca" [(valor)]="colorPropia" />
