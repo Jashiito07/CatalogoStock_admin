@@ -7,7 +7,17 @@
         eliminado deja de verse en el catálogo, pero su historial de pedidos se conserva.
       </p>
     </div>
-    <p-button label="Nuevo producto" icon="pi pi-plus" data-prueba="nuevo-producto" (onClick)="nuevo()" />
+    <div class="cs-productos__botones">
+      <p-button
+        label="Importar catálogo (PDF)"
+        icon="pi pi-file-pdf"
+        severity="secondary"
+        [outlined]="true"
+        routerLink="/productos/importar"
+        data-prueba="importar-catalogo"
+      />
+      <p-button label="Nuevo producto" icon="pi pi-plus" data-prueba="nuevo-producto" (onClick)="nuevo()" />
+    </div>
   </header>
 
   <form class="cs-productos__filtros" role="search" (submit)="$event.preventDefault()">

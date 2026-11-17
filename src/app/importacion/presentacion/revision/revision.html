@@ -1,0 +1,294 @@
+<section class="cs-revision" aria-labelledby="titulo-revision">
+  <header class="cs-revision__encabezado">
+    <div>
+      <h2 id="titulo-revision" class="cs-revision__titulo">Revisión de borradores</h2>
+      @if (estado.importacion(); as importacion) {
+        <p class="cs-revision__descripcion" data-prueba="resumen-importacion">
+          <span class="cs-revision__archivo">{{ importacion.nombreArchivo }}</span> ·
+          {{ importacion.marca.nombre }} · {{ importacion.paginas }} páginas ·
+          {{ resumenDeAnalisis(importacion) }}
+        </p>
+      }
+      <p class="cs-revision__descripcion">
+        Revisa cada borrador y apruébalo para publicarlo. Lo que no apruebes no llega a tus clientes.
+      </p>
+    </div>
+    <div class="cs-revision__navegacion">
+      <p-button label="Importar otro PDF" icon="pi pi-upload" severity="secondary" [outlined]="true" routerLink="/productos/importar" data-prueba="importar-otro" />
+      <p-button label="Ir a Productos" icon="pi pi-box" severity="secondary" [outlined]="true" routerLink="/productos" data-prueba="ir-productos" />
+    </div>
+  </header>
+
+  @if (estado.error(); as textoError) {
+    <p-message severity="error" icon="pi pi-times-circle" role="alert" class="cs-revision__mensaje" data-prueba="error-lista">
+      <div class="cs-revision__cuerpo-mensaje">
+        <span>{{ textoError }}</span>
+        <p-button label="Reintentar" icon="pi pi-refresh" size="small" (onClick)="reintentar()" />
+      </div>
+    </p-message>
+  }
+
+  @if (aviso(); as resultado) {
+    <p-message
+      [severity]="resultado.omitidos ? 'warn' : 'success'"
+      [icon]="resultado.omitidos ? 'pi pi-exclamation-triangle' : 'pi pi-check-circle'"
+      role="status"
+      class="cs-revision__mensaje"
+      data-prueba="aviso-lote"
+    >
+      <div class="cs-revision__cuerpo-mensaje">
+      <span>
+        @if (resultado.accion === 'aprobados') {
+          <strong data-prueba="cantidad-aviso">{{ resultado.cantidad === 1 ? 'Se aprobó 1 producto' : 'Se aprobaron ' + resultado.cantidad + ' productos' }}.</strong>
+          Ya forman parte del catálogo; súbeles las imágenes desde Productos.
+        } @else {
+          <strong data-prueba="cantidad-aviso">{{ resultado.cantidad === 1 ? 'Se descartó 1 borrador' : 'Se descartaron ' + resultado.cantidad + ' borradores' }}.</strong>
+        }
+        @if (resultado.omitidos) {
+          No se procesaron: {{ resultado.omitidos }}.
+        }
+      </span>
+      @if (resultado.accion === 'aprobados' && resultado.cantidad > 0) {
+        <p-button label="Ir a Productos" icon="pi pi-images" size="small" routerLink="/productos" data-prueba="aviso-productos" />
+      }
+      </div>
+    </p-message>
+  }
+
+  <div class="cs-revision__estados">
+    <span id="etiqueta-estado" class="cs-revision__etiqueta">Estado</span>
+    <p-selectbutton
+      [options]="opcionesEstado()"
+      optionLabel="etiqueta"
+      optionValue="valor"
+      [allowEmpty]="false"
+      [ngModel]="estadoFiltro()"
+      (ngModelChange)="alElegirEstado($event)"
+      [ngModelOptions]="{ standalone: true }"
+      ariaLabelledBy="etiqueta-estado"
+      data-prueba="filtro-estado"
+    />
+  </div>
+
+  <form class="cs-revision__filtros" role="search" (submit)="$event.preventDefault()">
+    <div class="cs-revision__filtro cs-revision__filtro--busqueda">
+      <label for="busqueda-borradores" class="cs-revision__etiqueta">Buscar</label>
+      <p-iconfield>
+        <p-inputicon class="pi pi-search" />
+        <input
+          pInputText
+          id="busqueda-borradores"
+          type="search"
+          name="busqueda"
+          autocomplete="off"
+          placeholder="Nombre o código"
+          [maxlength]="busquedaMaxima"
+          [ngModel]="texto()"
+          (ngModelChange)="alEscribir($event)"
+          [ngModelOptions]="{ standalone: true }"
+          class="cs-revision__busqueda"
+          data-prueba="busqueda"
+        />
+      </p-iconfield>
+    </div>
+
+    <div class="cs-revision__filtro">
+      <label for="filtro-pagina-pdf" class="cs-revision__etiqueta">Página del PDF</label>
+      <input
+        pInputText
+        id="filtro-pagina-pdf"
+        inputmode="numeric"
+        autocomplete="off"
+        placeholder="Ej.: 12"
+        [ngModel]="paginaPdf()"
+        (ngModelChange)="alEscribirPaginaPdf($event)"
+        [ngModelOptions]="{ standalone: true }"
+        [attr.aria-invalid]="errorPaginaPdf() ? 'true' : null"
+        class="cs-revision__busqueda"
+        data-prueba="filtro-pagina"
+      />
+      @if (errorPaginaPdf(); as mensaje) {
+        <small class="cs-revision__error" role="alert" data-prueba="error-pagina">{{ mensaje }}</small>
+      }
+    </div>
+
+    <div class="cs-revision__filtro cs-revision__filtro--casilla">
+      <p-checkbox
+        inputId="solo-advertencias"
+        [binary]="true"
+        [ngModel]="soloAdvertencias()"
+        (ngModelChange)="soloAdvertencias.set($event)"
+        (onChange)="alElegirFiltro()"
+        [ngModelOptions]="{ standalone: true }"
+        data-prueba="solo-advertencias"
+      />
+      <label for="solo-advertencias">Solo con advertencias</label>
+    </div>
+
+    @if (hayFiltrosActivos()) {
+      <p-button label="Limpiar filtros" icon="pi pi-filter-slash" severity="secondary" [outlined]="true" data-prueba="limpiar-filtros" (onClick)="limpiarFiltros()" />
+    }
+  </form>
+
+  @if (seleccionables()) {
+    <div class="cs-revision__barra" role="toolbar" aria-label="Acciones sobre los borradores seleccionados" data-prueba="barra-acciones">
+      <span class="cs-revision__seleccion" aria-live="polite" data-prueba="conteo-seleccion">
+        {{ seleccion().length === 1 ? '1 seleccionado' : seleccion().length + ' seleccionados' }}
+        @if (seleccionSinPrecio() > 0) {
+          · {{ seleccionSinPrecio() }} sin precio (no se pueden aprobar)
+        }
+      </span>
+      <p-button
+        label="Aprobar seleccionados"
+        icon="pi pi-check"
+        [disabled]="aprobables().length === 0 || ocupado()"
+        [loading]="ocupado()"
+        data-prueba="aprobar"
+        (onClick)="pedirAprobar()"
+      />
+      <p-button
+        label="Descartar"
+        icon="pi pi-trash"
+        severity="danger"
+        [outlined]="true"
+        [disabled]="seleccion().length === 0 || ocupado()"
+        data-prueba="descartar"
+        (onClick)="pedirDescartar()"
+      />
+    </div>
+  }
+
+  <p-table
+    [value]="filasTabla()"
+    dataKey="id"
+    [selection]="seleccion()"
+    (selectionChange)="seleccion.set($event)"
+    [lazy]="true"
+    [lazyLoadOnInit]="false"
+    [paginator]="true"
+    [rows]="estado.consulta().tamanio"
+    [first]="estado.primero()"
+    [totalRecords]="estado.total()"
+    [rowsPerPageOptions]="tamaniosPagina"
+    [loading]="estado.cargando()"
+    [showCurrentPageReport]="true"
+    currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} borradores"
+    [scrollable]="true"
+    size="small"
+    [tableStyle]="{ 'min-width': '56rem' }"
+    class="cs-revision__tabla"
+    (onLazyLoad)="alCambiarPagina($event)"
+  >
+    <ng-template #header>
+      <tr>
+        <th scope="col" class="cs-revision__casilla">
+          @if (seleccionables()) {
+            <p-tableheadercheckbox ariaLabel="Seleccionar todos los borradores de la página" />
+          } @else {
+            <span class="cs-solo-lector">Selección</span>
+          }
+        </th>
+        <th scope="col">Pág.</th>
+        <th scope="col">Código</th>
+        <th scope="col">Nombre</th>
+        <th scope="col" class="cs-revision__derecha">Precio</th>
+        <th scope="col">Marca</th>
+        <th scope="col">Disponibilidad</th>
+        <th scope="col">Advertencias</th>
+        <th scope="col"><span class="cs-solo-lector">Acciones</span></th>
+      </tr>
+    </ng-template>
+
+    <ng-template #body let-fila>
+      <tr data-prueba="fila-borrador">
+        <td class="cs-revision__casilla">
+          @if (seleccionables()) {
+            <p-tablecheckbox [value]="fila" [ariaLabel]="'Seleccionar ' + fila.nombre" />
+          }
+        </td>
+        <td data-prueba="pagina-borrador">{{ fila.pagina }}</td>
+        <td class="cs-revision__codigo" data-prueba="codigo-borrador">{{ fila.codigo ?? '—' }}</td>
+        <td class="cs-revision__nombre" data-prueba="nombre-borrador">{{ fila.nombre }}</td>
+        <td class="cs-revision__derecha cs-revision__precio" data-prueba="precio-borrador">
+          @if (fila.precio !== null) {
+            {{ precioDeBorrador(fila.precio) }}
+          } @else {
+            <span class="cs-revision__sin-precio">Sin precio</span>
+          }
+          @if (fila.precioNormal) {
+            <span class="cs-revision__normal" data-prueba="precio-normal">Normal {{ precioDeBorrador(fila.precioNormal) }}</span>
+          }
+        </td>
+        <td data-prueba="marca-borrador">{{ nombreMarca(fila.marcaId) }}</td>
+        <td>
+          <p-tag [value]="etiquetaDisponibilidad(fila.disponibilidad)" [severity]="severidad(fila.disponibilidad)" />
+        </td>
+        <td>
+          <span class="cs-revision__advertencias" data-prueba="advertencias">
+            @for (codigo of advertenciasDeRevision(fila); track codigo) {
+              <p-tag
+                [value]="infoAdvertencia(codigo).etiqueta"
+                [severity]="codigo === 'SIN_PRECIO' ? 'danger' : 'warn'"
+                icon="pi pi-exclamation-triangle"
+                [title]="infoAdvertencia(codigo).ayuda"
+                data-prueba="advertencia-revision"
+              />
+            }
+            @for (codigo of advertenciasInformativas(fila); track codigo) {
+              <p-tag
+                [value]="infoAdvertencia(codigo).etiqueta"
+                severity="info"
+                icon="pi pi-info-circle"
+                [title]="infoAdvertencia(codigo).ayuda"
+                class="cs-revision__informativa"
+                data-prueba="advertencia-informativa"
+              />
+            }
+          </span>
+        </td>
+        <td class="cs-revision__acciones">
+          @if (puedeEditar(fila)) {
+            <p-button
+              icon="pi pi-pencil"
+              size="small"
+              [rounded]="true"
+              [outlined]="true"
+              [ariaLabel]="'Editar ' + fila.nombre"
+              [attr.title]="'Editar ' + fila.nombre"
+              data-prueba="editar"
+              (onClick)="editar(fila)"
+            />
+          }
+        </td>
+      </tr>
+    </ng-template>
+
+    <ng-template #emptymessage>
+      <tr>
+        <td colspan="9">
+          <div class="cs-revision__vacio" data-prueba="borradores-vacio">
+            @if (!estado.error() && !estado.cargando()) {
+              @if (estado.hayFiltros()) {
+                <span>No encontramos borradores con esos filtros.</span>
+                <p-button label="Limpiar filtros" icon="pi pi-filter-slash" size="small" [outlined]="true" data-prueba="limpiar-vacio" (onClick)="limpiarFiltros()" />
+              } @else if (estadoFiltro() === 'PENDIENTE') {
+                <span>No quedan borradores pendientes de revisar.</span>
+              } @else {
+                <span>No hay borradores en este estado.</span>
+              }
+            }
+          </div>
+        </td>
+      </tr>
+    </ng-template>
+  </p-table>
+</section>
+
+<p-confirmdialog />
+
+<app-dialogo-borrador
+  [(visible)]="dialogoVisible"
+  [borrador]="enEdicion()"
+  (guardado)="alGuardar($event)"
+  (noEditable)="alNoEditable()"
+/>

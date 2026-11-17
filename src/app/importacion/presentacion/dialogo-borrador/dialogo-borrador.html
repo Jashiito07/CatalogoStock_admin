@@ -1,0 +1,134 @@
+<p-dialog
+  header="Editar borrador"
+  [(visible)]="visible"
+  [modal]="true"
+  [draggable]="false"
+  [closable]="!guardando()"
+  [closeOnEscape]="!guardando()"
+  [style]="{ width: '40rem', 'max-width': '96vw' }"
+  [contentStyle]="{ 'max-height': '75vh' }"
+  data-prueba="dialogo-borrador"
+>
+  @if (borrador(); as b) {
+    <form class="cs-dialogo-borrador" (ngSubmit)="guardar()" novalidate>
+      <p class="cs-dialogo-borrador__ayuda" data-prueba="datos-origen">
+        Página {{ b.pagina }} del PDF
+        @if (b.codigo) {
+          · Cód. {{ b.codigo }}
+        }
+        @if (b.precioNormal) {
+          · Precio normal del catálogo {{ precioDeBorrador(b.precioNormal) }}
+        }
+      </p>
+
+      @if (errorGeneral(); as mensaje) {
+        <p-message severity="error" icon="pi pi-times-circle" role="alert" data-prueba="error-general">{{ mensaje }}</p-message>
+      }
+
+      <div class="cs-dialogo-borrador__campo">
+        <label for="nombre-borrador" class="cs-dialogo-borrador__etiqueta">Nombre</label>
+        <input
+          pInputText
+          id="nombre-borrador"
+          [ngModelOptions]="{ standalone: true }"
+          [ngModel]="nombre()"
+          (ngModelChange)="nombre.set($event)"
+          (blur)="tocar('nombre')"
+          [maxlength]="longitudMaximaNombre"
+          autocomplete="off"
+          [attr.aria-invalid]="errorNombre() ? 'true' : null"
+          class="cs-dialogo-borrador__entrada"
+          data-prueba="nombre"
+        />
+        @if (errorNombre(); as mensaje) {
+          <small class="cs-dialogo-borrador__error" role="alert" data-prueba="error-nombre">{{ mensaje }}</small>
+        }
+      </div>
+
+      <div class="cs-dialogo-borrador__fila">
+        <div class="cs-dialogo-borrador__campo">
+          <label for="precio-borrador" class="cs-dialogo-borrador__etiqueta">Precio (USD)</label>
+          <input
+            pInputText
+            id="precio-borrador"
+            [ngModelOptions]="{ standalone: true }"
+            [ngModel]="precio()"
+            (ngModelChange)="precio.set($event)"
+            (blur)="tocar('precio')"
+            inputmode="decimal"
+            autocomplete="off"
+            placeholder="12.50"
+            [attr.aria-invalid]="errorPrecio() ? 'true' : null"
+            class="cs-dialogo-borrador__entrada"
+            data-prueba="precio"
+          />
+          @if (errorPrecio(); as mensaje) {
+            <small class="cs-dialogo-borrador__error" role="alert" data-prueba="error-precio">{{ mensaje }}</small>
+          }
+        </div>
+
+        <div class="cs-dialogo-borrador__campo">
+          <label for="marca-borrador" class="cs-dialogo-borrador__etiqueta">Marca</label>
+          <p-select
+            inputId="marca-borrador"
+            [ngModelOptions]="{ standalone: true }"
+            [ngModel]="marcaId()"
+            (ngModelChange)="marcaId.set($event)"
+            [options]="opcionesMarca()"
+            optionLabel="nombre"
+            optionValue="id"
+            optionDisabled="inactiva"
+            placeholder="Elige una marca"
+            appendTo="body"
+            [fluid]="true"
+            [attr.aria-invalid]="errorMarca() ? 'true' : null"
+            data-prueba="marca"
+          />
+          @if (errorMarca(); as mensaje) {
+            <small class="cs-dialogo-borrador__error" role="alert" data-prueba="error-marca">{{ mensaje }}</small>
+          }
+        </div>
+      </div>
+
+      <div class="cs-dialogo-borrador__campo">
+        <label for="disponibilidad-borrador" class="cs-dialogo-borrador__etiqueta">Disponibilidad</label>
+        <p-select
+          inputId="disponibilidad-borrador"
+          [ngModelOptions]="{ standalone: true }"
+          [ngModel]="disponibilidad()"
+          (ngModelChange)="disponibilidad.set($event)"
+          [options]="opcionesDisponibilidad"
+          optionLabel="etiqueta"
+          optionValue="valor"
+          appendTo="body"
+          [fluid]="true"
+          data-prueba="disponibilidad"
+        />
+      </div>
+
+      <div class="cs-dialogo-borrador__campo">
+        <label for="descripcion-borrador" class="cs-dialogo-borrador__etiqueta">Descripción</label>
+        <textarea
+          pTextarea
+          id="descripcion-borrador"
+          rows="4"
+          [ngModelOptions]="{ standalone: true }"
+          [ngModel]="descripcion()"
+          (ngModelChange)="descripcion.set($event)"
+          [maxlength]="longitudMaximaDescripcion"
+          class="cs-dialogo-borrador__entrada"
+          data-prueba="descripcion"
+        ></textarea>
+        <small class="cs-dialogo-borrador__ayuda">{{ descripcion().length }} / {{ longitudMaximaDescripcion }}</small>
+        @if (errorDescripcion(); as mensaje) {
+          <small class="cs-dialogo-borrador__error" role="alert" data-prueba="error-descripcion">{{ mensaje }}</small>
+        }
+      </div>
+    </form>
+  }
+
+  <ng-template #footer>
+    <p-button label="Cancelar" severity="secondary" [outlined]="true" [disabled]="guardando()" data-prueba="cancelar" (onClick)="cancelar()" />
+    <p-button label="Guardar" icon="pi pi-check" [loading]="guardando()" [disabled]="!formularioValido()" data-prueba="guardar" (onClick)="guardar()" />
+  </ng-template>
+</p-dialog>

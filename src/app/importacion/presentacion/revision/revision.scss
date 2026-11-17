@@ -1,0 +1,190 @@
+// Colores solo desde --cs-* y el tema de PrimeNG.
+.cs-revision {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 1rem;
+}
+
+.cs-revision__encabezado {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.cs-revision__navegacion {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.cs-revision__titulo {
+  margin: 0;
+  font-size: 1.5rem;
+  color: var(--cs-primario);
+}
+
+.cs-revision__descripcion {
+  margin: 0.25rem 0 0;
+  max-width: 52rem;
+}
+
+.cs-revision__archivo {
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.cs-revision__mensaje {
+  display: block;
+}
+
+.cs-revision__cuerpo-mensaje {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 0.75rem;
+}
+
+.cs-revision__estados {
+  display: grid;
+  gap: 0.25rem;
+  justify-items: start;
+}
+
+.cs-revision__etiqueta {
+  font-weight: 600;
+  font-size: 0.875rem;
+}
+
+.cs-revision__filtros {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
+  gap: 0.75rem;
+  align-items: end;
+}
+
+.cs-revision__filtro {
+  display: grid;
+  gap: 0.25rem;
+  min-width: 0;
+}
+
+.cs-revision__filtro--busqueda {
+  grid-column: span 2;
+}
+
+.cs-revision__filtro--casilla {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: var(--cs-control-minimo);
+}
+
+@media (max-width: 36rem) {
+  .cs-revision__filtro--busqueda {
+    grid-column: auto;
+  }
+}
+
+.cs-revision__busqueda {
+  width: 100%;
+  min-height: var(--cs-control-minimo);
+  box-sizing: border-box;
+}
+
+.cs-revision__error {
+  color: var(--p-red-700);
+}
+
+:host-context(.app-oscuro) .cs-revision__error {
+  color: var(--p-red-300);
+}
+
+.cs-revision__barra {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  background-color: var(--cs-superficie);
+  border: 1px solid var(--cs-borde);
+  border-radius: 0.5rem;
+}
+
+.cs-revision__seleccion {
+  flex: 1 1 12rem;
+  font-weight: 600;
+}
+
+.cs-revision__casilla {
+  width: 3rem;
+}
+
+.cs-revision__codigo {
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.cs-revision__nombre {
+  min-width: 10rem;
+  font-weight: 600;
+}
+
+.cs-revision__derecha {
+  text-align: right;
+}
+
+.cs-revision__precio {
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.cs-revision__sin-precio {
+  color: var(--p-red-700);
+}
+
+:host-context(.app-oscuro) .cs-revision__sin-precio {
+  color: var(--p-red-300);
+}
+
+.cs-revision__normal {
+  display: block;
+  font-weight: 400;
+  font-size: 0.8125rem;
+  color: var(--cs-texto-secundario);
+}
+
+.cs-revision__advertencias {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+}
+
+// Las advertencias informativas se distinguen también sin color: borde punteado.
+:host ::ng-deep .cs-revision__informativa .p-tag {
+  border: 1px dashed currentcolor;
+}
+
+.cs-revision__acciones {
+  text-align: right;
+  white-space: nowrap;
+}
+
+.cs-revision__vacio {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem 0;
+}
+
+.cs-solo-lector {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
