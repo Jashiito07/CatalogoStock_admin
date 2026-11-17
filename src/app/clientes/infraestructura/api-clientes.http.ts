@@ -30,9 +30,26 @@ export class ApiClientesHttp extends ApiClientes {
     if (consulta.activo !== undefined) {
       params = params.set('activo', String(consulta.activo));
     }
+    if (consulta.correoVerificado !== undefined) {
+      params = params.set('correoVerificado', String(consulta.correoVerificado));
+    }
     return firstValueFrom(
       this.http.get<PaginaClientes>(`${this.urlApi}${RUTA_USUARIOS}`, { params }),
     );
+  }
+
+  /**
+   * `?correoVerificado=false&tamanio=1`: solo interesa el `total`. Si la API es antigua y
+   * ignora el filtro, el elemento devuelto no trae `correoVerificadoEn: null`; entonces el
+   * `total` sería el de todos los clientes y no se debe mostrar: se devuelve 0.
+   */
+  async contarSinCorreoVerificado(): Promise<number> {
+    const pagina = await this.listar({ pagina: 1, tamanio: 1, correoVerificado: false });
+    const primero = pagina.elementos[0];
+    if (primero !== undefined && primero.correoVerificadoEn !== null) {
+      return 0;
+    }
+    return pagina.total;
   }
 
   /** Sin cuerpo (contrato). El código de la respuesta no se registra en ningún lugar. */

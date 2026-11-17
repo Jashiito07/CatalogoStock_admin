@@ -14,6 +14,35 @@ export interface Cliente {
   readonly creadoEn: string;
   /** Vencimiento (UTC) del código vigente, o `null` si no hay uno. */
   readonly codigoRecuperacionVigenteHasta: string | null;
+  /**
+   * Fecha ISO en que confirmó su correo, o `null` si aún no (contrato usuarios-gestion.md,
+   * «Correo verificado en la lista de clientes»). Ausente en una API antigua: estado
+   * desconocido, nunca «sin verificar».
+   */
+  readonly correoVerificadoEn?: string | null;
+}
+
+/** Estado del correo de un cliente. `desconocido`: la API no envió el campo. */
+export type EstadoCorreo = 'verificado' | 'sin-verificar' | 'desconocido';
+
+export function estadoCorreoDe(cliente: Pick<Cliente, 'correoVerificadoEn'>): EstadoCorreo {
+  const fecha = cliente.correoVerificadoEn;
+  if (fecha === undefined) {
+    return 'desconocido';
+  }
+  return fecha === null ? 'sin-verificar' : 'verificado';
+}
+
+export const ETIQUETA_CORREO_VERIFICADO = 'Verificado';
+export const ETIQUETA_CORREO_SIN_VERIFICAR = 'Sin verificar';
+export const AYUDA_CORREO_SIN_VERIFICAR =
+  'Aún no confirmó su correo. No podrá recuperar su clave por correo; solo con tu ayuda.';
+
+/** Texto del aviso sobre la tabla: «N clientes tienen el correo sin verificar». */
+export function textoAvisoSinVerificar(cantidad: number): string {
+  return cantidad === 1
+    ? '1 cliente tiene el correo sin verificar'
+    : `${cantidad} clientes tienen el correo sin verificar`;
 }
 
 /** Formato de paginación del contrato (README). */
@@ -41,6 +70,25 @@ export interface ConsultaClientes {
   readonly busqueda?: string;
   /** `?activo=true|false` (D-53); ausente = todos los clientes. */
   readonly activo?: boolean;
+  /** `?correoVerificado=true|false`; ausente = todos los clientes. */
+  readonly correoVerificado?: boolean;
+}
+
+/** Filtro «Correo» de la tabla. */
+export type FiltroCorreoCliente = 'todos' | 'verificados' | 'sin-verificar';
+
+export const OPCIONES_FILTRO_CORREO: { etiqueta: string; valor: FiltroCorreoCliente }[] = [
+  { etiqueta: 'Todos', valor: 'todos' },
+  { etiqueta: 'Verificados', valor: 'verificados' },
+  { etiqueta: 'Sin verificar', valor: 'sin-verificar' },
+];
+
+/** Valor de `?correoVerificado=` para el filtro, o `undefined` para no filtrar. */
+export function correoVerificadoDeFiltro(filtro: FiltroCorreoCliente): boolean | undefined {
+  if (filtro === 'verificados') {
+    return true;
+  }
+  return filtro === 'sin-verificar' ? false : undefined;
 }
 
 /** Filtro de estado de la tabla (D-53). */
@@ -87,6 +135,7 @@ export function construirConsultaClientes(
   pagina: number,
   tamanio: number,
   activo?: boolean,
+  correoVerificado?: boolean,
 ): ConsultaClientes {
   const paginaValida = Number.isInteger(pagina) && pagina >= 1 ? pagina : 1;
   const tamanioValido =
@@ -99,6 +148,7 @@ export function construirConsultaClientes(
     tamanio: tamanioValido,
     ...(texto ? { busqueda: texto } : {}),
     ...(activo === undefined ? {} : { activo }),
+    ...(correoVerificado === undefined ? {} : { correoVerificado }),
   };
 }
 
