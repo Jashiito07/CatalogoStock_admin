@@ -13,6 +13,12 @@
   gap: 1rem;
 }
 
+.cs-productos__botones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
 .cs-productos__titulo {
   margin: 0;
   font-size: 1.5rem;

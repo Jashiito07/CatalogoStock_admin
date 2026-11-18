@@ -1,0 +1,228 @@
+<section class="cs-importar" aria-labelledby="titulo-importar">
+  <header class="cs-importar__encabezado">
+    <div>
+      <h2 id="titulo-importar" class="cs-importar__titulo">Importar catálogo (PDF)</h2>
+      <p class="cs-importar__descripcion">
+        Carga el catálogo de una marca en PDF. El sistema lee el nombre, el código y el precio de cada
+        producto y los deja como <strong>borradores</strong> para que los revises. Los borradores no
+        llegan a tus clientes hasta que los apruebes. Las imágenes se suben después, en Productos.
+      </p>
+    </div>
+    <p-button
+      label="Volver a Productos"
+      icon="pi pi-arrow-left"
+      severity="secondary"
+      [outlined]="true"
+      routerLink="/productos"
+      data-prueba="volver"
+    />
+  </header>
+
+  <form class="cs-importar__formulario" (submit)="$event.preventDefault()" aria-label="Importar catálogo">
+    <div class="cs-importar__campo">
+      <label for="marca-importacion" class="cs-importar__etiqueta">Marca del catálogo</label>
+      <p-select
+        inputId="marca-importacion"
+        [options]="opcionesMarca()"
+        optionLabel="nombre"
+        optionValue="id"
+        placeholder="Elige una marca"
+        [ngModel]="marcaId()"
+        (ngModelChange)="alElegirMarca($event)"
+        [ngModelOptions]="{ standalone: true }"
+        [disabled]="analizando()"
+        appendTo="body"
+        [fluid]="true"
+        data-prueba="marca"
+      >
+        <ng-template #item let-opcion>
+          <span class="cs-importar__marca">
+            <span class="cs-importar__muestra" [style.background-color]="opcion.color"></span>
+            {{ opcion.nombre }}
+          </span>
+        </ng-template>
+      </p-select>
+      <small class="cs-importar__ayuda">Solo marcas activas. Los productos quedan asignados a esta marca.</small>
+      @if (sinMarcasActivas()) {
+        <p-message severity="warn" icon="pi pi-exclamation-triangle" role="alert" data-prueba="sin-marcas">
+          No hay marcas activas. Activa o crea una en Marcas para importar un catálogo.
+        </p-message>
+      }
+    </div>
+
+    <div class="cs-importar__campo">
+      <span id="etiqueta-pdf" class="cs-importar__etiqueta">Archivo PDF</span>
+      <p-fileupload
+        #cargador
+        mode="advanced"
+        name="archivo"
+        accept=".pdf,application/pdf"
+        [multiple]="false"
+        [customUpload]="true"
+        [auto]="false"
+        [showUploadButton]="false"
+        [showCancelButton]="false"
+        [disabled]="analizando()"
+        chooseLabel="Elegir PDF"
+        chooseIcon="pi pi-file-pdf"
+        invalidFileTypeMessageSummary="Archivo no válido"
+        invalidFileTypeMessageDetail="Elige el catálogo en formato PDF."
+        aria-labelledby="etiqueta-pdf"
+        data-prueba="cargador"
+        (onSelect)="alSeleccionar($event)"
+        (onRemove)="alQuitarArchivo()"
+        (onClear)="alQuitarArchivo()"
+      >
+        <ng-template #content let-archivos let-mensajes="messages" let-quitar="removeFileCallback">
+          @for (mensaje of mensajes; track $index) {
+            <p-message [severity]="mensaje.severity" role="alert">{{ mensaje.text }}</p-message>
+          }
+          @if (archivos.length === 0) {
+            <p class="cs-importar__vacio">Arrastra el PDF aquí o usa «Elegir PDF».</p>
+          } @else {
+            @for (archivo of archivos; track archivo.name; let indice = $index) {
+              <div class="cs-importar__elegido" data-prueba="archivo-elegido">
+                <i class="pi pi-file-pdf" aria-hidden="true"></i>
+                <span class="cs-importar__elegido-nombre">{{ archivo.name }}</span>
+                <span class="cs-importar__ayuda cs-importar__tamano">{{ formatearTamano(archivo.size) }}</span>
+                <p-button
+                  icon="pi pi-times"
+                  [rounded]="true"
+                  [text]="true"
+                  severity="danger"
+                  ariaLabel="Quitar el archivo elegido"
+                  data-prueba="quitar-archivo"
+                  (onClick)="quitar($event, indice)"
+                />
+              </div>
+            }
+          }
+        </ng-template>
+      </p-fileupload>
+      <small class="cs-importar__ayuda">Un solo archivo PDF, hasta {{ maxMb }} MB.</small>
+      @if (errorArchivo(); as mensaje) {
+        <p-message severity="error" icon="pi pi-times-circle" role="alert" data-prueba="error-archivo">{{ mensaje }}</p-message>
+      }
+    </div>
+
+    <div class="cs-importar__acciones">
+      <p-button
+        label="Analizar"
+        icon="pi pi-search"
+        [loading]="analizando()"
+        [disabled]="!puedeAnalizar()"
+        data-prueba="analizar"
+        (onClick)="analizar()"
+      />
+    </div>
+
+    @if (analizando()) {
+      <div class="cs-importar__progreso" role="status" aria-live="polite" data-prueba="progreso">
+        <p-progressbar mode="indeterminate" [style]="{ height: '0.5rem' }" aria-label="Analizando el catálogo" />
+        <p class="cs-importar__ayuda">
+          Analizando el catálogo. Puede tardar hasta un minuto; no cierres esta pantalla.
+        </p>
+      </div>
+    }
+
+    @if (errorAnalisis(); as mensaje) {
+      <p-message severity="error" icon="pi pi-times-circle" role="alert" data-prueba="error-analisis">
+        <div class="cs-importar__cuerpo-mensaje">
+        <span>{{ mensaje }}</span>
+        @if (idExistente(); as id) {
+          <p-button
+            label="Abrir la importación existente"
+            icon="pi pi-folder-open"
+            size="small"
+            [routerLink]="['/productos/importar', id]"
+            data-prueba="abrir-existente"
+          />
+        }
+        </div>
+      </p-message>
+    }
+
+    @if (resultado(); as importacion) {
+      <p-message severity="success" icon="pi pi-check-circle" role="status" data-prueba="resultado">
+        <div class="cs-importar__cuerpo-mensaje">
+        <span>
+          <strong data-prueba="resumen">{{ resumen() }}</strong>
+          Revisa los borradores antes de aprobarlos.
+        </span>
+        <p-button
+          label="Revisar borradores"
+          icon="pi pi-list-check"
+          size="small"
+          [routerLink]="['/productos/importar', importacion.id]"
+          data-prueba="revisar"
+        />
+        </div>
+      </p-message>
+    }
+  </form>
+
+  <section class="cs-importar__recientes" aria-labelledby="titulo-recientes">
+    <h3 id="titulo-recientes" class="cs-importar__subtitulo">Importaciones recientes</h3>
+    <p class="cs-importar__ayuda">
+      Retoma una importación que dejaste a medias. Se recuerdan las de esta sesión del navegador.
+    </p>
+    <p-table
+      [value]="[...estado.recientes()]"
+      dataKey="id"
+      [loading]="estado.cargandoRecientes()"
+      [scrollable]="true"
+      [tableStyle]="{ 'min-width': '44rem' }"
+      data-prueba="tabla-recientes"
+    >
+      <ng-template #header>
+        <tr>
+          <th scope="col">Archivo</th>
+          <th scope="col">Marca</th>
+          <th scope="col">Fecha</th>
+          <th scope="col" class="cs-importar__derecha">Pendientes</th>
+          <th scope="col" class="cs-importar__derecha">Aprobados</th>
+          <th scope="col" class="cs-importar__derecha">Descartados</th>
+          <th scope="col"><span class="cs-solo-lector">Acciones</span></th>
+        </tr>
+      </ng-template>
+      <ng-template #body let-fila>
+        <tr data-prueba="fila-reciente">
+          <td class="cs-importar__archivo">{{ fila.nombreArchivo }}</td>
+          <td>
+            <span
+              class="cs-importar__chip"
+              [style.background-color]="fila.marca.color"
+              [style.color]="fila.marca.textoSobreColor"
+            >
+              {{ fila.marca.nombre }}
+            </span>
+          </td>
+          <td>{{ fechaHora(fila.creadaEn) }}</td>
+          <td class="cs-importar__derecha">{{ fila.totales.pendientes }}</td>
+          <td class="cs-importar__derecha">{{ fila.totales.aprobados }}</td>
+          <td class="cs-importar__derecha">{{ fila.totales.descartados }}</td>
+          <td class="cs-importar__derecha">
+            <p-button
+              label="Abrir"
+              icon="pi pi-folder-open"
+              size="small"
+              [outlined]="true"
+              [ariaLabel]="'Abrir la importación de ' + fila.nombreArchivo"
+              [routerLink]="['/productos/importar', fila.id]"
+              data-prueba="abrir-reciente"
+            />
+          </td>
+        </tr>
+      </ng-template>
+      <ng-template #emptymessage>
+        <tr>
+          <td colspan="7">
+            <p class="cs-importar__vacio" data-prueba="sin-recientes">
+              {{ estado.cargandoRecientes() ? 'Cargando…' : 'Todavía no hay importaciones en esta sesión.' }}
+            </p>
+          </td>
+        </tr>
+      </ng-template>
+    </p-table>
+  </section>
+</section>

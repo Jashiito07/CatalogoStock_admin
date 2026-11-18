@@ -8,6 +8,7 @@ import {
   signal,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { RouterLink } from '@angular/router';
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
@@ -62,6 +63,7 @@ interface OpcionFiltro<T> {
   selector: 'app-productos',
   imports: [
     FormsModule,
+    RouterLink,
     TableModule,
     ButtonModule,
     TagModule,

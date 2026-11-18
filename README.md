@@ -142,6 +142,7 @@ src/
       infraestructura/               ApiMarcasHttp (GET/POST/PATCH /marcas, sin DELETE)
       presentacion/                  configura-negocio, marcas, dialogo-marca, selector-color,
                                      vista-previa-marca y guards del negocio
+    importacion/                     Importación del catálogo en PDF y revisión de borradores (F2, D-55)
     <modulo>/{dominio,aplicacion,infraestructura,presentacion}/   (próximas fases)
 ```
 
@@ -189,6 +190,25 @@ Sección **Productos** (`/productos`, módulo `src/app/productos/`), contra `doc
 - Crear y editar en un diálogo: marca (solo activas), precio como **texto** con 2 decimales (nunca `number`; se muestra «$12.50»), descripción, disponibilidad (RN-09) e imágenes (`p-fileupload`, máx. 5, 2 MB, JPG/PNG/WebP, validadas también en el cliente; la primera es la principal).
 - Las imágenes nuevas y el orden se aplican al guardar (POST multipart y PUT de orden); quitar una imagen guardada es inmediato y pide confirmación. Eliminar un producto pide confirmación (RNF-12).
 - Sin marcas, el guard de «Configura tu negocio» (D-48) redirige.
+
+## Importar el catálogo en PDF (RF-PRO-01, RF-PRO-02, D-49, D-55)
+
+Módulo `src/app/importacion/`, contra `docs/contrato-api/productos-importacion.md`. En **Productos**, el botón
+«Importar catálogo (PDF)» abre `/productos/importar`:
+
+- **Analizar**: elige la marca (solo activas) y un PDF (`p-fileupload`, un archivo, hasta 60 MB, validado también en el
+  cliente), con indicador de progreso y el resultado («Se encontraron N productos; M con advertencias»). Errores 400, 404,
+  409 `IMPORTACION_DUPLICADA` (con enlace a la existente), 413, 415, 422 y 429 con mensajes claros. El PDF no se guarda.
+- **Importaciones recientes**: el contrato no tiene endpoint para listarlas; el panel recuerda solo los **ids** (UUID) de
+  las últimas 5 en `sessionStorage` y consulta cada una con `GET /productos/importaciones/{id}`.
+- **Lista de revisión** (`/productos/importar/:id`): `p-table` con paginación del servidor (hasta 100), código, nombre,
+  precio (texto exacto) y precio normal, marca, disponibilidad, página del PDF y etiquetas de advertencia (las informativas
+  `PRECIO_EN_OFERTA` y `VARIAS_REFERENCIAS` con estilo distinto). Filtros por estado (con contadores), «Solo con advertencias»,
+  búsqueda con retardo y página del PDF.
+- **Editar** en `p-dialog` (solo se envían los campos cambiados); **Aprobar seleccionados** y **Descartar** con
+  `p-confirmdialog`. Un borrador sin precio no se envía a aprobar. Tras aprobar, aviso con la cantidad y enlace a Productos
+  para subir las imágenes. Lo que no se aprueba no llega a los clientes.
+
 ### Regla de dependencias
 
 ```text

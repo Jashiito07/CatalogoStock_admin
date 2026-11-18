@@ -2,6 +2,7 @@ import { Routes } from '@angular/router';
 
 import { proveerAuditoria } from './auditoria/infraestructura/lector-bitacora.http';
 import { proveerClientes } from './clientes/infraestructura/api-clientes.http';
+import { proveerImportacion } from './importacion/infraestructura/api-importaciones.http';
 import { proveerMarcas } from './marcas/infraestructura/api-marcas.http';
 import { negocioConfigurado, negocioSinConfigurar } from './marcas/presentacion/guardias-marcas';
 import { proveerProductos } from './productos/infraestructura/api-productos.http';
@@ -62,6 +63,26 @@ export const routes: Routes = [
         title: 'Marcas · CatálogoStock',
         canActivate: [negocioConfigurado],
         loadComponent: () => import('./marcas/presentacion/marcas/marcas').then((m) => m.Marcas),
+      },
+      {
+        // Importación del catálogo en PDF y lista de revisión de borradores (RF-PRO-01, D-55).
+        path: 'productos/importar',
+        canActivate: [negocioConfigurado],
+        providers: [proveerImportacion()],
+        children: [
+          {
+            path: '',
+            title: 'Importar catálogo (PDF) · CatálogoStock',
+            loadComponent: () =>
+              import('./importacion/presentacion/importar/importar').then((m) => m.Importar),
+          },
+          {
+            path: ':id',
+            title: 'Revisión de borradores · CatálogoStock',
+            loadComponent: () =>
+              import('./importacion/presentacion/revision/revision').then((m) => m.Revision),
+          },
+        ],
       },
       {
         path: 'productos',

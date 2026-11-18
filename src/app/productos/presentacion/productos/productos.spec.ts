@@ -1,4 +1,5 @@
 ﻿import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { provideRouter, Router } from '@angular/router';
 import { MessageService } from 'primeng/api';
 
 import { ErrorApi } from '../../../compartido/aplicacion/error-api';
@@ -52,6 +53,7 @@ describe('Productos (RF-PRO-01 a RF-PRO-05, RF-INV-03)', () => {
     await TestBed.configureTestingModule({
       imports: [Productos],
       providers: [
+        provideRouter([]),
         { provide: MessageService, useValue: avisos },
         EstadoMarcas,
         EstadoProductos,
@@ -111,6 +113,15 @@ describe('Productos (RF-PRO-01 a RF-PRO-05, RF-INV-03)', () => {
     opcion?.click();
     await estable();
   }
+
+  it('RF-PRO-01, D-55: «Importar catálogo (PDF)» lleva a la pantalla de importación', () => {
+    const navegar = vi.spyOn(TestBed.inject(Router), 'navigateByUrl').mockResolvedValue(true);
+    const enlace = elemento.querySelector<HTMLElement>('[data-prueba="importar-catalogo"]');
+    expect(enlace?.textContent).toContain('Importar catálogo (PDF)');
+    enlace?.querySelector('button')?.click();
+    expect(navegar).toHaveBeenCalledTimes(1);
+    expect(String(navegar.mock.calls[0]?.[0])).toBe('/productos/importar');
+  });
 
   it('RF-PRO-01: pide la primera página al servidor y muestra miniatura, nombre, marca, precio y disponibilidad', () => {
     expect(api.listar).toHaveBeenCalledTimes(1);
