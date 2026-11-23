@@ -178,6 +178,12 @@ Módulos previstos: `usuarios`, `productos`, `inventario`, `pedidos`, `pagos`,
   [marca] son fijos» (`aria-describedby`); en «Configura tu negocio» no hay selector para las sugeridas. La
   marca propia mantiene colores libres. El servidor impone la regla: 422 `COLOR_MARCA_FIJO` y
   `NOMBRE_MARCA_FIJO` se muestran con mensaje claro.
+- **«Nueva marca» con combobox (D-43, D-56)**: un `p-select` filtrable lista las marcas de
+  `GET /marcas/sugeridas` (muestra de color y acento); las ya agregadas salen deshabilitadas con «Ya agregada»
+  y, al final, «Agregar nueva marca…» abre el nombre libre (2 a 40 caracteres) y los colores libres. Una
+  conocida fija nombre y colores oficiales; un nombre libre que coincide con una conocida avisa «Esa marca ya
+  está en la lista: elígela arriba» y no se guarda. Si la consulta falla solo se ofrece «Agregar nueva marca…».
+  «Editar marca» no usa combobox.
 - Los colores de cada marca vienen de la API y se aplican como estilos en línea (única excepción a
   «sin hexadecimales en componentes»); el texto sobre el color se calcula igual que el servidor
   (blanco, `#1E293B`, `#0F172A`, negro: el primero con 4.5:1, RNF-11).

@@ -41,6 +41,81 @@
   border-radius: 0.375rem;
 }
 
+.cs-dialogo-marca__ayuda {
+  color: var(--cs-texto-secundario);
+}
+
+// RNF-10: el combobox mide al menos 48 px.
+.cs-dialogo-marca ::ng-deep .cs-dialogo-marca__combo {
+  min-height: var(--cs-control-minimo);
+  width: 100%;
+}
+
+// Opciones del combobox (D-43, D-56). El panel se agrega al <body>, por eso los estilos son globales.
+::ng-deep .cs-opcion-marca {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  width: 100%;
+  min-height: 2rem;
+}
+
+::ng-deep .cs-opcion-marca__muestra {
+  position: relative;
+  flex: none;
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: 50%;
+  border: 1px solid var(--cs-texto-secundario);
+}
+
+// Acento de la marca: círculo pequeño en la esquina de la muestra.
+::ng-deep .cs-opcion-marca__acento {
+  position: absolute;
+  right: -0.25rem;
+  bottom: -0.25rem;
+  width: 0.75rem;
+  height: 0.75rem;
+  border-radius: 50%;
+  border: 1px solid var(--cs-superficie);
+}
+
+::ng-deep .cs-opcion-marca__nombre {
+  flex: 1;
+}
+
+::ng-deep .cs-opcion-marca--nueva {
+  font-weight: 600;
+}
+
+// Etiqueta «Ya agregada»: texto principal sobre el fondo de la página (contraste ≥ 4.5:1).
+::ng-deep .cs-opcion-marca__etiqueta.p-tag {
+  background: var(--cs-fondo);
+  color: var(--cs-texto);
+  border: 1px solid var(--cs-borde);
+  font-weight: 600;
+}
+
+// Opciones deshabilitadas: legibles (sin la opacidad por defecto) pero claramente no elegibles.
+::ng-deep .cs-panel-marcas .p-select-option.p-disabled,
+::ng-deep .cs-panel-marcas .p-select-option[aria-disabled='true'] {
+  opacity: 1;
+  color: var(--cs-texto-secundario);
+  cursor: not-allowed;
+}
+
+::ng-deep .cs-panel-marcas .p-select-option-group {
+  color: var(--cs-texto-secundario);
+  font-weight: 600;
+}
+
+// «Agregar nueva marca…» queda al final, separada de las conocidas.
+::ng-deep .cs-panel-marcas .p-select-option-group:not(:first-child) {
+  border-top: 1px solid var(--cs-borde);
+  margin-top: 0.25rem;
+  padding-top: 0.75rem;
+}
+
 .cs-dialogo-marca__error {
   color: var(--p-red-700);
 }
