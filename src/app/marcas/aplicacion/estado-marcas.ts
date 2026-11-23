@@ -5,6 +5,7 @@ import {
   cambiosAlMover,
   Marca,
   MarcaSugerida,
+  mismaMarcaConocida,
   NuevaMarca,
   ordenarMarcas,
 } from '../dominio/marca';
@@ -37,10 +38,21 @@ export class EstadoMarcas {
    */
   readonly sugeridas = computed(() => this.listaSugeridas());
 
+  private readonly _cargandoSugeridas = signal(false);
+  private readonly _falloSugeridas = signal(false);
+  /** `true` mientras se consulta `GET /marcas/sugeridas` (el combobox muestra «cargando»). */
+  readonly cargandoSugeridas = this._cargandoSugeridas.asReadonly();
+  /** `true` si la última consulta de sugeridas falló: el combobox ofrece solo «Agregar nueva marca…». */
+  readonly falloSugeridas = this._falloSugeridas.asReadonly();
+
   /** Consulta `GET /marcas/sugeridas` una sola vez; si falla, devuelve lo que haya (vacío). */
   cargarSugeridas(): Promise<readonly MarcaSugerida[]> {
     if (this.listaSugeridas().length > 0) {
       return Promise.resolve(this.listaSugeridas());
+    }
+    if (this.sugeridasEnCurso === null) {
+      this._cargandoSugeridas.set(true);
+      this._falloSugeridas.set(false);
     }
     this.sugeridasEnCurso ??= Promise.resolve()
       .then(() => this.api.sugeridas())
@@ -48,8 +60,12 @@ export class EstadoMarcas {
         this.listaSugeridas.set(sugeridas);
         return sugeridas;
       })
-      .catch(() => this.listaSugeridas())
+      .catch(() => {
+        this._falloSugeridas.set(true);
+        return this.listaSugeridas();
+      })
       .finally(() => {
+        this._cargandoSugeridas.set(false);
         this.sugeridasEnCurso = null;
       });
     return this.sugeridasEnCurso;
@@ -82,6 +98,12 @@ export class EstadoMarcas {
   async crear(nueva: NuevaMarca): Promise<Marca> {
     const creada = await this.api.crear(nueva);
     this.lista.update((marcas) => ordenarMarcas([...(marcas ?? []), creada]));
+    // La conocida recién creada deja de ofrecerse en el combobox sin volver a consultar.
+    this.listaSugeridas.update((sugeridas) =>
+      sugeridas.map((s) =>
+        mismaMarcaConocida(s.nombre, creada.nombre) ? { ...s, yaCreada: true } : s,
+      ),
+    );
     return creada;
   }
 

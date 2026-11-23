@@ -16,6 +16,8 @@ import { DialogModule } from 'primeng/dialog';
 import { InputNumberModule } from 'primeng/inputnumber';
 import { InputTextModule } from 'primeng/inputtext';
 import { MessageModule } from 'primeng/message';
+import { SelectModule } from 'primeng/select';
+import { TagModule } from 'primeng/tag';
 
 import { EstadoMarcas } from '../../aplicacion/estado-marcas';
 import {
@@ -25,21 +27,39 @@ import {
 } from '../../aplicacion/mensajes-marcas';
 import {
   CambiosMarca,
+  CLAVE_NUEVA_MARCA,
   COLOR_MARCA_PREDETERMINADO,
   buscarMarcaConocida,
   esColorValido,
+  estanTodasAgregadas,
   LONGITUD_MAXIMA_NOMBRE,
   Marca,
   mismaMarcaConocida,
   nombreRepetido,
+  OpcionMarca,
+  opcionesDeMarcas,
   validarNombre,
 } from '../../dominio/marca';
 import { SelectorColor } from '../selector-color/selector-color';
 import { VistaPreviaMarca } from '../vista-previa-marca/vista-previa-marca';
 
+/** Opción del combobox con el texto extra que usa el filtro. */
+interface OpcionCombo extends OpcionMarca {
+  readonly busqueda: string;
+}
+
+interface GrupoOpciones {
+  readonly etiqueta: string;
+  readonly items: OpcionCombo[];
+}
+
 /**
- * Diálogo para crear o editar una marca (RF-PRO-04, D-43): nombre, color principal, color de
- * acento opcional, orden (solo al editar) y vista previa de la cabecera con su contraste.
+ * Diálogo para crear o editar una marca (RF-PRO-04, RF-PRO-06, D-43, D-56).
+ *
+ * - Crear: un combobox con las marcas conocidas (`GET /marcas/sugeridas`; las ya agregadas
+ *   aparecen deshabilitadas) y, al final, «Agregar nueva marca…» con nombre y colores libres.
+ *   Una conocida fija el nombre y los colores oficiales.
+ * - Editar: sin combobox; el nombre y los colores de una conocida siguen protegidos.
  */
 @Component({
   selector: 'app-dialogo-marca',
@@ -50,6 +70,8 @@ import { VistaPreviaMarca } from '../vista-previa-marca/vista-previa-marca';
     InputTextModule,
     InputNumberModule,
     MessageModule,
+    SelectModule,
+    TagModule,
     SelectorColor,
     VistaPreviaMarca,
   ],
@@ -76,9 +98,65 @@ export class DialogoMarca {
   protected readonly nombreTocado = signal(false);
 
   protected readonly titulo = computed(() => (this.marca() ? 'Editar marca' : 'Nueva marca'));
+  protected readonly esCreacion = computed(() => this.marca() === null);
 
-  /** Id de la nota que explica por qué los colores están bloqueados (ria-describedby). */
+  /** Id de la nota que explica por qué los colores están bloqueados (aria-describedby). */
   protected readonly idNotaColores = 'nota-colores-fijos';
+
+  // --- Combobox de marcas (solo al crear; D-43, D-56) -------------------------------------------
+
+  /** Elección del combobox: `null` (nada), el nombre de una conocida o `CLAVE_NUEVA_MARCA`. */
+  protected readonly eleccion = signal<string | null>(null);
+  protected readonly cargandoSugeridas = this.estado.cargandoSugeridas;
+  protected readonly falloSugeridas = this.estado.falloSugeridas;
+
+  private readonly opciones = computed(() =>
+    opcionesDeMarcas(this.estado.sugeridas(), this.estado.marcas()),
+  );
+  protected readonly todasAgregadas = computed(() => estanTodasAgregadas(this.opciones()));
+
+  /** Grupos del combobox: las conocidas y, al final y separada, «Agregar nueva marca…». */
+  protected readonly grupos = computed<GrupoOpciones[]>(() => {
+    const conocidas: OpcionCombo[] = this.opciones().map((o) => ({ ...o, busqueda: '' }));
+    const nueva: OpcionCombo = {
+      clave: CLAVE_NUEVA_MARCA,
+      nombre: 'Agregar nueva marca…',
+      color: '',
+      colorAcento: null,
+      yaAgregada: false,
+      busqueda: 'agregar nueva marca otra propia',
+    };
+    return [
+      ...(conocidas.length > 0 ? [{ etiqueta: 'Marcas conocidas', items: conocidas }] : []),
+      { etiqueta: 'Otra marca', items: [nueva] },
+    ];
+  });
+
+  protected readonly claveNueva = CLAVE_NUEVA_MARCA;
+  protected readonly esNueva = computed(
+    () => this.esCreacion() && this.eleccion() === CLAVE_NUEVA_MARCA,
+  );
+
+  /** Conocida elegida en el combobox (nombre y colores oficiales fijados). */
+  private readonly sugeridaElegida = computed(() => {
+    const clave = this.eleccion();
+    if (!this.esCreacion() || clave === null || clave === CLAVE_NUEVA_MARCA) {
+      return null;
+    }
+    return this.estado.sugeridas().find((s) => s.nombre === clave) ?? null;
+  });
+
+  /** Al crear hay que elegir en el combobox antes de mostrar el resto del formulario. */
+  protected readonly formularioVisible = computed(
+    () => !this.esCreacion() || this.eleccion() !== null,
+  );
+
+  /** Nombre que se valida, se previsualiza y se envía: el oficial si se eligió una conocida. */
+  protected readonly nombreEfectivo = computed(
+    () => this.sugeridaElegida()?.nombre ?? this.nombre(),
+  );
+
+  // --- Colores fijos (D-56) ---------------------------------------------------------------------
 
   /** Marca conocida a la que pertenece la marca que se edita (sus colores no cambian, D-56). */
   private readonly conocidaOriginal = computed(() => {
@@ -87,12 +165,14 @@ export class DialogoMarca {
   });
 
   /**
-   * Marca conocida que corresponde al formulario (D-56): la del nombre escrito o, al editar una
-   * conocida, la propia marca aunque el nombre esté a medio escribir. 
-ull: marca propia.
+   * Marca conocida que corresponde al formulario (D-56). Al crear, la elegida en el combobox. Al
+   * editar, la del nombre escrito o, si la propia marca es conocida, ella misma aunque el nombre
+   * esté a medio escribir. `null`: marca propia con colores libres.
    */
-  protected readonly conocida = computed(
-    () => buscarMarcaConocida(this.nombre(), this.estado.sugeridas()) ?? this.conocidaOriginal(),
+  protected readonly conocida = computed(() =>
+    this.esCreacion()
+      ? this.sugeridaElegida()
+      : (buscarMarcaConocida(this.nombre(), this.estado.sugeridas()) ?? this.conocidaOriginal()),
   );
   protected readonly bloqueada = computed(() => this.conocida() !== null);
 
@@ -103,27 +183,33 @@ ull: marca propia.
   );
 
   protected readonly errorNombre = computed(() => {
-    const local = validarNombre(this.nombre());
+    const nombre = this.nombreEfectivo();
+    const local = validarNombre(nombre);
     if (local !== null) {
       return this.nombreTocado() ? local : null;
     }
     const original = this.conocidaOriginal();
-    if (original !== null && !mismaMarcaConocida(this.nombre(), original.nombre)) {
+    if (original !== null && !mismaMarcaConocida(nombre, original.nombre)) {
       return `El nombre de ${original.nombre} no se puede cambiar por otro; solo puedes corregir mayúsculas o tildes.`;
     }
     const otros = this.estado
       .marcas()
       .filter((m) => m.id !== this.marca()?.id)
       .map((m) => m.nombre);
-    if (nombreRepetido(this.nombre(), otros)) {
+    if (nombreRepetido(nombre, otros)) {
       return 'Ya existe una marca con ese nombre.';
+    }
+    // D-56: una marca nueva con el nombre de una conocida no puede llevar colores propios.
+    if (this.esNueva() && buscarMarcaConocida(nombre, this.estado.sugeridas()) !== null) {
+      return 'Esa marca ya está en la lista: elígela arriba.';
     }
     return this.erroresServidor()['nombre'] ?? null;
   });
 
   protected readonly formularioValido = computed(
     () =>
-      validarNombre(this.nombre()) === null &&
+      this.formularioVisible() &&
+      validarNombre(this.nombreEfectivo()) === null &&
       this.errorNombre() === null &&
       esColorValido(this.colorMostrado()) &&
       (this.acentoMostrado() === null || esColorValido(this.acentoMostrado() ?? '')) &&
@@ -138,6 +224,7 @@ ull: marca propia.
       }
       const marca = untracked(() => this.marca());
       void untracked(() => this.estado.cargarSugeridas());
+      this.eleccion.set(null);
       this.nombre.set(marca?.nombre ?? '');
       this.color.set(marca?.color ?? COLOR_MARCA_PREDETERMINADO);
       this.colorAcento.set(marca?.colorAcento ?? null);
@@ -146,6 +233,14 @@ ull: marca propia.
       this.erroresServidor.set({});
       this.nombreTocado.set(false);
     });
+  }
+
+  /** El Vendedor eligió algo en el combobox: una conocida o «Agregar nueva marca…». */
+  protected elegir(clave: string | null): void {
+    this.eleccion.set(clave);
+    this.errorGeneral.set(null);
+    this.erroresServidor.set({});
+    this.nombreTocado.set(false);
   }
 
   protected agregarAcento(): void {
@@ -172,7 +267,7 @@ ull: marca propia.
       const existente = this.marca();
       if (existente === null) {
         const creada = await this.estado.crear({
-          nombre: this.conocida()?.nombre ?? this.nombre().trim(),
+          nombre: this.conocida()?.nombre ?? this.nombreEfectivo().trim(),
           color: this.colorMostrado(),
           colorAcento: this.acentoMostrado(),
         });

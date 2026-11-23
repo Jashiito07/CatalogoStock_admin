@@ -37,6 +37,15 @@ describe('Marcas (RF-PRO-04, D-43)', () => {
   }
 
   beforeEach(async () => {
+    // jsdom no trae matchMedia y el panel de `p-select` lo consulta al abrirse.
+    window.matchMedia ??= ((consulta: string) =>
+      ({
+        matches: false,
+        media: consulta,
+        addEventListener: () => undefined,
+        removeEventListener: () => undefined,
+      }) as unknown as MediaQueryList) as typeof window.matchMedia;
+    Element.prototype.scrollIntoView ??= () => undefined;
     listar = vi
       .fn()
       .mockResolvedValue([
@@ -125,6 +134,13 @@ describe('Marcas (RF-PRO-04, D-43)', () => {
 
     const dialogo = document.body.querySelector('[data-prueba="dialogo-marca"], .p-dialog');
     expect(dialogo?.textContent).toContain('Nueva marca');
+    // D-43: primero se elige en el combobox; «Agregar nueva marca…» abre el nombre libre.
+    document.body.querySelector<HTMLElement>('[data-prueba="combo-marca"]')?.click();
+    await estable();
+    Array.from(document.body.querySelectorAll<HTMLElement>('.p-select-option'))
+      .find((o) => o.textContent?.includes('Agregar nueva marca…'))
+      ?.click();
+    await estable();
     expect(dialogo?.querySelector('[data-prueba="vista-previa"]')).not.toBeNull();
     expect(dialogo?.textContent).toContain('Contraste');
 

@@ -144,6 +144,43 @@ export function buscarMarcaConocida(
   return sugeridas.find((s) => mismaMarcaConocida(s.nombre, nombre)) ?? null;
 }
 
+/** Clave de la opción «Agregar nueva marca…» del combobox (no puede coincidir con un nombre). */
+export const CLAVE_NUEVA_MARCA = '__nueva_marca__';
+
+/** Opción del combobox de «Nueva marca» (D-43, D-56): una marca conocida y si ya se agregó. */
+export interface OpcionMarca {
+  /** Identifica la opción: el nombre oficial de la marca conocida. */
+  readonly clave: string;
+  readonly nombre: string;
+  readonly color: string;
+  readonly colorAcento: string | null;
+  /** `true` si el servidor la marcó como creada o ya existe en la lista del panel. */
+  readonly yaAgregada: boolean;
+}
+
+/**
+ * Opciones del combobox a partir de `GET /marcas/sugeridas`. Una conocida cuenta como agregada
+ * si el servidor lo indica (`yaCreada`) o si el panel ya tiene una marca con ese nombre
+ * (misma normalización de D-56), para no ofrecer duplicados aunque la lista esté desactualizada.
+ */
+export function opcionesDeMarcas(
+  sugeridas: readonly MarcaSugerida[],
+  existentes: readonly Pick<Marca, 'nombre'>[],
+): OpcionMarca[] {
+  return sugeridas.map((s) => ({
+    clave: s.nombre,
+    nombre: s.nombre,
+    color: s.color,
+    colorAcento: s.colorAcento,
+    yaAgregada: s.yaCreada || existentes.some((m) => mismaMarcaConocida(m.nombre, s.nombre)),
+  }));
+}
+
+/** `true` si hay marcas conocidas y todas están agregadas (solo queda «Agregar nueva marca…»). */
+export function estanTodasAgregadas(opciones: readonly OpcionMarca[]): boolean {
+  return opciones.length > 0 && opciones.every((o) => o.yaAgregada);
+}
+
 export function nombreRepetido(nombre: string, existentes: readonly string[]): boolean {
   const clave = claveDeNombre(nombre);
   return existentes.some((otro) => claveDeNombre(otro) === clave);

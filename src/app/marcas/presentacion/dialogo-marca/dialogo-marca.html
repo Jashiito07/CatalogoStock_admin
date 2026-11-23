@@ -18,102 +18,213 @@
       >
     }
 
-    <div class="cs-dialogo-marca__campo">
-      <label for="nombre-marca" class="cs-dialogo-marca__etiqueta">Nombre</label>
-      <input
-        pInputText
-        id="nombre-marca"
-        [ngModelOptions]="{ standalone: true }"
-        [ngModel]="nombre()"
-        (ngModelChange)="nombre.set($event)"
-        (blur)="nombreTocado.set(true)"
-        [maxlength]="longitudMaximaNombre"
-        autocomplete="off"
-        [attr.aria-invalid]="errorNombre() ? 'true' : null"
-        class="cs-dialogo-marca__entrada"
-        data-prueba="nombre"
-      />
-      @if (errorNombre(); as mensaje) {
-        <small class="cs-dialogo-marca__error" role="alert" data-prueba="error-nombre">{{
-          mensaje
-        }}</small>
-      }
-    </div>
-
-    @if (conocida(); as oficial) {
-      <p class="cs-dialogo-marca__nota" [id]="idNotaColores" data-prueba="nota-color-fijo">
-        <i class="pi pi-lock" aria-hidden="true"></i>
-        Los colores de {{ oficial.nombre }} son fijos.
-      </p>
-    }
-
-    <app-selector-color
-      etiqueta="Color principal"
-      [valor]="colorMostrado()"
-      (valorChange)="color.set($event)"
-      [deshabilitado]="bloqueada()"
-      [descritoPor]="bloqueada() ? idNotaColores : null"
-      [errorExterno]="erroresServidor()['color'] ?? null"
-    />
-
-    @if (acentoMostrado(); as acento) {
-      <app-selector-color
-        etiqueta="Color de acento"
-        [valor]="acento"
-        (valorChange)="colorAcento.set($event)"
-        [deshabilitado]="bloqueada()"
-        [descritoPor]="bloqueada() ? idNotaColores : null"
-        [errorExterno]="erroresServidor()['colorAcento'] ?? null"
-      />
-      @if (!bloqueada()) {
-        <p-button
-          label="Quitar color de acento"
-          icon="pi pi-minus"
-          severity="secondary"
-          [text]="true"
-          size="small"
-          data-prueba="quitar-acento"
-          (onClick)="quitarAcento()"
-        />
-      }
-    } @else {
-      <p-button
-        label="Agregar color de acento (opcional)"
-        icon="pi pi-plus"
-        severity="secondary"
-        [outlined]="true"
-        size="small"
-        [disabled]="bloqueada()"
-        [attr.aria-describedby]="bloqueada() ? idNotaColores : null"
-        data-prueba="agregar-acento"
-        (onClick)="agregarAcento()"
-      />
-    }
-
-    @if (marca()) {
+    @if (esCreacion()) {
       <div class="cs-dialogo-marca__campo">
-        <label for="orden-marca" class="cs-dialogo-marca__etiqueta">Orden</label>
-        <p-inputnumber
-          inputId="orden-marca"
+        <span id="etiqueta-combo-marca" class="cs-dialogo-marca__etiqueta">Marca</span>
+        <p-select
           [ngModelOptions]="{ standalone: true }"
-          [ngModel]="orden()"
-          (ngModelChange)="orden.set($event)"
-          [min]="0"
-          [useGrouping]="false"
-          [showButtons]="true"
-          data-prueba="orden"
-        />
+          [ngModel]="eleccion()"
+          (ngModelChange)="elegir($event)"
+          [options]="grupos()"
+          [group]="true"
+          optionLabel="nombre"
+          optionValue="clave"
+          optionDisabled="yaAgregada"
+          optionGroupLabel="etiqueta"
+          optionGroupChildren="items"
+          [filter]="true"
+          filterBy="nombre,busqueda"
+          filterPlaceholder="Buscar marca"
+          placeholder="Elige una marca"
+          ariaLabel="Marca"
+          ariaLabelledBy="etiqueta-combo-marca"
+          [loading]="cargandoSugeridas()"
+          appendTo="body"
+          panelStyleClass="cs-panel-marcas"
+          styleClass="cs-dialogo-marca__combo"
+          [style]="{ width: '100%' }"
+          data-prueba="combo-marca"
+        >
+          <ng-template #selectedItem let-opcion>
+            @if (opcion.clave === claveNueva) {
+              <span class="cs-opcion-marca"
+                ><i class="pi pi-plus" aria-hidden="true"></i>{{ opcion.nombre }}</span
+              >
+            } @else {
+              <span class="cs-opcion-marca">
+                <span
+                  class="cs-opcion-marca__muestra"
+                  [style.background-color]="opcion.color"
+                  aria-hidden="true"
+                ></span>
+                {{ opcion.nombre }}
+              </span>
+            }
+          </ng-template>
+          <ng-template #item let-opcion>
+            @if (opcion.clave === claveNueva) {
+              <span class="cs-opcion-marca cs-opcion-marca--nueva" data-prueba="opcion-nueva"
+                ><i class="pi pi-plus" aria-hidden="true"></i>{{ opcion.nombre }}</span
+              >
+            } @else {
+              <span
+                class="cs-opcion-marca"
+                [class.cs-opcion-marca--agregada]="opcion.yaAgregada"
+                data-prueba="opcion-marca"
+              >
+                <span
+                  class="cs-opcion-marca__muestra"
+                  [style.background-color]="opcion.color"
+                  aria-hidden="true"
+                >
+                  @if (opcion.colorAcento) {
+                    <span
+                      class="cs-opcion-marca__acento"
+                      [style.background-color]="opcion.colorAcento"
+                    ></span>
+                  }
+                </span>
+                <span class="cs-opcion-marca__nombre">{{ opcion.nombre }}</span>
+                @if (opcion.yaAgregada) {
+                  <p-tag
+                    value="Ya agregada"
+                    severity="secondary"
+                    icon="pi pi-check"
+                    styleClass="cs-opcion-marca__etiqueta"
+                  />
+                }
+              </span>
+            }
+          </ng-template>
+          <ng-template #emptyfilter>
+            No hay marcas con ese nombre. Borra la búsqueda y elige «Agregar nueva marca…».
+          </ng-template>
+        </p-select>
+        @if (falloSugeridas()) {
+          <p-message
+            severity="warn"
+            icon="pi pi-exclamation-triangle"
+            role="status"
+            data-prueba="aviso-sugeridas"
+            >No pudimos cargar las marcas conocidas. Puedes agregar una nueva marca; el servidor
+            valida el nombre y los colores.</p-message
+          >
+        } @else if (todasAgregadas()) {
+          <p-message
+            severity="info"
+            icon="pi pi-info-circle"
+            role="status"
+            data-prueba="aviso-todas-agregadas"
+            >Ya agregaste todas las marcas conocidas. Elige «Agregar nueva marca…» para sumar
+            otra.</p-message
+          >
+        } @else if (!formularioVisible()) {
+          <small class="cs-dialogo-marca__ayuda" data-prueba="ayuda-combo"
+            >Elige una marca conocida o agrega una nueva al final de la lista.</small
+          >
+        }
       </div>
     }
 
-    <div class="cs-dialogo-marca__campo">
-      <span class="cs-dialogo-marca__etiqueta">Vista previa de la cabecera</span>
-      <app-vista-previa-marca
-        [nombre]="nombre()"
-        [color]="colorMostrado()"
-        [colorAcento]="acentoMostrado()"
+    @if (formularioVisible()) {
+      <div class="cs-dialogo-marca__campo">
+        <label for="nombre-marca" class="cs-dialogo-marca__etiqueta">Nombre</label>
+        <input
+          pInputText
+          id="nombre-marca"
+          [ngModelOptions]="{ standalone: true }"
+          [ngModel]="nombreEfectivo()"
+          (ngModelChange)="nombre.set($event)"
+          (blur)="nombreTocado.set(true)"
+          [maxlength]="longitudMaximaNombre"
+          [disabled]="esCreacion() && !esNueva()"
+          autocomplete="off"
+          [attr.aria-invalid]="errorNombre() ? 'true' : null"
+          class="cs-dialogo-marca__entrada"
+          data-prueba="nombre"
+        />
+        @if (errorNombre(); as mensaje) {
+          <small class="cs-dialogo-marca__error" role="alert" data-prueba="error-nombre">{{
+            mensaje
+          }}</small>
+        }
+      </div>
+
+      @if (conocida(); as oficial) {
+        <p class="cs-dialogo-marca__nota" [id]="idNotaColores" data-prueba="nota-color-fijo">
+          <i class="pi pi-lock" aria-hidden="true"></i>
+          Los colores de {{ oficial.nombre }} son fijos.
+        </p>
+      }
+
+      <app-selector-color
+        etiqueta="Color principal"
+        [valor]="colorMostrado()"
+        (valorChange)="color.set($event)"
+        [deshabilitado]="bloqueada()"
+        [descritoPor]="bloqueada() ? idNotaColores : null"
+        [errorExterno]="erroresServidor()['color'] ?? null"
       />
-    </div>
+
+      @if (acentoMostrado(); as acento) {
+        <app-selector-color
+          etiqueta="Color de acento"
+          [valor]="acento"
+          (valorChange)="colorAcento.set($event)"
+          [deshabilitado]="bloqueada()"
+          [descritoPor]="bloqueada() ? idNotaColores : null"
+          [errorExterno]="erroresServidor()['colorAcento'] ?? null"
+        />
+        @if (!bloqueada()) {
+          <p-button
+            label="Quitar color de acento"
+            icon="pi pi-minus"
+            severity="secondary"
+            [text]="true"
+            size="small"
+            data-prueba="quitar-acento"
+            (onClick)="quitarAcento()"
+          />
+        }
+      } @else {
+        <p-button
+          label="Agregar color de acento (opcional)"
+          icon="pi pi-plus"
+          severity="secondary"
+          [outlined]="true"
+          size="small"
+          [disabled]="bloqueada()"
+          [attr.aria-describedby]="bloqueada() ? idNotaColores : null"
+          data-prueba="agregar-acento"
+          (onClick)="agregarAcento()"
+        />
+      }
+
+      @if (marca()) {
+        <div class="cs-dialogo-marca__campo">
+          <label for="orden-marca" class="cs-dialogo-marca__etiqueta">Orden</label>
+          <p-inputnumber
+            inputId="orden-marca"
+            [ngModelOptions]="{ standalone: true }"
+            [ngModel]="orden()"
+            (ngModelChange)="orden.set($event)"
+            [min]="0"
+            [useGrouping]="false"
+            [showButtons]="true"
+            data-prueba="orden"
+          />
+        </div>
+      }
+
+      <div class="cs-dialogo-marca__campo">
+        <span class="cs-dialogo-marca__etiqueta">Vista previa de la cabecera</span>
+        <app-vista-previa-marca
+          [nombre]="nombreEfectivo()"
+          [color]="colorMostrado()"
+          [colorAcento]="acentoMostrado()"
+        />
+      </div>
+    }
   </form>
 
   <ng-template #footer>
