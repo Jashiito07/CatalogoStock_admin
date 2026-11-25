@@ -7,6 +7,7 @@ import {
   OnInit,
   signal,
 } from '@angular/core';
+import { NgTemplateOutlet } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { ConfirmationService, MessageService } from 'primeng/api';
@@ -17,10 +18,12 @@ import { IconFieldModule } from 'primeng/iconfield';
 import { InputIconModule } from 'primeng/inputicon';
 import { InputTextModule } from 'primeng/inputtext';
 import { MessageModule } from 'primeng/message';
+import { ProgressBarModule } from 'primeng/progressbar';
 import { SelectButtonModule } from 'primeng/selectbutton';
 import { TableLazyLoadEvent, TableModule } from 'primeng/table';
 import { TagModule } from 'primeng/tag';
 
+import { senalPantallaMovil } from '../../../compartido/presentacion/pantalla/pantalla-movil';
 import { EstadoMarcas } from '../../../marcas/aplicacion/estado-marcas';
 import {
   BUSQUEDA_MAXIMA,
@@ -48,6 +51,7 @@ import {
   tieneSinPrecio,
 } from '../../dominio/importacion';
 import { DialogoBorrador } from '../dialogo-borrador/dialogo-borrador';
+import { TarjetaBorrador } from '../tarjeta-borrador/tarjeta-borrador';
 
 /** Espera tras la última tecla antes de buscar (evita una consulta por letra). */
 export const RETARDO_BUSQUEDA_MS = 350;
@@ -87,8 +91,11 @@ export interface AvisoLote {
     IconFieldModule,
     InputIconModule,
     MessageModule,
+    ProgressBarModule,
     ConfirmDialogModule,
+    NgTemplateOutlet,
     DialogoBorrador,
+    TarjetaBorrador,
   ],
   providers: [ConfirmationService],
   templateUrl: './revision.html',
@@ -113,6 +120,10 @@ export class Revision implements OnInit, OnDestroy {
   protected readonly puedeEditar = puedeEditar;
   protected readonly tieneSinPrecio = tieneSinPrecio;
   protected readonly resumenDeAnalisis = resumenDeAnalisis;
+
+  /** Menos de 768 px: tarjetas en vez de tabla, filtros colapsables y barra inferior (D-61). */
+  protected readonly esMovil = senalPantallaMovil();
+  protected readonly filtrosAbiertos = signal(false);
 
   protected readonly estadoFiltro = signal<EstadoBorrador>('PENDIENTE');
   protected readonly soloAdvertencias = signal(false);
@@ -145,6 +156,26 @@ export class Revision implements OnInit, OnDestroy {
   protected readonly seleccionSinPrecio = computed(
     () => this.seleccion().filter((b) => tieneSinPrecio(b)).length,
   );
+
+  /** Cuántos filtros hay aplicados (para la insignia del botón «Filtros» en el celular). */
+  protected readonly cantidadFiltros = computed(
+    () =>
+      (this.soloAdvertencias() ? 1 : 0) +
+      (this.texto().trim() !== '' ? 1 : 0) +
+      (this.paginaPdf().trim() !== '' ? 1 : 0),
+  );
+
+  // Paginación numerada del celular: «Página 2 de 7» con botones táctiles.
+  protected readonly paginaActual = computed(() => this.estado.consulta().pagina);
+  protected readonly totalPaginas = computed(() =>
+    Math.max(1, Math.ceil(this.estado.total() / this.estado.consulta().tamanio)),
+  );
+
+  protected readonly todosSeleccionados = computed(() => {
+    const filas = this.estado.elementos();
+    const marcados = new Set(this.seleccion().map((b) => b.id));
+    return filas.length > 0 && filas.every((b) => marcados.has(b.id));
+  });
 
   private temporizador: ReturnType<typeof setTimeout> | null = null;
 
@@ -215,6 +246,34 @@ export class Revision implements OnInit, OnDestroy {
   protected alCambiarPagina(evento: TableLazyLoadEvent): void {
     this.seleccion.set([]);
     void this.estado.irA(evento.first ?? 0, evento.rows ?? this.estado.consulta().tamanio);
+  }
+
+  protected irAPagina(pagina: number): void {
+    const destino = Math.min(Math.max(1, pagina), this.totalPaginas());
+    if (destino === this.paginaActual()) {
+      return;
+    }
+    this.seleccion.set([]);
+    void this.estado.irA((destino - 1) * this.estado.consulta().tamanio, this.estado.consulta().tamanio);
+  }
+
+  protected alternarFiltros(): void {
+    this.filtrosAbiertos.update((abierto) => !abierto);
+  }
+
+  // ── Selección en tarjetas (celular) ──────────────────────────────────────────────────
+
+  protected estaSeleccionado(borrador: Borrador): boolean {
+    return this.seleccion().some((b) => b.id === borrador.id);
+  }
+
+  protected alternarSeleccion(borrador: Borrador, marcado: boolean): void {
+    const sinEste = this.seleccion().filter((b) => b.id !== borrador.id);
+    this.seleccion.set(marcado ? [...sinEste, borrador] : sinEste);
+  }
+
+  protected alternarTodos(marcado: boolean): void {
+    this.seleccion.set(marcado ? [...this.estado.elementos()] : []);
   }
 
   protected reintentar(): void {

@@ -5,8 +5,9 @@
   [draggable]="false"
   [closable]="!guardando()"
   [closeOnEscape]="!guardando()"
-  [style]="{ width: '40rem', 'max-width': '96vw' }"
-  [contentStyle]="{ 'max-height': '75vh' }"
+  [style]="estiloDialogo()"
+  [contentStyle]="estiloContenido()"
+  styleClass="cs-dialogo-borrador__ventana"
   data-prueba="dialogo-borrador"
 >
   @if (borrador(); as b) {
@@ -128,7 +129,9 @@
   }
 
   <ng-template #footer>
-    <p-button label="Cancelar" severity="secondary" [outlined]="true" [disabled]="guardando()" data-prueba="cancelar" (onClick)="cancelar()" />
-    <p-button label="Guardar" icon="pi pi-check" [loading]="guardando()" [disabled]="!formularioValido()" data-prueba="guardar" (onClick)="guardar()" />
+    <div class="cs-dialogo-borrador__pie">
+      <p-button label="Cancelar" severity="secondary" [outlined]="true" [disabled]="guardando()" data-prueba="cancelar" (onClick)="cancelar()" />
+      <p-button label="Guardar" icon="pi pi-check" [loading]="guardando()" [disabled]="!formularioValido()" data-prueba="guardar" (onClick)="guardar()" />
+    </div>
   </ng-template>
 </p-dialog>

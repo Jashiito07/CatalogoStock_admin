@@ -1,6 +1,6 @@
-import { HttpClient, HttpParams } from '@angular/common/http';
+import { HttpClient, HttpEventType, HttpParams, HttpResponse } from '@angular/common/http';
 import { EnvironmentProviders, inject, Injectable, makeEnvironmentProviders } from '@angular/core';
-import { firstValueFrom } from 'rxjs';
+import { filter, firstValueFrom, map, tap } from 'rxjs';
 
 import { URL_API } from '../../compartido/infraestructura/http/url-api';
 import { EstadoImportacion } from '../aplicacion/estado-importacion';
@@ -11,6 +11,7 @@ import {
   ConsultaBorradores,
   Importacion,
   PaginaBorradores,
+  porcentajeDeSubida,
   ResultadoBorrador,
 } from '../dominio/importacion';
 import { AlmacenRecientesSessionStorage } from './almacen-recientes.session-storage';
@@ -39,11 +40,27 @@ export class ApiImportacionesHttp extends ApiImportaciones {
     return `${this.base}/${encodeURIComponent(id)}`;
   }
 
-  analizar(archivo: File, marcaId: string): Promise<Importacion> {
+  analizar(
+    archivo: File,
+    marcaId: string,
+    alProgreso?: (porcentaje: number) => void,
+  ): Promise<Importacion> {
     const cuerpo = new FormData();
     cuerpo.append('marcaId', marcaId);
     cuerpo.append('archivo', archivo, archivo.name);
-    return firstValueFrom(this.http.post<Importacion>(this.base, cuerpo));
+    // `reportProgress` da el avance real de la subida; la respuesta llega al final como evento.
+    const respuesta = this.http
+      .post<Importacion>(this.base, cuerpo, { observe: 'events', reportProgress: true })
+      .pipe(
+        tap((evento) => {
+          if (evento.type === HttpEventType.UploadProgress) {
+            alProgreso?.(porcentajeDeSubida(evento.loaded, evento.total));
+          }
+        }),
+        filter((evento): evento is HttpResponse<Importacion> => evento.type === HttpEventType.Response),
+        map((evento) => evento.body as Importacion),
+      );
+    return firstValueFrom(respuesta);
   }
 
   obtener(id: string): Promise<Importacion> {

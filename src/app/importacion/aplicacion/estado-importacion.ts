@@ -72,8 +72,12 @@ export class EstadoImportacion {
   // ── Análisis y recientes ─────────────────────────────────────────────────────────────
 
   /** POST de la importación. Si sale bien, la recuerda entre las recientes. */
-  async analizar(archivo: File, marcaId: string): Promise<Importacion> {
-    const importacion = await this.api.analizar(archivo, marcaId);
+  async analizar(
+    archivo: File,
+    marcaId: string,
+    alProgreso?: (porcentaje: number) => void,
+  ): Promise<Importacion> {
+    const importacion = await this.api.analizar(archivo, marcaId, alProgreso);
     this.recordar(importacion.id);
     return importacion;
   }

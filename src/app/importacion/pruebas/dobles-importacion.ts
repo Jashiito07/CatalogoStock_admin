@@ -61,7 +61,9 @@ export function paginaBorradoresPrueba(
 
 /** Doble de `ApiImportaciones` con funciones de Vitest para comprobar las llamadas. */
 export interface ApiImportacionesFalsa extends ApiImportaciones {
-  analizar: Mock<(archivo: File, marcaId: string) => Promise<Importacion>>;
+  analizar: Mock<
+    (archivo: File, marcaId: string, alProgreso?: (porcentaje: number) => void) => Promise<Importacion>
+  >;
   obtener: Mock<(id: string) => Promise<Importacion>>;
   listarBorradores: Mock<(id: string, c: ConsultaBorradores) => Promise<PaginaBorradores>>;
   editarBorrador: Mock<(id: string, c: CambiosBorrador) => Promise<Borrador>>;

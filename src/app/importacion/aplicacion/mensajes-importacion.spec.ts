@@ -11,6 +11,9 @@ import {
   MENSAJE_MARCA_NO_ENCONTRADA,
   MENSAJE_NO_EDITABLE,
   MENSAJE_PDF_ILEGIBLE,
+  MENSAJE_CONEXION_LENTA,
+  MENSAJE_SIN_CONEXION_SUBIDA,
+  mensajeDeErrorDeAnalisis,
   mensajeDeErrorDeImportacion,
 } from './mensajes-importacion';
 
@@ -37,6 +40,15 @@ describe('mensajeDeErrorDeImportacion (contrato productos-importacion.md, «Erro
   it('sin conexión usa el mensaje del interceptor; lo desconocido, uno genérico', () => {
     expect(mensajeDeErrorDeImportacion(new ErrorApi('SIN_CONEXION', 'Sin conexión.', 0))).toBe('Sin conexión.');
     expect(mensajeDeErrorDeImportacion(new Error('x'))).toBe(MENSAJE_ERROR_INESPERADO);
+  });
+
+  it('D-61: el análisis distingue un corte de red y una conexión lenta (408, 502, 503, 504)', () => {
+    expect(mensajeDeErrorDeAnalisis(new ErrorApi('SIN_CONEXION', 'x', 0))).toBe(MENSAJE_SIN_CONEXION_SUBIDA);
+    for (const estado of [408, 502, 503, 504]) {
+      expect(mensajeDeErrorDeAnalisis(new ErrorApi('ERROR_DESCONOCIDO', 'x', estado))).toBe(MENSAJE_CONEXION_LENTA);
+    }
+    expect(mensajeDeErrorDeAnalisis(new ErrorApi('LIMITE_EXCEDIDO', 'x', 429))).toBe(MENSAJE_DEMASIADOS_ANALISIS);
+    expect(mensajeDeErrorDeAnalisis(new ErrorApi('PDF_ILEGIBLE', 'x', 422))).toBe(MENSAJE_PDF_ILEGIBLE);
   });
 
   it('extrae el id de la importación existente del 409, solo si es un UUID', () => {

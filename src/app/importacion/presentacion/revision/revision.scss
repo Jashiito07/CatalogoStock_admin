@@ -180,6 +180,105 @@
   padding: 1rem 0;
 }
 
+.cs-revision__etiqueta-casilla {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.75rem;
+}
+
+.cs-revision__marcar-todos {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+// ── Celular (D-61): tarjetas, filtros colapsables, chips y barra inferior fija ──────────
+.cs-revision__panel-filtros,
+.cs-revision__tarjetas {
+  display: grid;
+  gap: 0.75rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.cs-revision__filtros-contenido {
+  padding: 0.75rem;
+  background-color: var(--cs-superficie);
+  border: 1px solid var(--cs-borde);
+  border-radius: 0.5rem;
+}
+
+.cs-revision__chips {
+  max-width: 100%;
+  overflow-x: auto;
+  padding-bottom: 0.25rem;
+}
+
+:host ::ng-deep .cs-revision__chips .p-selectbutton {
+  white-space: nowrap;
+}
+
+.cs-revision__paginacion {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.cs-revision__pagina {
+  display: grid;
+  font-weight: 600;
+  text-align: center;
+}
+
+.cs-revision__barra-fija {
+  position: fixed;
+  inset-inline: 0;
+  bottom: 0;
+  z-index: 20;
+  display: grid;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem calc(0.5rem + env(safe-area-inset-bottom, 0px));
+  background-color: var(--cs-superficie);
+  border-top: 1px solid var(--cs-borde);
+  box-shadow: 0 -4px 12px rgb(0 0 0 / 12%);
+}
+
+.cs-revision__barra-botones {
+  display: grid;
+  gap: 0.5rem;
+}
+
+// Deja libre el final de la lista para que la barra fija no tape la última tarjeta.
+.cs-revision--con-barra {
+  padding-bottom: 11rem;
+}
+
+@media (max-width: 767.98px) {
+  .cs-revision__titulo {
+    font-size: 1.25rem;
+  }
+
+  .cs-revision__navegacion,
+  .cs-revision__cuerpo-mensaje {
+    display: grid;
+    gap: 0.75rem;
+    width: 100%;
+  }
+
+  :host ::ng-deep .cs-revision__ancho-movil,
+  :host ::ng-deep .cs-revision__boton-barra {
+    width: 100%;
+    justify-content: center;
+    min-height: 3rem;
+  }
+
+  .cs-revision__filtros {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
 .cs-solo-lector {
   position: absolute;
   width: 1px;

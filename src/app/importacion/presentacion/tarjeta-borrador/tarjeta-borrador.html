@@ -1,0 +1,68 @@
+<article class="cs-tarjeta" [class.cs-tarjeta--marcada]="seleccionado()" data-prueba="fila-borrador">
+  @if (seleccionable()) {
+    <div class="cs-tarjeta__marcar">
+      <p-checkbox
+        [binary]="true"
+        size="large"
+        [ngModel]="seleccionado()"
+        (ngModelChange)="seleccionadoCambio.emit($event)"
+        [ngModelOptions]="{ standalone: true }"
+        [ariaLabel]="'Seleccionar ' + borrador().nombre"
+        data-prueba="seleccionar-borrador"
+      />
+    </div>
+  }
+  <div class="cs-tarjeta__cuerpo">
+    <p class="cs-tarjeta__origen">
+      Cód. <span data-prueba="codigo-borrador">{{ borrador().codigo ?? '—' }}</span> · Pág.
+      <span data-prueba="pagina-borrador">{{ borrador().pagina }}</span>
+    </p>
+    <p class="cs-tarjeta__nombre" data-prueba="nombre-borrador">{{ borrador().nombre }}</p>
+    <p class="cs-tarjeta__precio" data-prueba="precio-borrador">
+      @if (precioActualDistinto(borrador()); as actual) {
+        <span class="cs-tarjeta__antes" data-prueba="precio-actual">Actual {{ precioDeBorrador(actual) }}</span>
+        <i class="pi pi-arrow-right" aria-hidden="true"></i>
+        <span class="cs-tarjeta__lector">nuevo</span>
+      }
+      @if (borrador().precio; as precio) {
+        <span>{{ precioDeBorrador(precio) }}</span>
+      } @else {
+        <span class="cs-tarjeta__sin-precio">Sin precio</span>
+      }
+      @if (borrador().precioNormal; as normal) {
+        <span class="cs-tarjeta__normal" data-prueba="precio-normal">Normal {{ precioDeBorrador(normal) }}</span>
+      }
+    </p>
+    <span class="cs-tarjeta__etiquetas" data-prueba="advertencias">
+      <p-tag [value]="etiquetaDisponibilidad(borrador().disponibilidad)" [severity]="severidad(borrador().disponibilidad)" />
+      @for (codigo of advertenciasDeRevision(borrador()); track codigo) {
+        <p-tag
+          [value]="infoAdvertencia(codigo).etiqueta"
+          [severity]="codigo === 'SIN_PRECIO' ? 'danger' : 'warn'"
+          icon="pi pi-exclamation-triangle"
+          data-prueba="advertencia-revision"
+        />
+      }
+      @for (codigo of advertenciasInformativas(borrador()); track codigo) {
+        <p-tag
+          [value]="infoAdvertencia(codigo).etiqueta"
+          severity="info"
+          icon="pi pi-info-circle"
+          class="cs-tarjeta__informativa"
+          data-prueba="advertencia-informativa"
+        />
+      }
+    </span>
+  </div>
+  @if (puedeEditar(borrador())) {
+    <p-button
+      label="Editar"
+      icon="pi pi-pencil"
+      [outlined]="true"
+      styleClass="cs-tarjeta__editar"
+      [ariaLabel]="'Editar ' + borrador().nombre"
+      data-prueba="editar"
+      (onClick)="editar.emit(borrador())"
+    />
+  }
+</article>
