@@ -67,6 +67,30 @@ export function mensajeDeErrorDeImportacion(error: unknown): string {
   }
 }
 
+export const MENSAJE_SIN_CONEXION_SUBIDA =
+  'Se perdió la conexión al subir el PDF. Revisa tu Wi-Fi o tus datos móviles y vuelve a tocar «Analizar»: el archivo sigue elegido.';
+export const MENSAJE_CONEXION_LENTA =
+  'La conexión está muy lenta o el servidor tardó demasiado. Prueba con Wi-Fi y vuelve a tocar «Analizar».';
+/** Aviso mientras sube: la subida lleva rato sin terminar (no es un error). */
+export const AVISO_SUBIDA_LENTA =
+  'La subida está tardando por la conexión. No cierres esta pantalla; si sigue igual, prueba con Wi-Fi.';
+
+/**
+ * Como `mensajeDeErrorDeImportacion`, pero para el análisis del PDF, donde un corte de red o un
+ * tiempo agotado (408, 502, 503, 504) piden volver a intentar con mejor conexión (D-61).
+ */
+export function mensajeDeErrorDeAnalisis(error: unknown): string {
+  if (error instanceof ErrorApi) {
+    if (error.esSinConexion) {
+      return MENSAJE_SIN_CONEXION_SUBIDA;
+    }
+    if ([408, 502, 503, 504].includes(error.estado)) {
+      return MENSAJE_CONEXION_LENTA;
+    }
+  }
+  return mensajeDeErrorDeImportacion(error);
+}
+
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 /** Id de la importación existente en un 409 `IMPORTACION_DUPLICADA` (`detalles.idImportacion`). */

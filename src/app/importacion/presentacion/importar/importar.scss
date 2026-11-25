@@ -1,4 +1,4 @@
-// Los colores de las marcas vienen de la API (estilos en línea); el resto usa --cs-*.
+﻿// Los colores de las marcas vienen de la API (estilos en línea); el resto usa --cs-*.
 .cs-importar {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
@@ -46,7 +46,25 @@
 }
 
 .cs-importar__etiqueta {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
   font-weight: 600;
+}
+
+// Número del paso (1-2-3): texto sobre Primario, contraste 5.17 en claro y oscuro.
+.cs-importar__numero {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: 50%;
+  background-color: var(--cs-primario);
+  color: var(--cs-sobre-primario);
+  font-size: 0.9375rem;
+  font-weight: 700;
 }
 
 .cs-importar__ayuda {
@@ -139,6 +157,112 @@
   font-weight: 600;
   white-space: nowrap;
   box-shadow: 0 0 0 1px var(--cs-texto-secundario);
+}
+
+.cs-importar__elegido-datos {
+  display: grid;
+  flex: 1 1 auto;
+  min-width: 0;
+  gap: 0.125rem;
+}
+
+.cs-importar__estado {
+  font-variant-numeric: tabular-nums;
+}
+
+// Controles de PrimeNG con estilos propios (D-61): botones grandes y áreas táctiles de 48 px o más.
+:host ::ng-deep {
+  .cs-importar__elegir,
+  .cs-importar__analizar {
+    min-height: 3.5rem; // 56 px
+    font-size: 1.0625rem;
+    font-weight: 600;
+  }
+
+  .cs-importar__quitar {
+    min-width: 3rem;
+    min-height: 3rem;
+  }
+
+  .p-select {
+    min-height: 3rem;
+    align-items: center;
+  }
+}
+
+// Lista de tarjetas de «Importaciones recientes» en el celular.
+.cs-importar__tarjetas {
+  display: grid;
+  gap: 0.75rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.cs-importar__tarjeta {
+  display: grid;
+  gap: 0.5rem;
+  padding: 0.75rem;
+  background-color: var(--cs-superficie);
+  border: 1px solid var(--cs-borde);
+  border-radius: 0.5rem;
+
+  p {
+    margin: 0;
+  }
+}
+
+.cs-importar__tarjeta-marca {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.25rem 0.75rem;
+}
+
+.cs-importar__contadores {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 1rem;
+  font-size: 0.9375rem;
+}
+
+@media (max-width: 767.98px) {
+  .cs-importar__formulario {
+    padding: 0.75rem;
+  }
+
+  .cs-importar__titulo {
+    font-size: 1.25rem;
+  }
+
+  .cs-importar__acciones {
+    display: grid;
+  }
+
+  :host ::ng-deep {
+    .cs-importar__elegir,
+    .cs-importar__analizar,
+    .cs-importar__ancho-movil {
+      width: 100%;
+      justify-content: center;
+    }
+
+    .cs-importar__ancho-movil {
+      min-height: 3rem;
+    }
+
+    // El botón grande ocupa todo el ancho dentro del cargador.
+    .cs-importar__cargador .p-fileupload-header {
+      display: grid;
+      padding-inline: 0;
+    }
+  }
+
+  .cs-importar__cuerpo-mensaje {
+    display: grid;
+    gap: 0.75rem;
+    width: 100%;
+  }
 }
 
 .cs-solo-lector {

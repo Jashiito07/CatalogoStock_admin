@@ -32,6 +32,14 @@ npm run build               # compilación de producción en dist/catalogostock-
 
 El panel usa el puerto **4201** (la app móvil usa el 4200 en el navegador).
 
+## Importar catálogos desde el celular (D-61)
+
+Importar el catálogo PDF y revisar los borradores funciona en el navegador del celular (menos de
+768 px): «Elegir PDF del catálogo» abre el selector nativo (Descargas, WhatsApp), la marca se
+sugiere por el nombre del archivo, la subida muestra su porcentaje y la revisión pasa a tarjetas
+con filtros colapsables y una barra fija «Aprobar seleccionados (N)». En escritorio sigue la tabla.
+«Compartir desde WhatsApp» y la instalación como PWA quedan para después (PLAN 11.7).
+
 ## Configuración
 
 `src/environments/` contiene solo configuración pública, **sin credenciales**:

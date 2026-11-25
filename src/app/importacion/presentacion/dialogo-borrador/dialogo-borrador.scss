@@ -37,6 +37,43 @@ input.cs-dialogo-borrador__entrada {
   color: var(--p-red-300);
 }
 
+.cs-dialogo-borrador__pie {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  width: 100%;
+}
+
+// Celular: entradas de 48 px, 16 px de letra (sin ampliación al enfocar) y botones a lo ancho.
+@media (max-width: 767.98px) {
+  input.cs-dialogo-borrador__entrada,
+  textarea.cs-dialogo-borrador__entrada {
+    font-size: 1rem;
+  }
+
+  :host ::ng-deep .p-select,
+  :host ::ng-deep .p-dialog-close-button {
+    min-width: 3rem;
+    min-height: 3rem;
+    align-items: center;
+  }
+
+  :host ::ng-deep .p-select {
+    min-width: 0;
+  }
+
+  .cs-dialogo-borrador__pie {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+
+  :host ::ng-deep .cs-dialogo-borrador__pie .p-button {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
 .cs-dialogo-borrador__ayuda {
   margin: 0;
   color: var(--cs-texto-secundario);

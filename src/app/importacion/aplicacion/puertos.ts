@@ -15,9 +15,14 @@ export abstract class ApiImportaciones {
   /**
    * POST /productos/importaciones (multipart: `marcaId` y `archivo`). 201 con la importación.
    * 400, 404 `MARCA_NO_ENCONTRADA`, 409 `IMPORTACION_DUPLICADA`, 413, 415, 422 `PDF_ILEGIBLE` o
-   * `MARCA_INACTIVA`, 429.
+   * `MARCA_INACTIVA`, 429. `alProgreso` recibe el porcentaje real de subida (0 a 100); al llegar a
+   * 100 el PDF ya está en el servidor y solo falta esperar el análisis.
    */
-  abstract analizar(archivo: File, marcaId: string): Promise<Importacion>;
+  abstract analizar(
+    archivo: File,
+    marcaId: string,
+    alProgreso?: (porcentaje: number) => void,
+  ): Promise<Importacion>;
 
   /** GET /productos/importaciones/{id}: la importación con sus totales. 404 si no existe. */
   abstract obtener(id: string): Promise<Importacion>;

@@ -18,6 +18,7 @@ import { MessageModule } from 'primeng/message';
 import { SelectModule } from 'primeng/select';
 import { TextareaModule } from 'primeng/textarea';
 
+import { senalPantallaMovil } from '../../../compartido/presentacion/pantalla/pantalla-movil';
 import { EstadoMarcas } from '../../../marcas/aplicacion/estado-marcas';
 import { erroresPorCampo, ErroresPorCampo } from '../../../marcas/aplicacion/mensajes-marcas';
 import {
@@ -84,6 +85,24 @@ export class DialogoBorrador {
   protected readonly longitudMaximaDescripcion = LONGITUD_MAXIMA_DESCRIPCION;
   protected readonly opcionesDisponibilidad = OPCIONES_DISPONIBILIDAD;
   protected readonly precioDeBorrador = precioDeBorrador;
+
+  /** En el celular el diálogo ocupa toda la pantalla (D-61). */
+  protected readonly esMovil = senalPantallaMovil();
+  protected readonly estiloDialogo = computed(() =>
+    this.esMovil()
+      ? {
+          width: '100vw',
+          height: '100dvh',
+          'max-width': '100vw',
+          'max-height': '100dvh',
+          margin: '0',
+          'border-radius': '0',
+        }
+      : { width: '40rem', 'max-width': '96vw' },
+  );
+  protected readonly estiloContenido = computed(() =>
+    this.esMovil() ? { flex: '1 1 auto', 'max-height': 'none' } : { 'max-height': '75vh' },
+  );
 
   protected readonly nombre = signal('');
   protected readonly descripcion = signal('');

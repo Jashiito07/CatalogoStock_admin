@@ -139,7 +139,7 @@ describe('Importar: pantalla «Importar catálogo (PDF)» (RF-PRO-01, D-49, D-55
     await elegir(archivo);
     botonAnalizar().click();
     await estable();
-    expect(api.analizar).toHaveBeenCalledWith(archivo, ID_MARCA);
+    expect(api.analizar).toHaveBeenCalledWith(archivo, ID_MARCA, expect.any(Function));
     expect(q('[data-prueba="progreso"]')).not.toBeNull();
     expect(q('[data-prueba="resultado"]')).toBeNull();
 
@@ -149,6 +149,82 @@ describe('Importar: pantalla «Importar catálogo (PDF)» (RF-PRO-01, D-49, D-55
     expect(q('[data-prueba="resumen"]')?.textContent).toContain('Se encontraron 131 productos; 12 con advertencias.');
     expect(q('[data-prueba="revisar"]')).not.toBeNull();
     expect(almacen.ids).toContain(ID_IMPORTACION);
+  });
+
+  describe('importar desde el celular (D-61)', () => {
+    it('preselecciona la marca por el nombre del archivo y lo avisa', async () => {
+      interno().alSeleccionar({
+        currentFiles: [pdf('Catalogo Yanbal C15 WhatsApp.pdf')],
+        files: [pdf('Catalogo Yanbal C15 WhatsApp.pdf')],
+      });
+      await estable();
+      expect(q('[data-prueba="marca-sugerida"]')?.textContent).toContain('Yanbal');
+      expect(botonAnalizar().disabled).toBe(false);
+    });
+
+    it('no pisa una marca elegida a mano ni sugiere si el nombre no la reconoce', async () => {
+      await elegir(pdf('avon-catalogo.pdf'));
+      expect(q('[data-prueba="marca-sugerida"]')).toBeNull();
+      interno().alElegirMarca(null);
+      interno().alSeleccionar({ currentFiles: [pdf('catalogo.pdf')], files: [pdf('catalogo.pdf')] });
+      await estable();
+      expect(q('[data-prueba="marca-sugerida"]')).toBeNull();
+      expect(botonAnalizar().disabled).toBe(true);
+    });
+
+    it('muestra los pasos 1-2-3 en orden', () => {
+      const pasos = ['paso-1', 'paso-2', 'paso-3'].map((p) => q(`[data-prueba="${p}"]`)?.textContent ?? '');
+      expect(pasos[0]).toContain('Elige la marca');
+      expect(pasos[1]).toContain('Elige el PDF');
+      expect(pasos[2]).toContain('Analizar');
+    });
+
+    it('el selector de archivos solo ofrece PDF y el botón principal es «Elegir PDF del catálogo»', () => {
+      expect((q('input[type="file"]') as HTMLInputElement).accept).toBe('application/pdf');
+      expect(q('.cs-importar__elegir')?.textContent).toContain('Elegir PDF del catálogo');
+    });
+
+    it('muestra el porcentaje real de subida y luego «Analizando…»', async () => {
+      let avanzar: (porcentaje: number) => void = () => undefined;
+      let terminar: (i: Importacion) => void = () => undefined;
+      api.analizar.mockImplementation((_a, _m, alProgreso) => {
+        avanzar = alProgreso ?? avanzar;
+        return new Promise<Importacion>((resolver) => (terminar = resolver));
+      });
+      await elegir(pdf());
+      botonAnalizar().click();
+      await estable();
+      avanzar(42);
+      await estable();
+      expect(q('[data-prueba="texto-subida"]')?.textContent).toContain('42 %');
+      avanzar(100);
+      await estable();
+      expect(q('[data-prueba="texto-subida"]')).toBeNull();
+      expect(q('[data-prueba="texto-analisis"]')?.textContent).toContain('Analizando…');
+      terminar(importacionPrueba());
+      await estable();
+      expect(q('[data-prueba="progreso"]')).toBeNull();
+    });
+
+    it('no permite analizar dos veces: el botón se deshabilita y un segundo toque no envía otra subida', async () => {
+      api.analizar.mockReturnValue(new Promise<Importacion>(() => undefined));
+      await elegir(pdf());
+      botonAnalizar().click();
+      await estable();
+      expect(botonAnalizar().disabled).toBe(true);
+      botonAnalizar().click();
+      await estable();
+      expect(api.analizar).toHaveBeenCalledTimes(1);
+    });
+
+    it('sin conexión explica que el archivo sigue elegido y deja volver a intentar', async () => {
+      api.analizar.mockRejectedValue(new ErrorApi('SIN_CONEXION', 'x', 0));
+      await elegir(pdf());
+      botonAnalizar().click();
+      await estable();
+      expect(q('[data-prueba="error-analisis"]')?.textContent).toContain('Se perdió la conexión');
+      expect(botonAnalizar().disabled).toBe(false);
+    });
   });
 
   describe('errores del servidor (contrato, «POST /productos/importaciones»)', () => {

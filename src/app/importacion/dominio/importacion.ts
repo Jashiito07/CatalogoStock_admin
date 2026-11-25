@@ -59,6 +59,22 @@ export interface Borrador {
   /** Códigos del contrato; un código desconocido se trata como advertencia de revisión. */
   readonly advertencias: readonly string[];
   readonly idProducto: string | null;
+  /**
+   * Producto de la misma marca que se actualizará al aprobar (catálogos mensuales, D-57). Es
+   * opcional: si la API no lo envía, la lista solo muestra el precio del borrador.
+   */
+  readonly productoExistente?: { readonly id: string; readonly nombre: string; readonly precio: string } | null;
+}
+
+/** Precio actual del producto que el borrador actualizaría, o `null` si no aplica o es igual. */
+export function precioActualDistinto(
+  borrador: Pick<Borrador, 'precio' | 'productoExistente'>,
+): string | null {
+  const actual = borrador.productoExistente?.precio;
+  if (actual === undefined || borrador.precio === null) {
+    return null;
+  }
+  return precioParaApi(actual) === precioParaApi(borrador.precio) ? null : actual;
 }
 
 /** Cuerpo parcial de `PATCH /productos/importaciones/borradores/{id}` (nada admite `null`). */
@@ -119,6 +135,45 @@ export function validarArchivoPdf(archivo: DatosArchivo): string | null {
 }
 
 // ── Advertencias ────────────────────────────────────────────────────────────────────────
+
+/** Pasos de la pantalla de importar, en el orden en que los ve el Vendedor (D-61). */
+export const PASOS_IMPORTACION: readonly string[] = ['Elige la marca', 'Elige el PDF', 'Analizar'];
+
+/** Minúsculas, sin tildes ni signos: «Catálogo L'Bel-C13.pdf» → «catalogolbelc13pdf». */
+function claveDeTexto(texto: string): string {
+  return texto
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, '');
+}
+
+/**
+ * Id de la marca que coincide con el nombre del archivo («Yanbal_C14.pdf» → Yanbal), o `null` si no
+ * se reconoce ninguna o hay duda. Solo se consideran las marcas dadas (las activas): la sugerida es
+ * aquella cuyo nombre («Yanbal», «Leonisa», «Avon», «Cyzone», «Ésika», «L'Bel»...) aparece en el
+ * archivo, sin importar mayúsculas, tildes ni signos. Es solo una sugerencia: el Vendedor siempre
+ * puede cambiarla.
+ */
+export function marcaSugeridaPorArchivo(
+  nombreArchivo: string,
+  marcas: readonly { readonly id: string; readonly nombre: string }[],
+): string | null {
+  const archivo = claveDeTexto(nombreArchivo.replace(/\.pdf$/i, ''));
+  const coincidencias = marcas.filter((marca) => {
+    const clave = claveDeTexto(marca.nombre);
+    return clave.length >= 3 && archivo.includes(clave);
+  });
+  return coincidencias.length === 1 ? (coincidencias[0]?.id ?? null) : null;
+}
+
+/** Porcentaje entero de subida (0 a 100); sin total conocido, 0. */
+export function porcentajeDeSubida(cargados: number, total: number | undefined): number {
+  if (total === undefined || total <= 0) {
+    return 0;
+  }
+  return Math.min(100, Math.max(0, Math.floor((cargados / total) * 100)));
+}
 
 export interface InfoAdvertencia {
   readonly etiqueta: string;

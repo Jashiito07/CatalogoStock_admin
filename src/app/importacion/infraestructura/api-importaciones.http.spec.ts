@@ -1,4 +1,4 @@
-import { provideHttpClient, withInterceptors } from '@angular/common/http';
+import { HttpEventType, provideHttpClient, withInterceptors } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 
@@ -47,6 +47,27 @@ describe('ApiImportacionesHttp (contrato productos-importacion.md, «Endpoints»
     expect((cuerpo.get('archivo') as File).name).toBe('catalogo.pdf');
     // El navegador fija el Content-Type con su límite.
     expect(peticion.request.headers.has('Content-Type')).toBe(false);
+    peticion.flush(importacionPrueba(), { status: 201, statusText: 'Created' });
+    expect((await promesa).id).toBe(ID_IMPORTACION);
+  });
+
+  it('D-61: informa el porcentaje real de subida y devuelve la importación al terminar', async () => {
+    const porcentajes: number[] = [];
+    const archivo = new File(['%PDF-1.4'], 'catalogo.pdf', { type: 'application/pdf' });
+    const promesa = api.analizar(archivo, ID_MARCA, (p) => porcentajes.push(p));
+    const peticion = http.expectOne(BASE);
+    expect(peticion.request.reportProgress).toBe(true);
+    peticion.event({ type: HttpEventType.UploadProgress, loaded: 25, total: 100 });
+    peticion.event({ type: HttpEventType.UploadProgress, loaded: 100, total: 100 });
+    expect(porcentajes).toEqual([25, 100]);
+    peticion.flush(importacionPrueba(), { status: 201, statusText: 'Created' });
+    expect((await promesa).id).toBe(ID_IMPORTACION);
+  });
+
+  it('sin función de progreso también funciona', async () => {
+    const promesa = api.analizar(new File(['x'], 'a.pdf'), ID_MARCA);
+    const peticion = http.expectOne(BASE);
+    peticion.event({ type: HttpEventType.UploadProgress, loaded: 1, total: 2 });
     peticion.flush(importacionPrueba(), { status: 201, statusText: 'Created' });
     expect((await promesa).id).toBe(ID_IMPORTACION);
   });
