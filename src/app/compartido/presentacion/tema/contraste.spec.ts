@@ -105,12 +105,25 @@ describe('Contraste del texto de estado de PrimeNG (RNF-11)', () => {
     }
   });
 
+  /** Lee `light-dark(#claro, #oscuro)` de un token del preset. */
+  function paresHex(ruta: string, campo: 'color' | 'background'): [string, string] {
+    const nodo = ruta
+      .split('.')
+      .reduce<unknown>(
+        (n, k) => (n as Record<string, unknown> | undefined)?.[k],
+        TemaCatalogoStock,
+      );
+    const valor = String((nodo as Record<string, string>)[campo]);
+    const [, claro, oscuro] = /light-dark\((#\w{6}), (#\w{6})\)/.exec(valor) ?? [];
+    return [claro!, oscuro!];
+  }
+
   for (const severidad of ['success', 'danger', 'warn', 'info']) {
-    it(`tag.${severidad}: texto ≥ 4.5 sobre su fondo en claro y en oscuro`, () => {
-      const texto = tonosDe(`components.tag.${severidad}`, 'color');
-      const fondo = tonosDe(`components.tag.${severidad}`, 'background');
-      expect(razonDeContraste(texto.claro, fondo.claro)).toBeGreaterThanOrEqual(CONTRASTE_MINIMO);
-      expect(razonDeContraste(texto.oscuro, fondo.oscuro)).toBeGreaterThanOrEqual(CONTRASTE_MINIMO);
+    it(`tag.${severidad}: texto ≥ 4.5 sobre su fondo en claro y en oscuro (pares de la maqueta)`, () => {
+      const [textoClaro, textoOscuro] = paresHex(`components.tag.${severidad}`, 'color');
+      const [fondoClaro, fondoOscuro] = paresHex(`components.tag.${severidad}`, 'background');
+      expect(razonDeContraste(textoClaro, fondoClaro)).toBeGreaterThanOrEqual(CONTRASTE_MINIMO);
+      expect(razonDeContraste(textoOscuro, fondoOscuro)).toBeGreaterThanOrEqual(CONTRASTE_MINIMO);
     });
   }
 });
@@ -141,15 +154,20 @@ describe('Contraste de la paleta (RNF-11)', () => {
     });
   });
 
-  describe('modo oscuro con violeta', () => {
+  describe('modo oscuro', () => {
     const pares: [string, string, string][] = [
       ['texto sobre fondo', O.texto, O.fondo],
       ['texto sobre superficie', O.texto, O.superficie],
       ['texto secundario sobre fondo', O.textoSecundario, O.fondo],
       ['texto secundario sobre superficie', O.textoSecundario, O.superficie],
-      ['blanco sobre Secundario (botón principal)', C.sobreColor, C.secundario],
-      ['violeta claro sobre superficie (precios y enlaces)', O.violetaClaro, O.superficie],
+      ['blanco sobre Primario (botón principal)', C.sobreColor, C.primario],
+      ['blanco sobre Secundario', C.sobreColor, C.secundario],
+      ['Primario claro como texto sobre superficie', O.primarioTexto, O.superficie],
+      ['Primario claro como texto sobre fondo', O.primarioTexto, O.fondo],
+      ['Primario claro como texto sobre superficie secundaria', O.primarioTexto, O.superficie2],
+      ['violeta claro sobre superficie (texto del Secundario)', O.violetaClaro, O.superficie],
       ['violeta claro sobre fondo', O.violetaClaro, O.fondo],
+      ['texto sobre superficie secundaria', O.texto, O.superficie2],
       ['#1E293B sobre el Acento', C.texto, C.acento],
       ['error sobre superficie', O.error, O.superficie],
       ['éxito sobre superficie', O.exito, O.superficie],

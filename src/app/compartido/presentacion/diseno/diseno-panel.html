@@ -1,55 +1,103 @@
 <a class="cs-saltar-contenido" href="#contenido-principal">Saltar al contenido</a>
 
+<!-- Datos de la sesión y acciones: en la barra (escritorio) o al pie del cajón (celular). -->
+<ng-template #plantillaSesion>
+  <div class="cs-barra-superior__sesion">
+    @if (nombreVendedor()) {
+      <span class="cs-barra-superior__vendedor" data-prueba="nombre-vendedor">
+        <i class="pi pi-user" aria-hidden="true"></i>
+        {{ nombreVendedor() }}
+      </span>
+    }
+    <app-selector-tema />
+    <p-button
+      label="Cambiar mi clave"
+      icon="pi pi-key"
+      severity="secondary"
+      [outlined]="true"
+      data-prueba="cambiar-mi-clave"
+      (onClick)="irACambiarClave()"
+    />
+    <p-button
+      label="Cerrar sesión"
+      icon="pi pi-sign-out"
+      severity="secondary"
+      [loading]="cerrando()"
+      (onClick)="cerrarSesion()"
+    />
+  </div>
+</ng-template>
+
+<!-- Secciones del panel: menú lateral oscuro (escritorio) o contenido del cajón (celular). -->
+<ng-template #plantillaMenu>
+  <nav aria-label="Secciones del panel">
+    <p-menu [model]="secciones()" class="cs-menu-lateral" />
+  </nav>
+</ng-template>
+
 <p-toolbar class="cs-barra-superior">
   <ng-template #start>
-    <h1 class="cs-barra-superior__titulo">
-      <!-- Logo oficial como imagen (D-38). Su texto alternativo da el nombre de la app. -->
-      <img
-        class="cs-barra-superior__logo"
-        [src]="logo()"
-        alt="CatálogoStock"
-        width="212"
-        height="40"
-      />
-      <span class="cs-barra-superior__subtitulo">{{ subtitulo }}</span>
-    </h1>
+    <div class="cs-barra-superior__inicio">
+      @if (esMovil()) {
+        <p-button
+          icon="pi pi-bars"
+          severity="secondary"
+          [text]="true"
+          styleClass="cs-hamburguesa"
+          ariaLabel="Abrir el menú"
+          data-prueba="abrir-menu"
+          (onClick)="cajonAbierto.set(true)"
+        />
+      }
+      <h1 class="cs-barra-superior__titulo">
+        <!-- Logo oficial como imagen (D-38). Su texto alternativo da el nombre de la app. -->
+        <img
+          class="cs-barra-superior__logo"
+          [src]="logo()"
+          alt="CatálogoStock"
+          width="212"
+          height="40"
+        />
+        <span class="cs-barra-superior__subtitulo">{{ subtitulo }}</span>
+      </h1>
+    </div>
   </ng-template>
   <ng-template #end>
-    <div class="cs-barra-superior__sesion">
-      @if (nombreVendedor()) {
-        <span class="cs-barra-superior__vendedor" data-prueba="nombre-vendedor">
-          <i class="pi pi-user" aria-hidden="true"></i>
-          {{ nombreVendedor() }}
-        </span>
-      }
-      <app-selector-tema />
-      <p-button
-        label="Cambiar mi clave"
-        icon="pi pi-key"
-        severity="secondary"
-        [outlined]="true"
-        data-prueba="cambiar-mi-clave"
-        (onClick)="irACambiarClave()"
-      />
-      <p-button
-        label="Cerrar sesión"
-        icon="pi pi-sign-out"
-        severity="secondary"
-        [loading]="cerrando()"
-        (onClick)="cerrarSesion()"
-      />
-    </div>
+    @if (!esMovil()) {
+      <ng-container [ngTemplateOutlet]="plantillaSesion" />
+    }
   </ng-template>
 </p-toolbar>
 
 <div class="cs-diseno">
-  <nav class="cs-diseno__menu" aria-label="Secciones del panel">
-    <p-menu [model]="secciones()" class="cs-menu-lateral" />
-  </nav>
+  @if (!esMovil()) {
+    <div class="cs-diseno__menu">
+      <ng-container [ngTemplateOutlet]="plantillaMenu" />
+    </div>
+  }
 
   <main id="contenido-principal" class="cs-diseno__contenido" tabindex="-1">
     <router-outlet />
   </main>
 </div>
+
+@if (esMovil()) {
+  <p-drawer
+    [(visible)]="cajonAbierto"
+    position="left"
+    styleClass="cs-cajon"
+    data-prueba="cajon-menu"
+  >
+    <ng-template #header>
+      <span class="cs-nombre-marca cs-cajon__marca">CatálogoStock</span>
+    </ng-template>
+    <div class="cs-cajon__contenido">
+      <ng-container [ngTemplateOutlet]="plantillaMenu" />
+      <div class="cs-cajon__sesion">
+        <ng-container [ngTemplateOutlet]="plantillaSesion" />
+      </div>
+    </div>
+  </p-drawer>
+}
 
 <p-toast position="top-right" />

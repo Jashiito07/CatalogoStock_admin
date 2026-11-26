@@ -1,4 +1,5 @@
 // Colores solo desde las variables corporativas (colores.css), nunca en hexadecimal.
+// El tema del menú lateral y del cajón (barra oscura) está en src/styles.scss.
 :host {
   display: flex;
   flex-direction: column;
@@ -21,20 +22,26 @@
   }
 }
 
-// Barra clara con el logo horizontal oficial (D-38): sobre el Primario, la mitad azul del
-// ícono de la bolsa se perdería. Texto en el color Texto (13.98:1 sobre blanco, RNF-11) y
-// una franja del Primario como acento de marca.
+// Barra superior con el logo horizontal oficial (D-38). Superficie del tema: blanca en claro
+// y #1E293B en oscuro (con el logo para fondo oscuro, D-41); texto en el color Texto (RNF-11).
 .cs-barra-superior {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.75rem;
+  gap: var(--cs-espacio-3);
   border-radius: 0;
   border: none;
-  border-bottom: 4px solid var(--cs-primario);
-  // Superficie del tema: blanca en claro, #1E293B en oscuro (D-41), con el logo de fondo oscuro.
-  background: var(--cs-superficie);
+  border-bottom: 1px solid var(--cs-borde);
+  background: var(--cs-sup);
   color: var(--cs-texto);
+  box-shadow: var(--cs-sombra);
   min-height: 4rem;
+}
+
+.cs-barra-superior__inicio {
+  display: flex;
+  align-items: center;
+  gap: var(--cs-espacio-2);
+  min-width: 0;
 }
 
 .cs-barra-superior__titulo {
@@ -43,6 +50,8 @@
   align-items: center;
   gap: 0.25rem 0.75rem;
   margin: 0;
+  // El logo es una imagen: el texto «Panel del vendedor» va en la fuente de interfaz.
+  font-family: inherit;
   font-size: 1.125rem;
   font-weight: 600;
 }
@@ -51,6 +60,7 @@
   display: block;
   height: 2.5rem;
   width: auto;
+  max-width: 100%;
 }
 
 .cs-barra-superior__subtitulo {
@@ -63,7 +73,7 @@
   flex-wrap: wrap;
   align-items: center;
   justify-content: flex-end;
-  gap: 0.75rem;
+  gap: var(--cs-espacio-3);
 }
 
 .cs-barra-superior__vendedor {
@@ -73,35 +83,78 @@
   font-weight: 600;
 }
 
+// Escritorio: barra lateral oscura a la izquierda y contenido a la derecha.
 .cs-diseno {
   display: flex;
   flex: 1;
-  gap: 1.5rem;
-  padding: 1.5rem;
+  align-items: stretch;
 }
 
 .cs-diseno__menu {
-  flex: 0 0 16rem;
-}
+  flex: 0 0 var(--cs-ancho-menu);
+  box-sizing: border-box;
+  padding: var(--cs-espacio-4) var(--cs-espacio-3);
+  background-color: var(--cs-lat);
+  color: var(--cs-lat-t);
 
-.cs-menu-lateral {
-  display: block;
-  width: 100%;
+  .cs-menu-lateral {
+    position: sticky;
+    top: var(--cs-espacio-4);
+  }
 }
 
 .cs-diseno__contenido {
   flex: 1;
   min-width: 0;
+  padding: var(--cs-espacio-5);
   outline: none;
 }
 
-@media (max-width: 768px) {
-  .cs-diseno {
+// Cajón (celular): marca arriba, secciones y, al pie, la sesión.
+.cs-cajon__marca {
+  font-size: 1.375rem;
+  color: var(--cs-lat-on-t);
+}
+
+.cs-cajon__contenido {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: var(--cs-espacio-5);
+}
+
+// La sesión va en una tarjeta con la superficie del tema: así los botones y el selector de tema
+// conservan el contraste del tema claro u oscuro sobre la barra oscura del cajón.
+.cs-cajon__sesion {
+  margin-top: auto;
+  padding: var(--cs-espacio-4);
+  border-radius: var(--cs-radio-control);
+  background-color: var(--cs-sup);
+  color: var(--cs-texto);
+
+  .cs-barra-superior__sesion {
     flex-direction: column;
-    padding: 1rem;
+    align-items: stretch;
+  }
+}
+
+@media (max-width: 768px) {
+  .cs-barra-superior {
+    flex-wrap: nowrap;
+    padding-inline: var(--cs-espacio-2);
   }
 
-  .cs-diseno__menu {
-    flex-basis: auto;
+  .cs-barra-superior__subtitulo {
+    // Visible solo para lectores de pantalla: el logo ya identifica el panel.
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  .cs-diseno__contenido {
+    padding: var(--cs-espacio-4);
   }
 }
