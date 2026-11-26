@@ -11,6 +11,7 @@ import { provideRouter, withComponentInputBinding } from '@angular/router';
 import { MessageService } from 'primeng/api';
 import { providePrimeNG } from 'primeng/config';
 
+import { LICENCIA_PRIMENG } from '../environments/licencia-primeng';
 import { routes } from './app.routes';
 import { proveerHttp } from './compartido/infraestructura/http/proveer-http';
 import { PreferenciaTemaLocalStorage } from './compartido/infraestructura/preferencia-tema.local-storage';
@@ -20,6 +21,7 @@ import {
   ServicioTema,
 } from './compartido/presentacion/tema/servicio-tema';
 import { TemaCatalogoStock } from './compartido/presentacion/tema/tema-catalogostock';
+import { licenciaPrimeng } from './compartido/presentacion/licencia-primeng';
 import { TRADUCCION_PRIMENG } from './compartido/presentacion/traduccion-primeng';
 import { proveerUsuarios } from './usuarios/infraestructura/proveer-usuarios';
 
@@ -32,6 +34,8 @@ export const appConfig: ApplicationConfig = {
     proveerHttp(),
     proveerUsuarios(),
     providePrimeNG({
+      // D-59: la clave viene del build (nunca versionada); sin clave PrimeNG avisa.
+      license: licenciaPrimeng(LICENCIA_PRIMENG),
       translation: TRADUCCION_PRIMENG,
       theme: {
         preset: TemaCatalogoStock,

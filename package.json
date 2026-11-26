@@ -3,11 +3,17 @@
   "version": "0.0.0",
   "scripts": {
     "ng": "ng",
+    "preparar-licencia": "node scripts/preparar-licencia.mjs",
+    "prestart": "npm run preparar-licencia",
     "start": "ng serve",
+    "prestart:red": "npm run preparar-licencia",
     "start:red": "ng serve --host 0.0.0.0 --port 4201",
+    "prebuild": "npm run preparar-licencia",
     "build": "ng build",
+    "prewatch": "npm run preparar-licencia",
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
+    "test:scripts": "vitest run --config scripts/vitest.config.mjs",
     "lint": "ng lint"
   },
   "private": true,

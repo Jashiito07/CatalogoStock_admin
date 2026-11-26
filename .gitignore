@@ -33,6 +33,9 @@ yarn-error.log
 .env
 .env.*
 
+# Licencia de PrimeNG (PrimeUI): la clave NUNCA se publica (D-59)
+src/environments/licencia-primeng.local.ts
+
 # Miscellaneous
 /.angular
 .sass-cache/
