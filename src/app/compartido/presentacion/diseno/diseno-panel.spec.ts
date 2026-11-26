@@ -137,6 +137,53 @@ describe('DisenoPanel', () => {
     expect((fixture.nativeElement as HTMLElement).textContent).not.toContain('Configura tu negocio');
   });
 
+  describe('pantalla de celular (< 768 px)', () => {
+    const matchMediaOriginal = window.matchMedia;
+
+    beforeEach(() => {
+      window.matchMedia = ((consulta: string) => ({
+        matches: true,
+        media: consulta,
+        addEventListener: () => undefined,
+        removeEventListener: () => undefined,
+      })) as unknown as typeof window.matchMedia;
+    });
+
+    afterEach(() => {
+      window.matchMedia = matchMediaOriginal;
+    });
+
+    it('RNF-10: el menú lateral no ocupa la página; hay botón de hamburguesa y el cajón está cerrado', async () => {
+      const fixture = TestBed.createComponent(DisenoPanel);
+      await fixture.whenStable();
+      const elemento = fixture.nativeElement as HTMLElement;
+
+      expect(elemento.querySelector('.cs-diseno__menu')).toBeNull();
+      expect(elemento.querySelector('nav[aria-label="Secciones del panel"]')).toBeNull();
+      const hamburguesa = elemento.querySelector<HTMLButtonElement>(
+        '[data-prueba="abrir-menu"] button',
+      );
+      expect(hamburguesa?.getAttribute('aria-label')).toBe('Abrir el menú');
+    });
+
+    it('la hamburguesa abre el cajón con las secciones y la sesión; sin cambiar las rutas', async () => {
+      const fixture = TestBed.createComponent(DisenoPanel);
+      await fixture.whenStable();
+      (fixture.nativeElement as HTMLElement)
+        .querySelector<HTMLButtonElement>('[data-prueba="abrir-menu"] button')
+        ?.click();
+      await fixture.whenStable();
+      fixture.detectChanges();
+
+      const cuerpo = document.body;
+      const menu = cuerpo.querySelector('nav[aria-label="Secciones del panel"]');
+      expect(menu).not.toBeNull();
+      expect(menu?.textContent).toContain('Productos');
+      expect(cuerpo.textContent).toContain('Cerrar sesión');
+      expect(cuerpo.querySelector('.cs-cajon')).not.toBeNull();
+    });
+  });
+
   it('RF-USU-01: «Cerrar sesión» revoca la sesión en la API y lleva al ingreso', async () => {
     const navegar = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
     const fixture = TestBed.createComponent(DisenoPanel);

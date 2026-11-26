@@ -1,0 +1,292 @@
+/*
+ * Clases utilitarias compartidas del rediseño (etapa 1). Solo usan las variables `--cs-*` de
+ * `colores.css`: aquí no hay colores en hexadecimal. Las pantallas de las etapas siguientes
+ * las combinan con componentes de PrimeNG (D-06).
+ *
+ * Contraste (RNF-11): cada par texto/fondo está medido en `scripts/tokens-contraste.spec.mjs`.
+ * Nada se comunica solo con color: las etiquetas de estado llevan texto e ícono.
+ */
+
+/* ---- Tipografía: serifa solo en títulos y nombres de marca ---- */
+.cs-titulo,
+.cs-nombre-marca {
+  font-family: var(--cs-fuente-titulo);
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  line-height: 1.2;
+}
+
+/* Etiqueta pequeña sobre un título («MARTES, 24 DE NOVIEMBRE»): acento oscuro legible. */
+.cs-kicker {
+  color: var(--cs-kick);
+  font-size: 0.8125rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.cs-texto-suave {
+  color: var(--cs-texto2);
+}
+
+/* ---- Tarjeta de resumen (KPI del Inicio y de las pantallas del panel) ----
+ *   <section class="cs-tarjeta-resumen">
+ *     <h2 class="cs-tarjeta-resumen__titulo"><i class="pi pi-box" aria-hidden="true"></i> Productos</h2>
+ *     <p class="cs-tarjeta-resumen__valor">428</p>
+ *     <p class="cs-tarjeta-resumen__detalle">361 disponibles</p>
+ *   </section>
+ */
+.cs-tarjeta {
+  background-color: var(--cs-sup);
+  color: var(--cs-texto);
+  border: 1px solid var(--cs-borde);
+  border-radius: var(--cs-radio-tarjeta);
+  box-shadow: var(--cs-sombra);
+}
+
+.cs-tarjeta-resumen {
+  display: flex;
+  flex-direction: column;
+  gap: var(--cs-espacio-2);
+  padding: var(--cs-espacio-5);
+  background-color: var(--cs-sup);
+  color: var(--cs-texto);
+  border: 1px solid var(--cs-borde);
+  border-radius: var(--cs-radio-tarjeta);
+  box-shadow: var(--cs-sombra);
+}
+
+.cs-tarjeta-resumen__titulo {
+  display: flex;
+  align-items: center;
+  gap: var(--cs-espacio-2);
+  margin: 0;
+  font-family: inherit;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--cs-texto2);
+}
+
+.cs-tarjeta-resumen__titulo .pi {
+  color: var(--cs-pri-t);
+}
+
+.cs-tarjeta-resumen__valor {
+  margin: 0;
+  font-family: var(--cs-fuente-titulo);
+  font-size: 2.5rem;
+  font-weight: 700;
+  line-height: 1.1;
+}
+
+.cs-tarjeta-resumen__detalle {
+  margin: 0;
+  color: var(--cs-texto2);
+  font-size: 0.875rem;
+}
+
+/* Rejilla responsiva para varias tarjetas de resumen. */
+.cs-rejilla-resumen {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 14rem), 1fr));
+  gap: var(--cs-espacio-4);
+}
+
+/* ---- Chip de filtro (≥ 40 px de alto; anunciar `aria-pressed` en el botón) ----
+ *   <button type="button" class="cs-chip cs-chip--activo" aria-pressed="true">Disponibles</button>
+ */
+.cs-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--cs-espacio-2);
+  min-height: var(--cs-control-compacto);
+  padding: 0 var(--cs-espacio-4);
+  background-color: var(--cs-sup);
+  color: var(--cs-texto);
+  border: 1px solid var(--cs-ctl);
+  border-radius: var(--cs-radio-pildora);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    transform var(--cs-duracion) var(--cs-curva),
+    background-color var(--cs-duracion) var(--cs-curva);
+}
+
+.cs-chip:hover {
+  background-color: var(--cs-sup2);
+}
+
+/* Chip activo: fondo del Primario con texto blanco (5.17:1), un poco elevado. */
+.cs-chip--activo,
+.cs-chip[aria-pressed='true'] {
+  background-color: var(--cs-pri);
+  color: var(--cs-sobre-pri);
+  border-color: var(--cs-pri);
+  transform: translateY(-1px);
+}
+
+.cs-chip--activo:hover,
+.cs-chip[aria-pressed='true']:hover {
+  background-color: var(--cs-pri);
+}
+
+/* ---- Etiqueta de estado: texto + ícono, nunca solo color ----
+ *   <span class="cs-etiqueta cs-etiqueta--ok"><i class="pi pi-check" aria-hidden="true"></i> Disponible</span>
+ *   Variantes: --ok (pi-check), --aviso (pi-clock / pi-exclamation-triangle),
+ *   --error (pi-times), --info (pi-info-circle), --acento (insignia con texto #1E293B).
+ */
+.cs-etiqueta {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--cs-espacio-1);
+  padding: 0.25rem 0.75rem;
+  border-radius: var(--cs-radio-pildora);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  line-height: 1.3;
+  background-color: var(--cs-sup2);
+  color: var(--cs-texto);
+}
+
+.cs-etiqueta--ok {
+  background-color: var(--cs-ok-bg);
+  color: var(--cs-ok);
+}
+
+.cs-etiqueta--aviso {
+  background-color: var(--cs-warn-bg);
+  color: var(--cs-warn);
+}
+
+.cs-etiqueta--error {
+  background-color: var(--cs-mal-bg);
+  color: var(--cs-mal);
+}
+
+.cs-etiqueta--info {
+  background-color: var(--cs-info-bg);
+  color: var(--cs-info);
+}
+
+.cs-etiqueta--acento {
+  background-color: var(--cs-acento);
+  color: var(--cs-sobre-acento);
+}
+
+/* ---- Colores de marca (D-43) ----
+ * `.cs-marca` pinta con --marca-fondo / --marca-texto / --marca-acento; la pantalla los fija
+ * con el color de la marca y el texto calculado por contraste (blanco, #1E293B, #0F172A o
+ * negro). Las clases `cs-marca--<nombre>` traen los valores iniciales del DERCA.
+ */
+.cs-marca {
+  background-color: var(--marca-fondo);
+  color: var(--marca-texto);
+}
+
+.cs-marca-borde {
+  border-color: var(--marca-acento);
+}
+
+.cs-marca--yanbal {
+  --marca-fondo: var(--cs-marca-yanbal);
+  --marca-texto: var(--cs-marca-yanbal-t);
+}
+
+.cs-marca--avon {
+  --marca-fondo: var(--cs-marca-avon);
+  --marca-texto: var(--cs-marca-avon-t);
+}
+
+.cs-marca--lbel {
+  --marca-fondo: var(--cs-marca-lbel);
+  --marca-texto: var(--cs-marca-lbel-t);
+}
+
+.cs-marca--cyzone {
+  --marca-fondo: var(--cs-marca-cyzone);
+  --marca-texto: var(--cs-marca-cyzone-t);
+}
+
+.cs-marca--esika {
+  --marca-fondo: var(--cs-marca-esika);
+  --marca-texto: var(--cs-marca-esika-t);
+}
+
+.cs-marca--leonisa {
+  --marca-fondo: var(--cs-marca-leonisa);
+  --marca-texto: var(--cs-marca-leonisa-t);
+  --marca-acento: var(--cs-marca-leonisa-acento);
+}
+
+/* ---- Movimiento ligero (solo CSS; se desactiva con «reducir movimiento») ---- */
+@keyframes cs-aparecer {
+  from {
+    opacity: 0;
+    transform: translateY(0.5rem);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes cs-latido {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.12);
+  }
+}
+
+.cs-aparecer {
+  animation: cs-aparecer 260ms var(--cs-curva) both;
+}
+
+.cs-latido {
+  animation: cs-latido 420ms var(--cs-curva) 1;
+}
+
+/* Tarjeta que se eleva al pasar el cursor o recibir foco. */
+.cs-elevar {
+  transition:
+    transform var(--cs-duracion) var(--cs-curva),
+    box-shadow var(--cs-duracion) var(--cs-curva);
+}
+
+.cs-elevar:hover,
+.cs-elevar:focus-within {
+  transform: translateY(-2px);
+}
+
+/* Escala al pulsar. */
+.cs-presionar {
+  transition: transform var(--cs-duracion) var(--cs-curva);
+}
+
+.cs-presionar:active {
+  transform: scale(0.97);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cs-aparecer,
+  .cs-latido {
+    animation: none;
+  }
+
+  .cs-elevar,
+  .cs-presionar,
+  .cs-chip {
+    transition: none;
+  }
+
+  .cs-elevar:hover,
+  .cs-elevar:focus-within,
+  .cs-presionar:active,
+  .cs-chip--activo,
+  .cs-chip[aria-pressed='true'] {
+    transform: none;
+  }
+}

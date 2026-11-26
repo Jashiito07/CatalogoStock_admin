@@ -1,6 +1,7 @@
 /*
- * Estilos globales del panel. Los colores salen de colores.css y del preset de PrimeNG
- * (tema-catalogostock.ts); aquí no se escriben colores en hexadecimal.
+ * Estilos globales del panel. Los colores salen de colores.css (tokens `--cs-*`) y del preset de
+ * PrimeNG (tema-catalogostock.ts); aquí no se escriben colores en hexadecimal. Las clases
+ * utilitarias compartidas están en utilidades.css.
  */
 html,
 body {
@@ -16,19 +17,135 @@ body {
     sans-serif;
 }
 
-/* RNF-10: controles cómodos (mismo mínimo que la app móvil). */
+/* Tipografía: serifa solo en títulos de pantalla y nombres de marca (fuentes del sistema). */
+h1,
+h2 {
+  font-family: var(--cs-fuente-titulo);
+  letter-spacing: -0.01em;
+  line-height: 1.2;
+}
+
+/* RNF-10: controles cómodos (48 px; los campos de texto nunca bajan de 40 px). */
 .p-button,
 .p-menu-item-link {
   min-height: var(--cs-control-minimo);
 }
 
-/* El menú lateral ocupa todo el ancho de su columna. */
-.cs-menu-lateral .p-menu {
-  width: 100%;
+.p-inputtext,
+.p-select,
+.p-multiselect,
+.p-inputnumber-input,
+.p-password-input {
+  min-height: var(--cs-control-compacto);
 }
 
 /* Foco visible para la navegación por teclado. */
 :focus-visible {
   outline: 2px solid var(--cs-primario);
   outline-offset: 2px;
+}
+
+/*
+ * Menú lateral del panel (escritorio) y cajón (celular): barra oscura con íconos y el elemento
+ * activo resaltado, como en la maqueta. Texto #CBD5E1 sobre #0F172A (12.02:1); activo blanco
+ * sobre #1E293B (14.63:1). Las variables `--p-menu-*` son los tokens del componente de PrimeNG.
+ */
+.cs-menu-lateral {
+  display: block;
+  width: 100%;
+  --p-menu-background: transparent;
+  --p-menu-border-color: transparent;
+  --p-menu-shadow: none;
+  --p-menu-color: var(--cs-lat-t);
+  --p-menu-item-color: var(--cs-lat-t);
+  --p-menu-item-icon-color: var(--cs-lat-t);
+  --p-menu-item-focus-background: var(--cs-lat-on);
+  --p-menu-item-focus-color: var(--cs-lat-on-t);
+  --p-menu-item-icon-focus-color: var(--cs-lat-on-t);
+  --p-menu-item-border-radius: 1rem;
+  --p-menu-submenu-label-background: transparent;
+  --p-menu-submenu-label-color: var(--cs-lat-t);
+
+  .p-menu {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .p-menu-submenu-label {
+    font-size: 0.75rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .p-menu-item-link {
+    border-radius: 1rem;
+    transition:
+      background-color var(--cs-duracion) var(--cs-curva),
+      color var(--cs-duracion) var(--cs-curva);
+  }
+
+  .p-menu-item-icon {
+    font-size: 1.125rem;
+  }
+
+  /* Elemento activo: fondo elevado, texto blanco y marca naranja a la izquierda. */
+  .p-menu-item-link-active {
+    background-color: var(--cs-lat-on);
+    color: var(--cs-lat-on-t);
+    font-weight: 600;
+    box-shadow: inset 4px 0 0 var(--cs-acento);
+
+    .p-menu-item-icon,
+    .p-menu-item-label {
+      color: var(--cs-lat-on-t);
+    }
+  }
+}
+
+/* Cajón del menú en pantallas pequeñas: misma barra oscura, velo detrás. */
+.cs-cajon {
+  --p-drawer-background: var(--cs-lat);
+  --p-drawer-color: var(--cs-lat-t);
+  --p-drawer-border-color: transparent;
+  --p-drawer-shadow: var(--cs-sombra);
+  width: min(20rem, 86vw);
+
+  // El contenido ocupa todo el alto del cajón: la sesión queda al pie sin cortarse.
+  .p-drawer-content {
+    display: flex;
+    flex-direction: column;
+    padding-bottom: max(var(--cs-espacio-4), env(safe-area-inset-bottom));
+  }
+
+  // Botón de cerrar sobre la barra oscura: texto claro (el violeta no llega a 4.5:1 sobre #0F172A).
+  .p-drawer-header .p-button {
+    --p-button-text-secondary-color: var(--cs-lat-on-t);
+    --p-button-text-secondary-hover-background: var(--cs-lat-on);
+    color: var(--cs-lat-on-t);
+  }
+}
+
+/* Botón de hamburguesa: ícono grande y táctil (48 px). */
+.cs-hamburguesa {
+  min-width: var(--cs-control-minimo);
+
+  .p-button-icon {
+    font-size: 1.5rem;
+  }
+}
+
+.p-overlay-mask.p-drawer-mask {
+  background: var(--cs-velo);
+}
+
+/* «Reducir movimiento»: sin animaciones ni transiciones (también las de PrimeNG). */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

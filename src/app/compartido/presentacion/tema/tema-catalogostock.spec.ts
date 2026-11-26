@@ -16,11 +16,21 @@ function token(ruta: string): unknown {
 }
 
 describe('TemaCatalogoStock (D-06, D-41)', () => {
-  it('genera la escala primaria desde el Primario en claro y desde el Secundario en oscuro', () => {
+  it('genera la escala primaria desde el Primario en claro y en oscuro (acción azul)', () => {
     const valor = String(token('semantic.primary.500')).toLowerCase();
-    expect(valor).toBe(
-      `light-dark(${COLORES_CORPORATIVOS.primario.toLowerCase()}, ${COLORES_CORPORATIVOS.secundario.toLowerCase()})`,
-    );
+    expect(valor).toBe(COLORES_CORPORATIVOS.primario.toLowerCase());
+  });
+
+  it('el Primario como texto pasa a #60A5FA en oscuro y los controles tienen borde ≥ 3:1', () => {
+    expect(String(token('semantic.primary.color'))).toBe('light-dark({primary.500}, #60A5FA)');
+    expect(String(token('semantic.formField.borderColor'))).toBe('light-dark(#64748B, #94A3B8)');
+  });
+
+  it('esquinas redondeadas y sombra suave salen de las variables --cs-* (una sola definición)', () => {
+    expect(token('components.card.root.borderRadius')).toBe('var(--cs-radio-tarjeta)');
+    expect(token('components.card.root.shadow')).toBe('var(--cs-sombra)');
+    expect(token('components.button.root.borderRadius')).toBe('var(--cs-radio-pildora)');
+    expect(token('components.tag.root.borderRadius')).toBe('var(--cs-radio-pildora)');
   });
 
   it('el botón principal usa texto blanco sobre el tono 500 de la escala primaria', () => {

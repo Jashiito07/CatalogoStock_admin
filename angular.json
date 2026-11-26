@@ -33,6 +33,7 @@
             "styles": [
               "node_modules/primeicons/primeicons.css",
               "src/app/compartido/presentacion/tema/colores.css",
+              "src/app/compartido/presentacion/tema/utilidades.css",
               "src/styles.scss"
             ]
           },
@@ -41,7 +42,7 @@
               "budgets": [
                 {
                   "type": "initial",
-                  "maximumWarning": "600kB",
+                  "maximumWarning": "700kB",
                   "maximumError": "1MB"
                 },
                 {
