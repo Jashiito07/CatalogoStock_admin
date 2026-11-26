@@ -40,6 +40,24 @@ sugiere por el nombre del archivo, la subida muestra su porcentaje y la revisió
 con filtros colapsables y una barra fija «Aprobar seleccionados (N)». En escritorio sigue la tabla.
 «Compartir desde WhatsApp» y la instalación como PWA quedan para después (PLAN 11.7).
 
+## Licencia de PrimeNG (PrimeUI Community) (D-59)
+
+PrimeNG 22 pide una clave de licencia; sin ella muestra el aviso rojo «Invalid PrimeUI License». La verificación es sin conexión.
+
+> **Advertencia:** la clave **nunca se sube a Git** (el repositorio es público y los términos de PrimeUI prohíben publicarla). No la pegues en código, README, issues ni PR.
+
+Cómo funciona: `src/environments/licencia-primeng.ts` (versionado) exporta `LICENCIA_PRIMENG = ''`. En `development` y `production`, Angular lo sustituye por `src/environments/licencia-primeng.local.ts` (ignorado por Git), que genera `scripts/preparar-licencia.mjs` con esta prioridad: variable de entorno `PRIMEUI_LICENSE` → archivo `%USERPROFILE%\catalogostock-claves\primeui.txt` → vacío. El script no imprime la clave (solo «clave aplicada» o «sin clave») y no sustituye una clave válida por una vacía.
+
+Pasos:
+
+1. Regístrate en https://primeui.dev y obtén la clave de la licencia Community.
+2. Guárdala en una sola línea, sin espacios, en `%USERPROFILE%\catalogostock-claves\primeui.txt` (fuera del repositorio).
+3. `npm start`, `npm run start:red`, `npm run build` y `npm run watch` ejecutan el script automáticamente (ganchos `pre*`). En otros casos: `npm run preparar-licencia`.
+4. CI: crea el secreto `PRIMEUI_LICENSE` en GitHub (Settings → Secrets and variables → Actions). Sin el secreto (forks, PR de terceros) el build funciona igual, sin clave.
+5. Renovación anual: actualiza el archivo local y el secreto de GitHub; después ejecuta `npm run preparar-licencia`.
+
+Pruebas del script: `npm run test:scripts` (también corren en CI).
+
 ## Configuración
 
 `src/environments/` contiene solo configuración pública, **sin credenciales**:

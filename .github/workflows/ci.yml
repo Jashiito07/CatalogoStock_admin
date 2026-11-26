@@ -29,5 +29,10 @@ jobs:
         run: npm run lint
       - name: Pruebas
         run: npm test -- --watch=false
+      - name: Pruebas de scripts
+        run: npm run test:scripts
       - name: Build
+        # D-59: sin el secreto (forks, PR de terceros) el build funciona sin clave.
+        env:
+          PRIMEUI_LICENSE: ${{ secrets.PRIMEUI_LICENSE }}
         run: npm run build
