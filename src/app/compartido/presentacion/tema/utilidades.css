@@ -290,3 +290,96 @@
     transform: none;
   }
 }
+
+/* ---- Tabla que en celular pasa a filas tipo tarjeta (< 768 px) ----
+ *   <p-table class="cs-tabla-tarjetas" ...> y, en cada <td>, `data-etiqueta="Nombre"`.
+ *   La cabecera se oculta (solo para lectores de pantalla) y cada celda muestra su etiqueta
+ *   a la izquierda. Las celdas sin `data-etiqueta` (imagen, acciones) ocupan toda la fila.
+ *   La clase `cs-celda-acciones` alinea los botones al inicio y deja que envuelvan.
+ */
+@media (max-width: 767.98px) {
+  .cs-tabla-tarjetas .p-datatable-table-container {
+    overflow: visible;
+  }
+
+  .cs-tabla-tarjetas .p-datatable-table {
+    display: block;
+    width: 100%;
+    min-width: 0 !important;
+  }
+
+  /* Cabecera solo para lectores de pantalla (PrimeNG la deja sticky en tablas con scroll). */
+  .cs-tabla-tarjetas .p-datatable-thead {
+    position: absolute !important;
+    display: block;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+  }
+
+  .cs-tabla-tarjetas .p-datatable-tbody {
+    display: grid;
+    gap: var(--cs-espacio-3);
+    padding-block: var(--cs-espacio-2);
+  }
+
+  .cs-tabla-tarjetas .p-datatable-tbody > tr {
+    display: grid;
+    gap: var(--cs-espacio-1);
+    padding: var(--cs-espacio-4);
+    background-color: var(--cs-sup);
+    color: var(--cs-texto);
+    border: 1px solid var(--cs-borde);
+    border-radius: var(--cs-radio-control);
+    box-shadow: var(--cs-sombra);
+  }
+
+  .cs-tabla-tarjetas .p-datatable-tbody > tr > td {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--cs-espacio-1) var(--cs-espacio-3);
+    min-width: 0;
+    padding: var(--cs-espacio-1) 0;
+    border: 0;
+    background: transparent;
+    text-align: left;
+    overflow-wrap: anywhere;
+  }
+
+  .cs-tabla-tarjetas .p-datatable-tbody > tr > td[data-etiqueta]::before {
+    content: attr(data-etiqueta);
+    flex: 0 0 7rem;
+    color: var(--cs-texto2);
+    font-size: 0.8125rem;
+    font-weight: 600;
+  }
+
+  .cs-tabla-tarjetas .p-datatable-tbody > tr > td.cs-celda-acciones {
+    justify-content: flex-start;
+    flex-wrap: wrap;
+    white-space: normal;
+    padding-top: var(--cs-espacio-3);
+    border-top: 1px solid var(--cs-borde);
+  }
+
+  /* El mensaje «sin resultados» no es una fila de datos: sin tarjeta. */
+  .cs-tabla-tarjetas .p-datatable-tbody > tr.p-datatable-empty-message {
+    padding: 0;
+    border: 0;
+    box-shadow: none;
+    background: transparent;
+  }
+
+  .cs-tabla-tarjetas .p-datatable-tbody > tr.p-datatable-empty-message > td {
+    display: block;
+  }
+
+  .cs-tabla-tarjetas .p-paginator {
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: var(--cs-espacio-2);
+  }
+}

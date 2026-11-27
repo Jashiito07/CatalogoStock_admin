@@ -106,7 +106,7 @@
     currentPageReportTemplate="{first} a {last} de {totalRecords} clientes"
     [tableStyle]="{ 'min-width': '48rem' }"
     (onLazyLoad)="alCargarPagina($event)"
-    class="cs-clientes__tabla"
+    class="cs-clientes__tabla cs-tabla-tarjetas"
   >
     <ng-template #header>
       <tr>
@@ -122,8 +122,8 @@
 
     <ng-template #body let-fila>
       <tr data-prueba="fila-cliente">
-        <td class="cs-clientes__nombre">{{ fila.nombre }}</td>
-        <td class="cs-clientes__correo">
+        <td class="cs-clientes__nombre" data-etiqueta="Nombre">{{ fila.nombre }}</td>
+        <td class="cs-clientes__correo" data-etiqueta="Correo">
           <span class="cs-clientes__direccion">{{ fila.correo }}</span>
           @switch (fila.estadoCorreo) {
             @case ('verificado') {
@@ -152,20 +152,20 @@
             }
           }
         </td>
-        <td data-prueba="estado-cuenta">
+        <td data-etiqueta="Estado" data-prueba="estado-cuenta">
           <p-tag
             [value]="fila.etiquetaEstado"
             [severity]="fila.activo ? 'success' : 'secondary'"
             [icon]="fila.activo ? 'pi pi-check-circle' : 'pi pi-ban'"
           />
         </td>
-        <td class="cs-clientes__numero">{{ fila.telefono }}</td>
-        <td class="cs-clientes__numero">
+        <td class="cs-clientes__numero" data-etiqueta="Teléfono">{{ fila.telefono }}</td>
+        <td class="cs-clientes__numero" data-etiqueta="Registro">
           <time [attr.datetime]="fila.creadoEn">
             {{ fila.creadoEn | date: 'dd/MM/yyyy' : zonaEcuador }}
           </time>
         </td>
-        <td data-prueba="estado-codigo">
+        <td data-etiqueta="Código" data-prueba="estado-codigo">
           @switch (fila.estadoCodigo.tipo) {
             @case ('inactiva') {
               <span class="cs-clientes__sin-codigo">No disponible</span>
@@ -182,7 +182,7 @@
             }
           }
         </td>
-        <td>
+        <td class="cs-celda-acciones">
           <div class="cs-clientes__acciones">
           <!-- D-53: sin «Eliminar». Una cuenta desactivada no recibe código (422 CUENTA_INACTIVA). -->
           @if (fila.activo) {

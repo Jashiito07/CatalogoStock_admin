@@ -95,6 +95,17 @@ export function etiquetaDisponibilidad(valor: Disponibilidad): string {
   return ETIQUETAS_DISPONIBILIDAD[valor];
 }
 
+/** Ícono (PrimeIcons) que acompaña al texto de la etiqueta: nada se comunica solo con color. */
+const ICONOS_DISPONIBILIDAD: Readonly<Record<Disponibilidad, string>> = {
+  DISPONIBLE: 'pi pi-check-circle',
+  AGOTADO: 'pi pi-times-circle',
+  PENDIENTE_REPOSICION: 'pi pi-clock',
+};
+
+export function iconoDisponibilidad(valor: Disponibilidad): string {
+  return ICONOS_DISPONIBILIDAD[valor];
+}
+
 export function esDisponibilidad(valor: unknown): valor is Disponibilidad {
   return typeof valor === 'string' && (DISPONIBILIDADES as readonly string[]).includes(valor);
 }

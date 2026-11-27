@@ -116,7 +116,7 @@
     currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} productos"
     [scrollable]="true"
     [tableStyle]="{ 'min-width': '58rem' }"
-    class="cs-productos__tabla"
+    class="cs-productos__tabla cs-tabla-tarjetas"
     (onLazyLoad)="alCambiarPagina($event)"
   >
     <ng-template #header>
@@ -150,8 +150,8 @@
             </span>
           }
         </td>
-        <td class="cs-productos__nombre" data-prueba="nombre-producto">{{ fila.nombre }}</td>
-        <td>
+        <td class="cs-productos__nombre" data-etiqueta="Nombre" data-prueba="nombre-producto">{{ fila.nombre }}</td>
+        <td data-etiqueta="Marca">
           <span
             class="cs-productos__marca"
             [style.background-color]="fila.marca.color"
@@ -161,10 +161,10 @@
             {{ fila.marca.nombre }}
           </span>
         </td>
-        <td class="cs-productos__derecha cs-productos__precio" data-prueba="precio-producto">
+        <td class="cs-productos__derecha cs-productos__precio" data-etiqueta="Precio" data-prueba="precio-producto">
           {{ formatearPrecio(fila.precio) }}
         </td>
-        <td data-prueba="disponibilidad-producto">
+        <td data-etiqueta="Disponibilidad" data-prueba="disponibilidad-producto">
           <p-select
             [options]="opcionesDisponibilidad"
             optionLabel="etiqueta"
@@ -178,14 +178,14 @@
             data-prueba="cambiar-disponibilidad"
           >
             <ng-template #selectedItem let-opcion>
-              <p-tag [value]="opcion.etiqueta" [severity]="severidad(opcion.valor)" data-prueba="etiqueta-disponibilidad" />
+              <p-tag [value]="opcion.etiqueta" [severity]="severidad(opcion.valor)" [icon]="iconoDisponibilidad(opcion.valor)" data-prueba="etiqueta-disponibilidad" />
             </ng-template>
             <ng-template #item let-opcion>
-              <p-tag [value]="opcion.etiqueta" [severity]="severidad(opcion.valor)" />
+              <p-tag [value]="opcion.etiqueta" [severity]="severidad(opcion.valor)" [icon]="iconoDisponibilidad(opcion.valor)" />
             </ng-template>
           </p-select>
         </td>
-        <td class="cs-productos__acciones">
+        <td class="cs-productos__acciones cs-celda-acciones">
           <p-button
             label="Editar"
             icon="pi pi-pencil"

@@ -38,6 +38,9 @@ describe('VerificarCorreo (RF-USU-05, D-50)', () => {
   }
 
   beforeEach(async () => {
+    // La cuenta regresiva usa setInterval: se controla con reloj falso (solo intervalos) para que
+    // «1:00» no dependa del tiempo real que tarde la prueba. setTimeout sigue real para `estable()`.
+    vi.useFakeTimers({ toFake: ['setInterval', 'clearInterval'] });
     api = crearApiFalsa();
     api.ingresarVendedor.mockResolvedValue(crearSesion());
     await TestBed.configureTestingModule({
@@ -55,7 +58,10 @@ describe('VerificarCorreo (RF-USU-05, D-50)', () => {
     await estable();
   });
 
-  afterEach(() => fixture.destroy());
+  afterEach(() => {
+    fixture.destroy();
+    vi.useRealTimers();
+  });
 
   it('muestra el correo de destino y solo «Enviar código» al empezar', () => {
     expect(elemento.textContent).toContain('vendedora@correo.com');
@@ -68,6 +74,11 @@ describe('VerificarCorreo (RF-USU-05, D-50)', () => {
     expect(elemento.querySelector('#verificar-codigo')).not.toBeNull();
     expect(elemento.querySelector('[data-prueba="espera"]')?.textContent).toContain('1:00');
     expect(elemento.querySelector<HTMLButtonElement>('[data-prueba="enviar-codigo"] button')?.disabled).toBe(true);
+
+    // Con el reloj falso, el avance es exacto: tras 1 s quedan 0:59.
+    vi.advanceTimersByTime(1000);
+    fixture.detectChanges();
+    expect(elemento.querySelector('[data-prueba="espera"]')?.textContent).toContain('0:59');
   });
 
   it.each([

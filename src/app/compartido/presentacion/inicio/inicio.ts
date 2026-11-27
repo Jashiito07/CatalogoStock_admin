@@ -1,32 +1,69 @@
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
-import { MessageService } from 'primeng/api';
-import { BadgeModule } from 'primeng/badge';
+import { DatePipe } from '@angular/common';
+import { ChangeDetectionStrategy, Component, computed, inject, OnInit } from '@angular/core';
+import { RouterLink } from '@angular/router';
 import { ButtonModule } from 'primeng/button';
-import { CardModule } from 'primeng/card';
-import { DialogModule } from 'primeng/dialog';
+import { TagModule } from 'primeng/tag';
 
+import { aFilaBitacora, FilaBitacora, iconoSeveridad } from '../../../auditoria/presentacion/bitacora/bitacora';
 import { SesionVendedor } from '../../../usuarios/aplicacion/sesion-vendedor';
 import { correoVerificado } from '../../../usuarios/dominio/codigo-correo';
 import { VerificarCorreo } from '../../../usuarios/presentacion/verificar-correo/verificar-correo';
+import {
+  DISPONIBILIDADES,
+  Disponibilidad,
+  etiquetaDisponibilidad,
+  iconoDisponibilidad,
+} from '../../../productos/dominio/producto';
+import { fechaHoraEcuador } from '../../dominio/fecha-ecuador';
+import { anchoRelativo, arcosDona, porcentaje, RADIO_DONA } from '../../dominio/graficos';
+import { ResumenPanel } from '../../aplicacion/resumen-panel';
 
-interface ColorCorporativo {
-  nombre: string;
-  uso: string;
-  /** Clase CSS que pinta la muestra con su variable `--cs-*`. */
-  clase: string;
+/** Variante visual (clases `cs-etiqueta--*`) de cada disponibilidad. */
+const VARIANTE_DISPONIBILIDAD: Readonly<Record<Disponibilidad, string>> = {
+  DISPONIBLE: 'ok',
+  AGOTADO: 'error',
+  PENDIENTE_REPOSICION: 'aviso',
+};
+
+/** Color de cada tramo del gráfico (variables `--cs-g*`, no textuales). */
+const COLOR_DISPONIBILIDAD: Readonly<Record<Disponibilidad, string>> = {
+  DISPONIBLE: 'var(--cs-g4)',
+  AGOTADO: 'var(--cs-g6)',
+  PENDIENTE_REPOSICION: 'var(--cs-g2)',
+};
+
+interface TramoDisponibilidad {
+  readonly valor: Disponibilidad;
+  readonly etiqueta: string;
+  readonly icono: string;
+  readonly variante: string;
+  readonly color: string;
+  readonly cantidad: number;
 }
 
-/** Página de bienvenida del panel; sirve para comprobar el tema corporativo (D-06). */
+/**
+ * Inicio del panel (maqueta combinada, etapa 4): resumen del catálogo con datos reales de la API.
+ * Tarjetas de resumen, tres gráficos pequeños en HTML/CSS/SVG, importaciones recientes y actividad
+ * reciente de la bitácora. No muestra ventas ni pedidos: llegan en la Fase 6.
+ */
 @Component({
   selector: 'app-inicio',
-  imports: [CardModule, ButtonModule, BadgeModule, DialogModule, VerificarCorreo],
+  imports: [DatePipe, RouterLink, ButtonModule, TagModule, VerificarCorreo],
   templateUrl: './inicio.html',
   styleUrl: './inicio.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class Inicio {
-  private readonly mensajes = inject(MessageService);
+export class Inicio implements OnInit {
   private readonly sesion = inject(SesionVendedor);
+  protected readonly resumen = inject(ResumenPanel);
+
+  protected readonly zonaEcuador = '-0500';
+  protected readonly hoy = new Date();
+  protected readonly radioDona = RADIO_DONA;
+  protected readonly fechaHora = fechaHoraEcuador;
+  protected readonly iconoSeveridad = iconoSeveridad;
+  protected readonly porcentaje = porcentaje;
+  protected readonly anchoRelativo = anchoRelativo;
 
   /** Correo del Vendedor mientras no esté verificado (D-50); `null` si ya lo está. */
   protected readonly correoPorVerificar = computed(() => {
@@ -34,26 +71,56 @@ export class Inicio {
     return usuario !== null && !correoVerificado(usuario) ? usuario.correo : null;
   });
 
-  protected readonly guiaVisible = signal(false);
+  protected readonly nombreVendedor = computed(() => this.sesion.usuario()?.nombre ?? '');
 
-  protected readonly colores: readonly ColorCorporativo[] = [
-    { nombre: 'Primario', uso: 'Acciones principales y encabezados', clase: 'cs-muestra--primario' },
-    { nombre: 'Secundario', uso: 'Acciones secundarias y etiquetas', clase: 'cs-muestra--secundario' },
-    { nombre: 'Acento', uso: 'Insignias y avisos importantes', clase: 'cs-muestra--acento' },
-    { nombre: 'Fondo', uso: 'Fondo general de las pantallas', clase: 'cs-muestra--fondo' },
-    { nombre: 'Texto', uso: 'Texto principal', clase: 'cs-muestra--texto' },
-  ];
+  /** Tramos del gráfico de disponibilidad (solo los que tienen productos). */
+  protected readonly tramos = computed<TramoDisponibilidad[]>(() => {
+    const seccion = this.resumen.productos();
+    if (seccion.estado !== 'listo') {
+      return [];
+    }
+    return DISPONIBILIDADES.map((valor) => ({
+      valor,
+      etiqueta: etiquetaDisponibilidad(valor),
+      icono: iconoDisponibilidad(valor),
+      variante: VARIANTE_DISPONIBILIDAD[valor],
+      color: COLOR_DISPONIBILIDAD[valor],
+      cantidad: seccion.datos.porDisponibilidad[valor],
+    }));
+  });
 
-  protected mostrarAvisoDePrueba(): void {
-    this.mensajes.add({
-      severity: 'success',
-      summary: 'Todo listo',
-      detail: 'El tema corporativo del panel está activo.',
-      life: 3000,
-    });
+  /** Mayor cantidad de productos de una marca: escala del gráfico «Productos por marca». */
+  protected readonly maximoPorMarca = computed(() => {
+    const seccion = this.resumen.productos();
+    return seccion.estado === 'listo' ? Math.max(0, ...seccion.datos.porMarca.map((m) => m.total)) : 0;
+  });
+
+  /** Arcos del donut «Correos de clientes»: verificados y sin verificar. */
+  protected readonly arcosCorreo = computed(() => {
+    const seccion = this.resumen.clientes();
+    return seccion.estado === 'listo'
+      ? arcosDona([seccion.datos.verificados, seccion.datos.sinVerificar])
+      : [];
+  });
+
+  protected readonly actividad = computed<FilaBitacora[]>(() => {
+    const seccion = this.resumen.actividad();
+    return seccion.estado === 'listo' ? seccion.datos.map(aFilaBitacora) : [];
+  });
+
+  /** «jueves, 26 de noviembre» en hora de Ecuador, sobre el saludo. */
+  protected readonly fechaLarga = new Intl.DateTimeFormat('es-EC', {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long',
+    timeZone: 'America/Guayaquil',
+  }).format(this.hoy);
+
+  ngOnInit(): void {
+    void this.resumen.cargar();
   }
 
-  protected abrirGuiaDeColores(): void {
-    this.guiaVisible.set(true);
+  protected recargar(): void {
+    void this.resumen.cargar();
   }
 }

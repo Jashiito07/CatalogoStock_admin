@@ -115,7 +115,7 @@
     currentPageReportTemplate="{first} a {last} de {totalRecords} actividades"
     [tableStyle]="{ 'min-width': '52rem' }"
     (onLazyLoad)="alCargarPagina($event)"
-    class="cs-bitacora__tabla"
+    class="cs-bitacora__tabla cs-tabla-tarjetas"
   >
     <ng-template #header>
       <tr>
@@ -129,13 +129,13 @@
 
     <ng-template #body let-fila>
       <tr data-prueba="fila-bitacora">
-        <td class="cs-bitacora__fecha">
+        <td class="cs-bitacora__fecha" data-etiqueta="Fecha y hora">
           <time [attr.datetime]="fila.fecha">
             {{ fila.fecha | date: 'dd/MM/yyyy HH:mm:ss' : zonaEcuador }}
           </time>
         </td>
-        <td><p-tag [value]="fila.accion" [severity]="fila.severidad" /></td>
-        <td>
+        <td data-etiqueta="Acción"><p-tag [value]="fila.accion" [severity]="fila.severidad" [icon]="iconoSeveridad(fila.severidad)" /></td>
+        <td data-etiqueta="Usuario">
           <div class="cs-bitacora__usuario">
             <span
               data-prueba="usuario"
@@ -159,8 +159,8 @@
             }
           </div>
         </td>
-        <td>{{ fila.entidad }}</td>
-        <td>
+        <td data-etiqueta="Objeto">{{ fila.entidad }}</td>
+        <td data-etiqueta="Detalle">
           @if (fila.detalle.length > 0) {
             <dl class="cs-bitacora__detalle">
               @for (campo of fila.detalle; track campo.etiqueta) {

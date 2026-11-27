@@ -43,6 +43,8 @@ describe('RecuperarClave del Vendedor (RF-USU-05, D-50)', () => {
   }
 
   beforeEach(async () => {
+    // Reloj falso solo para intervalos: la cuenta regresiva no depende del tiempo real.
+    vi.useFakeTimers({ toFake: ['setInterval', 'clearInterval'] });
     api = crearApiFalsa();
     await TestBed.configureTestingModule({
       imports: [RecuperarClave],
@@ -58,7 +60,10 @@ describe('RecuperarClave del Vendedor (RF-USU-05, D-50)', () => {
     await estable();
   });
 
-  afterEach(() => fixture.destroy());
+  afterEach(() => {
+    fixture.destroy();
+    vi.useRealTimers();
+  });
 
   it('paso 1: pide el correo y deja la nota del comando del servidor', () => {
     expect(elemento.querySelector('label[for="correo-recuperacion"]')?.textContent).toContain('Correo');
