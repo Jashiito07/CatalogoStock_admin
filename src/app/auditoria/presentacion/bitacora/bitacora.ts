@@ -41,6 +41,18 @@ const SEVERIDAD_POR_GRAVEDAD: Readonly<Record<Gravedad, SeveridadEtiqueta>> = {
   alerta: 'danger',
 };
 
+/** Ícono que acompaña a la etiqueta de la acción: la gravedad no se comunica solo con color. */
+export function iconoSeveridad(severidad: SeveridadEtiqueta): string {
+  switch (severidad) {
+    case 'success':
+      return 'pi pi-check-circle';
+    case 'danger':
+      return 'pi pi-exclamation-triangle';
+    default:
+      return 'pi pi-info-circle';
+  }
+}
+
 export const MENSAJE_SIN_PERMISO = 'No tienes permiso para esta acción.';
 
 /** Fila de la tabla ya preparada para mostrarse. */
@@ -101,6 +113,7 @@ export class Bitacora {
 
   /** Zona horaria para mostrar las fechas (Ecuador, UTC-5, sin horario de verano). */
   protected readonly zonaEcuador = '-0500';
+  protected readonly iconoSeveridad = iconoSeveridad;
   protected readonly opcionesFilas = [10, 20, 50, 100];
   protected readonly opcionesAccion = ACCIONES_AUDITORIA.map((valor) => ({
     valor,

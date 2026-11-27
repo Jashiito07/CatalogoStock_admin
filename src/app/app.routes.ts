@@ -1,5 +1,6 @@
 import { Routes } from '@angular/router';
 
+import { ResumenPanel } from './compartido/aplicacion/resumen-panel';
 import { proveerAuditoria } from './auditoria/infraestructura/lector-bitacora.http';
 import { proveerClientes } from './clientes/infraestructura/api-clientes.http';
 import { proveerImportacion } from './importacion/infraestructura/api-importaciones.http';
@@ -46,6 +47,14 @@ export const routes: Routes = [
         title: 'Inicio · CatálogoStock',
         // D-48: sin marcas, el ingreso termina en «Configura tu negocio».
         canActivate: [negocioConfigurado],
+        // El resumen reúne datos de productos, clientes, importaciones y bitácora (solo lectura).
+        providers: [
+          proveerProductos(),
+          proveerClientes(),
+          proveerImportacion(),
+          proveerAuditoria(),
+          ResumenPanel,
+        ],
         loadComponent: () =>
           import('./compartido/presentacion/inicio/inicio').then((m) => m.Inicio),
       },

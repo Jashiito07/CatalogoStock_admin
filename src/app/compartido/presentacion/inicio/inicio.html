@@ -2,57 +2,309 @@
   <app-verificar-correo [correo]="correo" />
 }
 
-<p-card class="cs-inicio">
-  <ng-template #title>
-    <h2 class="cs-inicio__titulo">Bienvenido al panel del vendedor</h2>
-  </ng-template>
-  <ng-template #subtitle>Administra lo que tus clientes ven en la app de CatálogoStock.</ng-template>
-
-  <p>
-    Desde aquí gestionarás productos, marcas, inventario, pedidos, verificación de
-    transferencias y conflictos de sincronización. Estas secciones se habilitarán en las
-    próximas fases.
-  </p>
-
-  <p class="cs-inicio__fase">
-    <span>Fase actual:</span>
-    <p-badge value="Base técnica" severity="warn" badgeSize="large" />
-  </p>
-
-  <ng-template #footer>
-    <div class="cs-inicio__acciones">
-      <p-button
-        label="Mostrar aviso de prueba"
-        icon="pi pi-check"
-        (onClick)="mostrarAvisoDePrueba()"
-      />
-      <p-button
-        label="Ver colores corporativos"
-        icon="pi pi-palette"
-        severity="secondary"
-        (onClick)="abrirGuiaDeColores()"
-      />
+<section class="cs-inicio" aria-labelledby="titulo-inicio">
+  <header class="cs-inicio__encabezado">
+    <div>
+      <p class="cs-kicker" data-prueba="fecha-inicio">{{ fechaLarga }}</p>
+      <h2 id="titulo-inicio" class="cs-titulo cs-inicio__titulo">
+        Bienvenido{{ nombreVendedor() ? ', ' + nombreVendedor() : '' }}
+      </h2>
+      <p class="cs-texto-suave cs-inicio__subtitulo">
+        Así está tu catálogo hoy. Los datos vienen del servidor; no incluyen ventas ni pedidos,
+        que llegan en la Fase 6.
+      </p>
     </div>
-  </ng-template>
-</p-card>
+    <p-button
+      label="Actualizar"
+      icon="pi pi-refresh"
+      severity="secondary"
+      [outlined]="true"
+      data-prueba="actualizar-resumen"
+      (onClick)="recargar()"
+    />
+  </header>
 
-<p-dialog
-  header="Colores corporativos"
-  [(visible)]="guiaVisible"
-  [modal]="true"
-  [draggable]="false"
-  [style]="{ width: 'min(32rem, 95vw)' }"
->
-  <ul class="cs-colores">
-    @for (color of colores; track color.nombre) {
-      <li class="cs-colores__item">
-        <span class="cs-muestra" [class]="color.clase" aria-hidden="true"></span>
-        <span>
-          <strong>{{ color.nombre }}</strong>
-          <br />
-          {{ color.uso }}
-        </span>
-      </li>
-    }
-  </ul>
-</p-dialog>
+  <!-- Tarjetas de resumen: datos reales de la API -->
+  <div class="cs-rejilla-resumen" data-prueba="tarjetas-resumen">
+    <section class="cs-tarjeta-resumen cs-aparecer" aria-labelledby="resumen-productos" data-prueba="tarjeta-productos">
+      <h3 id="resumen-productos" class="cs-tarjeta-resumen__titulo">
+        <i class="pi pi-box" aria-hidden="true"></i> Productos en el catálogo
+      </h3>
+      @if (resumen.productos(); as seccion) {
+        @switch (seccion.estado) {
+          @case ('listo') {
+            <p class="cs-tarjeta-resumen__valor" data-prueba="valor-productos">{{ seccion.datos.total }}</p>
+            <p class="cs-tarjeta-resumen__detalle">
+              {{ seccion.datos.porDisponibilidad.DISPONIBLE }} disponibles ·
+              {{ seccion.datos.porDisponibilidad.AGOTADO }} agotados
+            </p>
+          }
+          @case ('error') {
+            <p class="cs-tarjeta-resumen__valor" aria-hidden="true">—</p>
+            <p class="cs-inicio__error" role="alert"><i class="pi pi-times-circle" aria-hidden="true"></i> No pudimos cargar los productos.</p>
+          }
+          @default {
+            <p class="cs-tarjeta-resumen__valor" aria-busy="true">…</p>
+            <p class="cs-tarjeta-resumen__detalle">Cargando…</p>
+          }
+        }
+      }
+      <p-button label="Ver productos" icon="pi pi-arrow-right" iconPos="right" [text]="true" size="small" routerLink="/productos" />
+    </section>
+
+    <section class="cs-tarjeta-resumen cs-aparecer" aria-labelledby="resumen-marcas" data-prueba="tarjeta-marcas">
+      <h3 id="resumen-marcas" class="cs-tarjeta-resumen__titulo">
+        <i class="pi pi-tags" aria-hidden="true"></i> Marcas activas
+      </h3>
+      @if (resumen.marcas(); as seccion) {
+        @switch (seccion.estado) {
+          @case ('listo') {
+            <p class="cs-tarjeta-resumen__valor" data-prueba="valor-marcas">{{ seccion.datos.activas }}</p>
+            <p class="cs-tarjeta-resumen__detalle">de {{ seccion.datos.total }} marcas registradas</p>
+          }
+          @case ('error') {
+            <p class="cs-tarjeta-resumen__valor" aria-hidden="true">—</p>
+            <p class="cs-inicio__error" role="alert"><i class="pi pi-times-circle" aria-hidden="true"></i> No pudimos cargar las marcas.</p>
+          }
+          @default {
+            <p class="cs-tarjeta-resumen__valor" aria-busy="true">…</p>
+            <p class="cs-tarjeta-resumen__detalle">Cargando…</p>
+          }
+        }
+      }
+      <p-button label="Ver marcas" icon="pi pi-arrow-right" iconPos="right" [text]="true" size="small" routerLink="/marcas" />
+    </section>
+
+    <section class="cs-tarjeta-resumen cs-aparecer" aria-labelledby="resumen-clientes" data-prueba="tarjeta-clientes">
+      <h3 id="resumen-clientes" class="cs-tarjeta-resumen__titulo">
+        <i class="pi pi-users" aria-hidden="true"></i> Clientes activos
+      </h3>
+      @if (resumen.clientes(); as seccion) {
+        @switch (seccion.estado) {
+          @case ('listo') {
+            <p class="cs-tarjeta-resumen__valor" data-prueba="valor-clientes">{{ seccion.datos.activos }}</p>
+            <p class="cs-tarjeta-resumen__detalle">
+              {{ seccion.datos.desactivados }} desactivados · {{ seccion.datos.verificados }} con correo verificado
+            </p>
+          }
+          @case ('error') {
+            <p class="cs-tarjeta-resumen__valor" aria-hidden="true">—</p>
+            <p class="cs-inicio__error" role="alert"><i class="pi pi-times-circle" aria-hidden="true"></i> No pudimos cargar los clientes.</p>
+          }
+          @default {
+            <p class="cs-tarjeta-resumen__valor" aria-busy="true">…</p>
+            <p class="cs-tarjeta-resumen__detalle">Cargando…</p>
+          }
+        }
+      }
+      <p-button label="Ver clientes" icon="pi pi-arrow-right" iconPos="right" [text]="true" size="small" routerLink="/clientes" />
+    </section>
+
+    <section class="cs-tarjeta-resumen cs-aparecer" aria-labelledby="resumen-borradores" data-prueba="tarjeta-borradores">
+      <h3 id="resumen-borradores" class="cs-tarjeta-resumen__titulo">
+        <i class="pi pi-file-pdf" aria-hidden="true"></i> Borradores pendientes
+      </h3>
+      @if (resumen.importaciones(); as seccion) {
+        @switch (seccion.estado) {
+          @case ('listo') {
+            <p class="cs-tarjeta-resumen__valor" data-prueba="valor-borradores">{{ seccion.datos.borradoresPendientes }}</p>
+            <p class="cs-tarjeta-resumen__detalle">
+              {{ seccion.datos.recientes.length === 1 ? 'en 1 importación reciente' : 'en ' + seccion.datos.recientes.length + ' importaciones recientes' }}
+            </p>
+          }
+          @case ('error') {
+            <p class="cs-tarjeta-resumen__valor" aria-hidden="true">—</p>
+            <p class="cs-inicio__error" role="alert"><i class="pi pi-times-circle" aria-hidden="true"></i> No pudimos cargar las importaciones.</p>
+          }
+          @default {
+            <p class="cs-tarjeta-resumen__valor" aria-busy="true">…</p>
+            <p class="cs-tarjeta-resumen__detalle">Cargando…</p>
+          }
+        }
+      }
+      <p-button label="Importar catálogo" icon="pi pi-arrow-right" iconPos="right" [text]="true" size="small" routerLink="/productos/importar" />
+    </section>
+  </div>
+
+  <!-- Gráficos pequeños (HTML/CSS/SVG) con los mismos datos -->
+  <div class="cs-inicio__graficos">
+    <section class="cs-tarjeta cs-inicio__panel" aria-labelledby="grafico-disponibilidad" data-prueba="grafico-disponibilidad">
+      <h3 id="grafico-disponibilidad" class="cs-inicio__subtitulo-panel">Disponibilidad de productos</h3>
+      @if (resumen.productos(); as seccion) {
+        @if (seccion.estado === 'listo') {
+          @if (seccion.datos.total === 0) {
+            <p class="cs-texto-suave">Todavía no hay productos. Crea uno o importa un catálogo en PDF.</p>
+          } @else {
+            <div class="cs-barra-apilada" role="img" [attr.aria-label]="'Disponibilidad: ' + tramos()[0].cantidad + ' disponibles, ' + tramos()[1].cantidad + ' agotados, ' + tramos()[2].cantidad + ' pendientes de reposición'">
+              @for (tramo of tramos(); track tramo.valor) {
+                @if (tramo.cantidad > 0) {
+                  <span class="cs-barra-apilada__tramo" [style.flex-grow]="tramo.cantidad" [style.background-color]="tramo.color"></span>
+                }
+              }
+            </div>
+            <ul class="cs-leyenda">
+              @for (tramo of tramos(); track tramo.valor) {
+                <li class="cs-leyenda__fila" data-prueba="leyenda-disponibilidad">
+                  <span [class]="'cs-etiqueta cs-etiqueta--' + tramo.variante">
+                    <i [class]="tramo.icono" aria-hidden="true"></i> {{ tramo.etiqueta }}
+                  </span>
+                  <span class="cs-leyenda__valor">
+                    <strong>{{ tramo.cantidad }}</strong>
+                    <span class="cs-texto-suave">({{ porcentaje(tramo.cantidad, seccion.datos.total) }} %)</span>
+                  </span>
+                </li>
+              }
+            </ul>
+          }
+        } @else if (seccion.estado === 'error') {
+          <p class="cs-inicio__error" role="alert"><i class="pi pi-times-circle" aria-hidden="true"></i> No pudimos cargar este gráfico.</p>
+        } @else {
+          <p class="cs-texto-suave" aria-busy="true">Cargando…</p>
+        }
+      }
+    </section>
+
+    <section class="cs-tarjeta cs-inicio__panel" aria-labelledby="grafico-marcas" data-prueba="grafico-marcas">
+      <h3 id="grafico-marcas" class="cs-inicio__subtitulo-panel">Productos por marca</h3>
+      @if (resumen.productos(); as seccion) {
+        @if (seccion.estado === 'listo') {
+          @if (seccion.datos.porMarca.length === 0) {
+            <p class="cs-texto-suave">Sin marcas activas para mostrar.</p>
+          } @else {
+            <ul class="cs-barras">
+              @for (marca of seccion.datos.porMarca; track marca.id) {
+                <li class="cs-barras__fila" data-prueba="barra-marca">
+                  <span class="cs-barras__nombre">{{ marca.nombre }}</span>
+                  <span class="cs-barras__pista" aria-hidden="true">
+                    <span class="cs-barras__relleno" [style.width.%]="anchoRelativo(marca.total, maximoPorMarca())" [style.background-color]="marca.color"></span>
+                  </span>
+                  <strong class="cs-barras__valor">{{ marca.total }}</strong>
+                </li>
+              }
+            </ul>
+          }
+        } @else if (seccion.estado === 'error') {
+          <p class="cs-inicio__error" role="alert"><i class="pi pi-times-circle" aria-hidden="true"></i> No pudimos cargar este gráfico.</p>
+        } @else {
+          <p class="cs-texto-suave" aria-busy="true">Cargando…</p>
+        }
+      }
+    </section>
+
+    <section class="cs-tarjeta cs-inicio__panel" aria-labelledby="grafico-correos" data-prueba="grafico-correos">
+      <h3 id="grafico-correos" class="cs-inicio__subtitulo-panel">Correos de clientes</h3>
+      @if (resumen.clientes(); as seccion) {
+        @if (seccion.estado === 'listo') {
+          @if (seccion.datos.verificados + seccion.datos.sinVerificar === 0) {
+            <p class="cs-texto-suave">Todavía no hay clientes registrados.</p>
+          } @else {
+            <div class="cs-dona">
+              <svg class="cs-dona__svg" viewBox="0 0 42 42" role="img"
+                [attr.aria-label]="seccion.datos.verificados + ' con correo verificado y ' + seccion.datos.sinVerificar + ' sin verificar'">
+                <circle class="cs-dona__pista" cx="21" cy="21" [attr.r]="radioDona" fill="none" stroke-width="6" />
+                @for (arco of arcosCorreo(); track $index) {
+                  <circle
+                    cx="21" cy="21" [attr.r]="radioDona" fill="none" stroke-width="6"
+                    [attr.stroke]="$index === 0 ? 'var(--cs-g1)' : 'var(--cs-g2)'"
+                    [attr.stroke-dasharray]="arco.trazo"
+                    [attr.stroke-dashoffset]="arco.desfase"
+                  />
+                }
+              </svg>
+              <p class="cs-dona__centro">
+                <strong>{{ porcentaje(seccion.datos.verificados, seccion.datos.verificados + seccion.datos.sinVerificar) }} %</strong>
+                <span class="cs-texto-suave">verificados</span>
+              </p>
+            </div>
+            <ul class="cs-leyenda">
+              <li class="cs-leyenda__fila">
+                <span class="cs-etiqueta cs-etiqueta--ok"><i class="pi pi-check-circle" aria-hidden="true"></i> Verificado</span>
+                <strong data-prueba="correos-verificados">{{ seccion.datos.verificados }}</strong>
+              </li>
+              <li class="cs-leyenda__fila">
+                <span class="cs-etiqueta cs-etiqueta--aviso"><i class="pi pi-exclamation-triangle" aria-hidden="true"></i> Sin verificar</span>
+                <strong data-prueba="correos-sin-verificar">{{ seccion.datos.sinVerificar }}</strong>
+              </li>
+            </ul>
+          }
+        } @else if (seccion.estado === 'error') {
+          <p class="cs-inicio__error" role="alert"><i class="pi pi-times-circle" aria-hidden="true"></i> No pudimos cargar este gráfico.</p>
+        } @else {
+          <p class="cs-texto-suave" aria-busy="true">Cargando…</p>
+        }
+      }
+    </section>
+  </div>
+
+  <div class="cs-inicio__listas">
+    <section class="cs-tarjeta cs-inicio__panel" aria-labelledby="importaciones-recientes" data-prueba="importaciones-recientes">
+      <h3 id="importaciones-recientes" class="cs-inicio__subtitulo-panel">Importaciones recientes</h3>
+      @if (resumen.importaciones(); as seccion) {
+        @if (seccion.estado === 'listo') {
+          @if (seccion.datos.recientes.length === 0) {
+            <p class="cs-texto-suave">Todavía no hay importaciones en esta sesión.</p>
+            <p-button label="Importar catálogo (PDF)" icon="pi pi-file-pdf" [outlined]="true" routerLink="/productos/importar" />
+          } @else {
+            <ul class="cs-lista">
+              @for (importacion of seccion.datos.recientes; track importacion.id) {
+                <li class="cs-lista__fila" data-prueba="importacion-reciente">
+                  <div class="cs-lista__texto">
+                    <span class="cs-lista__titulo">{{ importacion.nombreArchivo }}</span>
+                    <span class="cs-texto-suave">
+                      <span class="cs-inicio__chip-marca" [style.background-color]="importacion.marca.color" [style.color]="importacion.marca.textoSobreColor">{{ importacion.marca.nombre }}</span>
+                      {{ fechaHora(importacion.creadaEn) }} · {{ importacion.totales.pendientes }} pendientes · {{ importacion.totales.aprobados }} aprobados
+                    </span>
+                  </div>
+                  <p-button
+                    label="Abrir"
+                    icon="pi pi-folder-open"
+                    size="small"
+                    [outlined]="true"
+                    [ariaLabel]="'Abrir la importación de ' + importacion.nombreArchivo"
+                    [routerLink]="['/productos/importar', importacion.id]"
+                  />
+                </li>
+              }
+            </ul>
+          }
+        } @else if (seccion.estado === 'error') {
+          <p class="cs-inicio__error" role="alert"><i class="pi pi-times-circle" aria-hidden="true"></i> No pudimos cargar las importaciones.</p>
+        } @else {
+          <p class="cs-texto-suave" aria-busy="true">Cargando…</p>
+        }
+      }
+    </section>
+
+    <section class="cs-tarjeta cs-inicio__panel" aria-labelledby="actividad-reciente" data-prueba="actividad-reciente">
+      <h3 id="actividad-reciente" class="cs-inicio__subtitulo-panel">Actividad reciente</h3>
+      @if (resumen.actividad(); as seccion) {
+        @if (seccion.estado === 'listo') {
+          @if (actividad().length === 0) {
+            <p class="cs-texto-suave">Todavía no hay actividades registradas.</p>
+          } @else {
+            <ul class="cs-lista">
+              @for (fila of actividad(); track fila.id) {
+                <li class="cs-lista__fila" data-prueba="actividad">
+                  <div class="cs-lista__texto">
+                    <span>
+                      <p-tag [value]="fila.accion" [severity]="fila.severidad" [icon]="iconoSeveridad(fila.severidad)" />
+                    </span>
+                    <span class="cs-texto-suave">
+                      {{ fila.usuario.nombre }} ·
+                      <time [attr.datetime]="fila.fecha">{{ fila.fecha | date: 'dd/MM/yyyy HH:mm' : zonaEcuador }}</time>
+                    </span>
+                  </div>
+                </li>
+              }
+            </ul>
+          }
+          <p-button label="Ver bitácora" icon="pi pi-arrow-right" iconPos="right" [text]="true" size="small" routerLink="/bitacora" />
+        } @else if (seccion.estado === 'error') {
+          <p class="cs-inicio__error" role="alert"><i class="pi pi-times-circle" aria-hidden="true"></i> No pudimos cargar la actividad.</p>
+        } @else {
+          <p class="cs-texto-suave" aria-busy="true">Cargando…</p>
+        }
+      }
+    </section>
+  </div>
+</section>

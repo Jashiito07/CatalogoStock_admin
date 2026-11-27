@@ -58,6 +58,8 @@ export class DisenoPanel {
   /** Menos de 768 px: el menú lateral pasa a un cajón con botón de hamburguesa. */
   protected readonly esMovil = senalPantallaMovil();
   protected readonly cajonAbierto = signal(false);
+  /** Aviso «Próximamente (Fase 6)» del pie del menú; el Vendedor puede cerrarlo. */
+  protected readonly avisoFase6Visible = signal(true);
 
   constructor() {
     // Al navegar desde el cajón, se cierra (solo cambia la presentación, no las rutas).

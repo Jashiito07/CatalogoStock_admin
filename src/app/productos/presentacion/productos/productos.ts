@@ -28,6 +28,7 @@ import {
   Disponibilidad,
   DISPONIBILIDADES,
   etiquetaDisponibilidad,
+  iconoDisponibilidad,
   formatearPrecio,
   imagenPrincipal,
   Producto,
@@ -91,6 +92,7 @@ export class Productos implements OnInit, OnDestroy {
   /** `p-table` pide una lista mutable. */
   protected readonly filasTabla = computed(() => [...this.estado.elementos()]);
   protected readonly etiquetaDisponibilidad = etiquetaDisponibilidad;
+  protected readonly iconoDisponibilidad = iconoDisponibilidad;
   protected readonly formatearPrecio = formatearPrecio;
   protected readonly imagenPrincipal = imagenPrincipal;
 

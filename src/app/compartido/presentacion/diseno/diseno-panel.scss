@@ -97,10 +97,56 @@
   background-color: var(--cs-lat);
   color: var(--cs-lat-t);
 
+  display: flex;
+  flex-direction: column;
+
   .cs-menu-lateral {
     position: sticky;
     top: var(--cs-espacio-4);
   }
+
+  // El aviso «Próximamente» queda al pie del menú y se mantiene a la vista al desplazar.
+  .cs-proximamente {
+    position: sticky;
+    bottom: var(--cs-espacio-4);
+    margin-top: auto;
+  }
+}
+
+// Aviso discreto «Próximamente (Fase 6)». Texto #CBD5E1 sobre la superficie del menú (RNF-11).
+.cs-proximamente {
+  position: relative;
+  margin-top: var(--cs-espacio-5);
+  padding: var(--cs-espacio-3) var(--cs-espacio-4);
+  padding-inline-end: 3rem;
+  border: 1px dashed var(--cs-lat-t);
+  border-radius: var(--cs-radio-control);
+  background-color: var(--cs-lat-on);
+  color: var(--cs-lat-t);
+  font-size: 0.8125rem;
+}
+
+.cs-proximamente__titulo {
+  display: flex;
+  align-items: center;
+  gap: var(--cs-espacio-2);
+  margin: 0;
+  color: var(--cs-lat-on-t);
+  font-weight: 700;
+}
+
+.cs-proximamente__texto {
+  margin: var(--cs-espacio-1) 0 0;
+}
+
+:host ::ng-deep .cs-proximamente__cerrar {
+  position: absolute;
+  top: var(--cs-espacio-1);
+  inset-inline-end: var(--cs-espacio-1);
+  width: 2.5rem;
+  min-height: 2.5rem;
+  height: 2.5rem;
+  color: var(--cs-lat-t);
 }
 
 .cs-diseno__contenido {

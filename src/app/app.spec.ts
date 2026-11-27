@@ -74,7 +74,7 @@ describe('App', () => {
     const arnes = await RouterTestingHarness.create('/');
     expect(TestBed.inject(Router).url).toBe('/inicio');
     expect((arnes.routeNativeElement as HTMLElement).textContent).toContain(
-      'Bienvenido al panel del vendedor',
+      'Así está tu catálogo hoy',
     );
   });
 });

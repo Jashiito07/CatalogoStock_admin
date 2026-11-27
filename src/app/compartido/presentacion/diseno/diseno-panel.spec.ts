@@ -120,6 +120,20 @@ describe('DisenoPanel', () => {
     }
   });
 
+  it('muestra el aviso «Próximamente (Fase 6)» al pie del menú y se puede cerrar', async () => {
+    const fixture = TestBed.createComponent(DisenoPanel);
+    await fixture.whenStable();
+    const elemento = fixture.nativeElement as HTMLElement;
+
+    expect(elemento.querySelector('[data-prueba="proximamente"]')?.textContent).toContain(
+      'Próximamente (Fase 6)',
+    );
+    elemento.querySelector<HTMLButtonElement>('[data-prueba="cerrar-proximamente"] button')?.click();
+    await fixture.whenStable();
+
+    expect(elemento.querySelector('[data-prueba="proximamente"]')).toBeNull();
+  });
+
   it('D-48: sin marcas el menú muestra «Configura tu negocio»; con marcas no', async () => {
     listarMarcas.mockResolvedValue([]);
     const sin = TestBed.createComponent(DisenoPanel);

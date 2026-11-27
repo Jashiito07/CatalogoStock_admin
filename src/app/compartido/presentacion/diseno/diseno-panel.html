@@ -33,6 +33,25 @@
   <nav aria-label="Secciones del panel">
     <p-menu [model]="secciones()" class="cs-menu-lateral" />
   </nav>
+  @if (avisoFase6Visible()) {
+    <!-- Aviso discreto y cerrable: lo que llega en la Fase 6 (sin ventas ni pedidos todavía). -->
+    <aside class="cs-proximamente" aria-labelledby="titulo-proximamente" data-prueba="proximamente">
+      <p-button
+        icon="pi pi-times"
+        [text]="true"
+        [rounded]="true"
+        size="small"
+        styleClass="cs-proximamente__cerrar"
+        ariaLabel="Cerrar el aviso «Próximamente»"
+        data-prueba="cerrar-proximamente"
+        (onClick)="avisoFase6Visible.set(false)"
+      />
+      <p id="titulo-proximamente" class="cs-proximamente__titulo">
+        <i class="pi pi-clock" aria-hidden="true"></i> Próximamente (Fase 6)
+      </p>
+      <p class="cs-proximamente__texto">Inventario, pedidos, pagos y conflictos de sincronización.</p>
+    </aside>
+  }
 </ng-template>
 
 <p-toolbar class="cs-barra-superior">

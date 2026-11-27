@@ -22,7 +22,7 @@
     dataKey="id"
     [loading]="cargando()"
     [tableStyle]="{ 'min-width': '52rem' }"
-    class="cs-marcas__tabla"
+    class="cs-marcas__tabla cs-tabla-tarjetas"
   >
     <ng-template #header>
       <tr>
@@ -37,7 +37,7 @@
 
     <ng-template #body let-fila let-indice="rowIndex">
       <tr data-prueba="fila-marca">
-        <td>
+        <td data-etiqueta="Color">
           <span
             class="cs-marcas__muestra"
             [style.background-color]="fila.color"
@@ -47,8 +47,8 @@
           ></span>
           <span class="cs-marcas__hex">{{ fila.color }}</span>
         </td>
-        <td class="cs-marcas__nombre">{{ fila.nombre }}</td>
-        <td data-prueba="celda-acento">
+        <td class="cs-marcas__nombre" data-etiqueta="Nombre">{{ fila.nombre }}</td>
+        <td data-etiqueta="Acento" data-prueba="celda-acento">
           @if (fila.colorAcento) {
             <span
               class="cs-marcas__muestra"
@@ -61,14 +61,14 @@
             <span class="cs-marcas__sin-acento">Sin acento</span>
           }
         </td>
-        <td data-prueba="estado-marca">
+        <td data-etiqueta="Estado" data-prueba="estado-marca">
           @if (fila.activa) {
-            <p-tag value="Activa" severity="success" />
+            <p-tag value="Activa" severity="success" icon="pi pi-check-circle" />
           } @else {
-            <p-tag value="Inactiva" severity="secondary" />
+            <p-tag value="Inactiva" severity="secondary" icon="pi pi-eye-slash" />
           }
         </td>
-        <td class="cs-marcas__orden">
+        <td class="cs-marcas__orden" data-etiqueta="Orden">
           <span class="cs-marcas__numero">{{ fila.orden }}</span>
           <p-button
             icon="pi pi-arrow-up"
@@ -91,7 +91,7 @@
             (onClick)="mover(fila, 1)"
           />
         </td>
-        <td class="cs-marcas__acciones">
+        <td class="cs-marcas__acciones cs-celda-acciones">
           <p-button
             label="Editar"
             icon="pi pi-pencil"
