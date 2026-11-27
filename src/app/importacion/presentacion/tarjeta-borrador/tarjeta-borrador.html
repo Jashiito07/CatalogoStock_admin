@@ -53,7 +53,22 @@
         />
       }
     </span>
+    @if (tienePrecioPorConfirmar(borrador())) {
+      <p class="cs-tarjeta__ayuda" data-prueba="ayuda-precio-heredado">{{ infoAdvertencia('PRECIO_HEREDADO').ayuda }}.</p>
+    }
   </div>
+  @if (puedeConfirmarPrecio(borrador())) {
+    <p-button
+      label="Confirmar precio"
+      icon="pi pi-check-circle"
+      styleClass="cs-tarjeta__editar"
+      [loading]="confirmando()"
+      [disabled]="confirmando()"
+      [ariaLabel]="'Confirmar precio de ' + borrador().nombre"
+      data-prueba="confirmar-precio"
+      (onClick)="confirmarPrecio.emit(borrador())"
+    />
+  }
   @if (puedeEditar(borrador())) {
     <p-button
       label="Editar"

@@ -23,6 +23,27 @@
     </div>
   </header>
 
+  @if (estado.porConfirmar(); as porConfirmar) {
+    <p-message severity="warn" icon="pi pi-exclamation-triangle" role="status" class="cs-revision__mensaje" data-prueba="contador-por-confirmar">
+      <div class="cs-revision__cuerpo-mensaje">
+        <span>
+          <strong data-prueba="cantidad-por-confirmar">{{ porConfirmar }} {{ porConfirmar === 1 ? 'borrador espera' : 'borradores esperan' }} confirmación de precio.</strong>
+          Tomamos el precio de la ficha del catálogo; confírmalos antes de aprobar.
+        </span>
+        <p-button
+          [label]="soloPorConfirmar() ? 'Ver todos los pendientes' : 'Ver solo estos'"
+          [icon]="soloPorConfirmar() ? 'pi pi-list' : 'pi pi-filter'"
+          size="small"
+          severity="secondary"
+          [outlined]="true"
+          styleClass="cs-revision__ancho-movil"
+          data-prueba="filtro-por-confirmar"
+          (onClick)="alternarPorConfirmar()"
+        />
+      </div>
+    </p-message>
+  }
+
   @if (estado.error(); as textoError) {
     <p-message severity="error" icon="pi pi-times-circle" role="alert" class="cs-revision__mensaje" data-prueba="error-lista">
       <div class="cs-revision__cuerpo-mensaje">
@@ -34,8 +55,8 @@
 
   @if (aviso(); as resultado) {
     <p-message
-      [severity]="resultado.omitidos ? 'warn' : 'success'"
-      [icon]="resultado.omitidos ? 'pi pi-exclamation-triangle' : 'pi pi-check-circle'"
+      [severity]="resultado.omitidos || resultado.porConfirmar > 0 ? 'warn' : 'success'"
+      [icon]="resultado.omitidos || resultado.porConfirmar > 0 ? 'pi pi-exclamation-triangle' : 'pi pi-check-circle'"
       role="status"
       class="cs-revision__mensaje"
       data-prueba="aviso-lote"
@@ -47,6 +68,10 @@
           Ya forman parte del catálogo; súbeles las imágenes desde Productos.
         } @else {
           <strong data-prueba="cantidad-aviso">{{ resultado.cantidad === 1 ? 'Se descartó 1 borrador' : 'Se descartaron ' + resultado.cantidad + ' borradores' }}.</strong>
+        }
+        @if (resultado.porConfirmar > 0) {
+          <strong data-prueba="aviso-por-confirmar">{{ textoPorConfirmar(resultado.porConfirmar) }}.</strong>
+          Pulsa «Confirmar precio» en cada uno y vuelve a aprobar.
         }
         @if (resultado.omitidos) {
           No se procesaron: {{ resultado.omitidos }}.
@@ -133,6 +158,20 @@
         <label for="solo-advertencias" class="cs-revision__etiqueta-casilla">Solo con advertencias</label>
       </div>
 
+      <div class="cs-revision__filtro cs-revision__filtro--casilla">
+        <p-checkbox
+          inputId="solo-por-confirmar"
+          [binary]="true"
+          [disabled]="estadoFiltro() !== 'PENDIENTE'"
+          [ngModel]="soloPorConfirmar()"
+          (ngModelChange)="soloPorConfirmar.set($event)"
+          (onChange)="alElegirFiltro()"
+          [ngModelOptions]="{ standalone: true }"
+          data-prueba="solo-por-confirmar"
+        />
+        <label for="solo-por-confirmar" class="cs-revision__etiqueta-casilla">Solo por confirmar precio</label>
+      </div>
+
       @if (hayFiltrosActivos()) {
         <p-button label="Limpiar filtros" icon="pi pi-filter-slash" severity="secondary" [outlined]="true" styleClass="cs-revision__ancho-movil" data-prueba="limpiar-filtros" (onClick)="limpiarFiltros()" />
       }
@@ -207,8 +246,10 @@
             [borrador]="fila"
             [seleccionable]="seleccionables()"
             [seleccionado]="estaSeleccionado(fila)"
+            [confirmando]="confirmando().has(fila.id)"
             (seleccionadoCambio)="alternarSeleccion(fila, $event)"
             (editar)="editar($event)"
+            (confirmarPrecio)="confirmarPrecio($event)"
           />
         </li>
       } @empty {
@@ -253,6 +294,9 @@
           @if (seleccionSinPrecio() > 0) {
             · {{ seleccionSinPrecio() }} sin precio (no se aprobarán)
           }
+          @if (seleccionPorConfirmar() > 0) {
+            · {{ seleccionPorConfirmar() }} por confirmar precio (no se aprobarán)
+          }
         </span>
         <div class="cs-revision__barra-botones">
           <p-button
@@ -284,6 +328,9 @@
           {{ seleccion().length === 1 ? '1 seleccionado' : seleccion().length + ' seleccionados' }}
           @if (seleccionSinPrecio() > 0) {
             · {{ seleccionSinPrecio() }} sin precio (no se pueden aprobar)
+          }
+          @if (seleccionPorConfirmar() > 0) {
+            · {{ seleccionPorConfirmar() }} por confirmar precio (no se pueden aprobar)
           }
         </span>
         <p-button
@@ -381,6 +428,9 @@
                   [title]="infoAdvertencia(codigo).ayuda"
                   data-prueba="advertencia-revision"
                 />
+                @if (codigo === 'PRECIO_HEREDADO') {
+                  <span class="cs-solo-lector" data-prueba="ayuda-precio-heredado">{{ infoAdvertencia(codigo).ayuda }}.</span>
+                }
               }
               @for (codigo of advertenciasInformativas(fila); track codigo) {
                 <p-tag
@@ -395,6 +445,19 @@
             </span>
           </td>
           <td class="cs-revision__acciones">
+            @if (puedeConfirmarPrecio(fila)) {
+              <p-button
+                label="Confirmar precio"
+                icon="pi pi-check-circle"
+                size="small"
+                [style]="{ 'margin-right': '0.5rem' }"
+                [loading]="confirmando().has(fila.id)"
+                [disabled]="confirmando().has(fila.id)"
+                [ariaLabel]="'Confirmar precio de ' + fila.nombre"
+                data-prueba="confirmar-precio"
+                (onClick)="confirmarPrecio(fila)"
+              />
+            }
             @if (puedeEditar(fila)) {
               <p-button
                 icon="pi pi-pencil"

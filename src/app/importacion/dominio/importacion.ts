@@ -208,6 +208,12 @@ const ADVERTENCIAS: Readonly<Record<string, InfoAdvertencia>> = {
     ayuda: 'Este código ya se aprobó en otra importación.',
     informativa: false,
   },
+  PRECIO_HEREDADO: {
+    etiqueta: 'Precio tomado de la ficha del catálogo. Confírmalo antes de aprobar',
+    ayuda:
+      'Este producto no traía su propio precio en el catálogo. Se usó el precio de la ficha del producto, que puede ser el de otro formato o de un set. Revisa la página del PDF y pulsa Confirmar precio o corrígelo',
+    informativa: false,
+  },
   PRECIO_EN_OFERTA: {
     etiqueta: 'Precio en oferta',
     ayuda: 'El catálogo trae un precio normal distinto del vigente.',
@@ -244,11 +250,43 @@ export function tieneSinPrecio(borrador: Pick<Borrador, 'precio' | 'advertencias
   return borrador.precio === null || borrador.advertencias.includes('SIN_PRECIO');
 }
 
-/** Solo un borrador pendiente y con precio se puede aprobar (el servidor lo vuelve a comprobar). */
+/** Precio tomado de la ficha (perfil Yanbal): el Vendedor debe confirmarlo antes de aprobar. */
+export function tienePrecioPorConfirmar(borrador: Pick<Borrador, 'advertencias'>): boolean {
+  return borrador.advertencias.includes('PRECIO_HEREDADO');
+}
+
+/** Se puede confirmar el precio de un borrador pendiente que lo heredó y ya tiene uno. */
+export function puedeConfirmarPrecio(
+  borrador: Pick<Borrador, 'estado' | 'precio' | 'advertencias'>,
+): boolean {
+  return (
+    borrador.estado === 'PENDIENTE' && borrador.precio !== null && tienePrecioPorConfirmar(borrador)
+  );
+}
+
+/**
+ * Cuerpo del PATCH que confirma el precio heredado: se envía el `precio` actual aunque sea el mismo
+ * (contrato «Precio heredado de la ficha»). El texto es exacto, sin números de punto flotante.
+ */
+export function cambiosParaConfirmarPrecio(borrador: Pick<Borrador, 'precio'>): CambiosBorrador {
+  if (borrador.precio === null) {
+    throw new Error('Un borrador sin precio no se puede confirmar.');
+  }
+  return { precio: precioParaApi(borrador.precio) };
+}
+
+/**
+ * Solo un borrador pendiente, con precio y sin precio por confirmar se puede aprobar (el servidor lo
+ * vuelve a comprobar: `SIN_PRECIO`, `PRECIO_NO_CONFIRMADO`).
+ */
 export function puedeAprobar(
   borrador: Pick<Borrador, 'estado' | 'precio' | 'advertencias'>,
 ): boolean {
-  return borrador.estado === 'PENDIENTE' && !tieneSinPrecio(borrador);
+  return (
+    borrador.estado === 'PENDIENTE' &&
+    !tieneSinPrecio(borrador) &&
+    !tienePrecioPorConfirmar(borrador)
+  );
 }
 
 export function puedeEditar(borrador: Pick<Borrador, 'estado'>): boolean {
@@ -278,7 +316,21 @@ export function precioDeBorrador(precio: string | null): string {
 
 // ── Resultado de aprobar o descartar ────────────────────────────────────────────────────
 
-export type ErrorDeBorrador = 'SIN_PRECIO' | 'MARCA_INACTIVA' | 'NO_PENDIENTE' | 'NO_ENCONTRADO';
+export type ErrorDeBorrador =
+  | 'SIN_PRECIO'
+  | 'PRECIO_NO_CONFIRMADO'
+  | 'MARCA_INACTIVA'
+  | 'NO_PENDIENTE'
+  | 'NO_ENCONTRADO';
+
+export const ERROR_PRECIO_NO_CONFIRMADO: ErrorDeBorrador = 'PRECIO_NO_CONFIRMADO';
+
+/** «1 borrador necesita confirmar el precio» / «3 borradores necesitan confirmar el precio». */
+export function textoPorConfirmar(cantidad: number): string {
+  return cantidad === 1
+    ? '1 borrador necesita confirmar el precio'
+    : `${cantidad} borradores necesitan confirmar el precio`;
+}
 
 export type ResultadoBorrador =
   | { readonly id: string; readonly estado: EstadoBorrador; readonly idProducto?: string | null }
@@ -304,6 +356,7 @@ export function resumirLote(resultados: readonly ResultadoBorrador[]): ResumenLo
 
 const MENSAJES_ERROR_BORRADOR: Readonly<Record<string, string>> = {
   SIN_PRECIO: 'sin precio',
+  PRECIO_NO_CONFIRMADO: 'con el precio sin confirmar',
   MARCA_INACTIVA: 'con la marca desactivada',
   NO_PENDIENTE: 'que ya no estaban pendientes',
   NO_ENCONTRADO: 'que ya no existen',

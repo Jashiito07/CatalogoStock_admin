@@ -89,6 +89,16 @@
   border: 1px dashed currentcolor;
 }
 
+.cs-tarjeta__ayuda {
+  font-size: 0.8125rem;
+  color: var(--cs-texto-secundario);
+}
+
+:host ::ng-deep .cs-tarjeta__cuerpo .p-tag {
+  white-space: normal;
+  text-align: left;
+}
+
 :host ::ng-deep p-button {
   display: grid;
   grid-column: 1 / -1;

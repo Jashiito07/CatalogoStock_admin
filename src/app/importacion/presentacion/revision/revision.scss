@@ -172,6 +172,11 @@
   white-space: nowrap;
 }
 
+:host ::ng-deep .cs-revision__advertencias .p-tag {
+  max-width: 17rem;
+  white-space: normal;
+}
+
 .cs-revision__vacio {
   display: flex;
   flex-wrap: wrap;
