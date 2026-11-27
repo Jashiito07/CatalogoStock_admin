@@ -7,9 +7,11 @@ import {
   ConsultaBorradores,
   EstadoBorrador,
   Importacion,
+  cambiosParaConfirmarPrecio,
   resumirLote,
   ResumenLote,
   TAMANIO_PAGINA_BORRADORES,
+  tienePrecioPorConfirmar,
 } from '../dominio/importacion';
 import { mensajeDeErrorDeImportacion } from './mensajes-importacion';
 import { AlmacenImportacionesRecientes, ApiImportaciones } from './puertos';
@@ -20,7 +22,16 @@ export interface FiltrosBorradores {
   readonly conAdvertencias?: boolean;
   readonly busqueda?: string;
   readonly paginaPdf?: number;
+  /**
+   * Solo los pendientes con `PRECIO_HEREDADO`. La API no tiene ese filtro: se piden los pendientes
+   * con advertencias y se filtran aquí (la paginación pasa a ser local en este modo).
+   */
+  readonly soloPorConfirmar?: boolean;
 }
+
+/** Tamaño de página y tope de páginas al buscar los borradores que esperan confirmar su precio. */
+const TAMANIO_ESCANEO = 100;
+const MAXIMO_PAGINAS_ESCANEO = 30;
 
 /** Cuántas importaciones recientes se recuerdan en la sesión. */
 export const MAXIMO_RECIENTES = 5;
@@ -50,7 +61,14 @@ export class EstadoImportacion {
   private readonly _error = signal<string | null>(null);
   private readonly _recientes = signal<readonly Importacion[]>([]);
   private readonly _cargandoRecientes = signal(false);
+  private readonly _soloPorConfirmar = signal(false);
+  private readonly _porConfirmar = signal<number | null>(null);
   private numeroDeCarga = 0;
+
+  /** Modo «solo con precio por confirmar» activo. */
+  readonly soloPorConfirmar = this._soloPorConfirmar.asReadonly();
+  /** Cuántos pendientes esperan confirmar su precio; `null` si aún no se sabe. */
+  readonly porConfirmar = this._porConfirmar.asReadonly();
 
   readonly importacion = this._importacion.asReadonly();
   readonly consulta = this._consulta.asReadonly();
@@ -66,7 +84,12 @@ export class EstadoImportacion {
   readonly primero = computed(() => (this._consulta().pagina - 1) * this._consulta().tamanio);
   readonly hayFiltros = computed(() => {
     const { conAdvertencias, busqueda, paginaPdf } = this._consulta();
-    return conAdvertencias === true || Boolean(busqueda) || paginaPdf !== undefined;
+    return (
+      conAdvertencias === true ||
+      Boolean(busqueda) ||
+      paginaPdf !== undefined ||
+      this._soloPorConfirmar()
+    );
   });
 
   // ── Análisis y recientes ─────────────────────────────────────────────────────────────
@@ -123,6 +146,8 @@ export class EstadoImportacion {
     this._elementos.set([]);
     this._total.set(0);
     this._consulta.set(CONSULTA_INICIAL);
+    this._soloPorConfirmar.set(false);
+    this._porConfirmar.set(null);
     this._error.set(null);
     this._cargando.set(true);
     try {
@@ -134,6 +159,67 @@ export class EstadoImportacion {
       return;
     }
     await this.cargar();
+    await this.contarPorConfirmar();
+  }
+
+  /**
+   * Pendientes con `PRECIO_HEREDADO` de la importación abierta (más los filtros de búsqueda y de
+   * página del PDF que se indiquen). La API no los cuenta: se recorren los pendientes con
+   * advertencias, de 100 en 100, y se filtran aquí.
+   */
+  private async buscarPorConfirmar(
+    idImportacion: string,
+    filtros: Pick<ConsultaBorradores, 'busqueda' | 'paginaPdf'> = {},
+  ): Promise<Borrador[]> {
+    const encontrados: Borrador[] = [];
+    for (let pagina = 1; pagina <= MAXIMO_PAGINAS_ESCANEO; pagina++) {
+      const respuesta = await this.api.listarBorradores(idImportacion, {
+        pagina,
+        tamanio: TAMANIO_ESCANEO,
+        estado: 'PENDIENTE',
+        conAdvertencias: true,
+        ...(filtros.busqueda ? { busqueda: filtros.busqueda } : {}),
+        ...(filtros.paginaPdf !== undefined ? { paginaPdf: filtros.paginaPdf } : {}),
+      });
+      encontrados.push(...respuesta.elementos.filter(tienePrecioPorConfirmar));
+      if (respuesta.elementos.length === 0 || pagina * TAMANIO_ESCANEO >= respuesta.total) {
+        break;
+      }
+    }
+    return encontrados;
+  }
+
+  /** Actualiza el contador de precios por confirmar. Si falla, conserva el último valor. */
+  async contarPorConfirmar(): Promise<void> {
+    const importacion = this._importacion();
+    if (importacion === null) {
+      return;
+    }
+    if (importacion.totales.conAdvertencias === 0) {
+      this._porConfirmar.set(0);
+      return;
+    }
+    try {
+      this._porConfirmar.set((await this.buscarPorConfirmar(importacion.id)).length);
+    } catch {
+      // El contador es una ayuda: la lista y la API siguen siendo la fuente de verdad.
+    }
+  }
+
+  private async cargarPorConfirmar(importacion: Importacion, carga: number): Promise<void> {
+    const consulta = this._consulta();
+    const encontrados = await this.buscarPorConfirmar(importacion.id, consulta);
+    if (carga !== this.numeroDeCarga) {
+      return;
+    }
+    const ultima = Math.max(1, Math.ceil(encontrados.length / consulta.tamanio));
+    const pagina = Math.min(consulta.pagina, ultima);
+    if (pagina !== consulta.pagina) {
+      this._consulta.update((c) => ({ ...c, pagina }));
+    }
+    const desde = (pagina - 1) * consulta.tamanio;
+    this._elementos.set(encontrados.slice(desde, desde + consulta.tamanio));
+    this._total.set(encontrados.length);
   }
 
   /** Consulta los borradores con la página y los filtros actuales. */
@@ -146,6 +232,10 @@ export class EstadoImportacion {
     this._cargando.set(true);
     this._error.set(null);
     try {
+      if (this._soloPorConfirmar()) {
+        await this.cargarPorConfirmar(importacion, carga);
+        return;
+      }
       const pagina = await this.api.listarBorradores(importacion.id, this._consulta());
       if (carga !== this.numeroDeCarga) {
         return;
@@ -173,6 +263,7 @@ export class EstadoImportacion {
   /** Cambia filtros, vuelve a la primera página y consulta. */
   async filtrar(filtros: FiltrosBorradores): Promise<void> {
     const busqueda = filtros.busqueda?.trim();
+    this._soloPorConfirmar.set(filtros.soloPorConfirmar === true && filtros.estado === 'PENDIENTE');
     this._consulta.update((c) => ({
       pagina: 1,
       tamanio: c.tamanio,
@@ -216,7 +307,21 @@ export class EstadoImportacion {
     const borrador = await this.api.editarBorrador(id, cambios);
     this._elementos.update((lista) => lista.map((b) => (b.id === id ? borrador : b)));
     await this.refrescarImportacion();
+    await this.contarPorConfirmar();
     return borrador;
+  }
+
+  /**
+   * Confirma el precio heredado de la ficha: PATCH con el `precio` actual (contrato «Precio heredado
+   * de la ficha»). La fila refleja lo que devuelve el servidor, sin la advertencia; en el modo «solo
+   * por confirmar» el borrador sale de la lista.
+   */
+  async confirmarPrecio(borrador: Borrador): Promise<Borrador> {
+    const confirmado = await this.editar(borrador.id, cambiosParaConfirmarPrecio(borrador));
+    if (this._soloPorConfirmar() && !tienePrecioPorConfirmar(confirmado)) {
+      await this.cargar();
+    }
+    return confirmado;
   }
 
   /** Aprueba borradores: el servidor crea los productos y decide cuáles son aprobables. */
@@ -235,5 +340,6 @@ export class EstadoImportacion {
 
   private async recargarTrasLote(): Promise<void> {
     await Promise.all([this.refrescarImportacion(), this.cargar()]);
+    await this.contarPorConfirmar();
   }
 }

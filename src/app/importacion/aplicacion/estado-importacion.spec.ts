@@ -90,11 +90,82 @@ describe('EstadoImportacion (RF-PRO-01, RF-PRO-02)', () => {
       { id: 'b1', estado: 'APROBADO', idProducto: 'p1' },
       { id: 'b2', error: 'SIN_PRECIO' },
     ]);
-    const llamadas = api.listarBorradores.mock.calls.length;
+    const listas = () =>
+      api.listarBorradores.mock.calls.filter(([, consulta]) => consulta.conAdvertencias !== true).length;
+    const llamadas = listas();
     const resumen = await estado.aprobar(['b1', 'b2']);
     expect(resumen.correctos).toEqual(['b1']);
     expect(resumen.fallidos).toEqual([{ id: 'b2', error: 'SIN_PRECIO' }]);
-    expect(api.listarBorradores.mock.calls.length).toBe(llamadas + 1);
+    expect(listas()).toBe(llamadas + 1);
+  });
+
+  describe('precio heredado de la ficha (RN-11)', () => {
+    const heredado = (id: string) =>
+      borradorPrueba(id, { advertencias: ['PRECIO_HEREDADO'], precio: '19.50' });
+
+    it('cuenta los pendientes por confirmar recorriendo las páginas de pendientes con advertencias', async () => {
+      api.listarBorradores.mockImplementation(async (_id, consulta) => {
+        if (consulta.conAdvertencias !== true) {
+          return paginaBorradoresPrueba([borradorPrueba('b1')], consulta, 1);
+        }
+        const elementos =
+          consulta.pagina === 1
+            ? [heredado('h1'), borradorPrueba('x', { advertencias: ['SIN_CODIGO'] })]
+            : [heredado('h2')];
+        return paginaBorradoresPrueba(elementos, consulta, 150); // 2 páginas de 100
+      });
+      await estado.abrir(ID_IMPORTACION);
+      expect(api.listarBorradores).toHaveBeenCalledWith(ID_IMPORTACION, {
+        pagina: 2,
+        tamanio: 100,
+        estado: 'PENDIENTE',
+        conAdvertencias: true,
+      });
+      expect(estado.porConfirmar()).toBe(2);
+    });
+
+    it('sin borradores con advertencias no consulta y el contador queda en 0', async () => {
+      api.obtener.mockResolvedValue(
+        importacionPrueba({ totales: { pendientes: 3, aprobados: 0, descartados: 0, conAdvertencias: 0 } }),
+      );
+      await estado.abrir(ID_IMPORTACION);
+      expect(estado.porConfirmar()).toBe(0);
+      expect(api.listarBorradores.mock.calls.every(([, c]) => c.conAdvertencias !== true)).toBe(true);
+    });
+
+    it('el modo «solo por confirmar» filtra y pagina en local', async () => {
+      api.listarBorradores.mockResolvedValue(
+        paginaBorradoresPrueba([heredado('h1'), heredado('h2'), heredado('h3'), borradorPrueba('x', { advertencias: ['SIN_CODIGO'] })]),
+      );
+      await estado.abrir(ID_IMPORTACION);
+      await estado.filtrar({ estado: 'PENDIENTE', soloPorConfirmar: true });
+      expect(estado.elementos().map((b) => b.id)).toEqual(['h1', 'h2', 'h3']);
+      expect(estado.total()).toBe(3);
+      expect(estado.hayFiltros()).toBe(true);
+      // Fuera de «Pendientes» el filtro no aplica.
+      await estado.filtrar({ estado: 'APROBADO', soloPorConfirmar: true });
+      expect(estado.soloPorConfirmar()).toBe(false);
+    });
+
+    it('confirmarPrecio envía el precio actual en el PATCH y actualiza el contador', async () => {
+      api.listarBorradores.mockResolvedValue(paginaBorradoresPrueba([heredado('h1'), heredado('h2')]));
+      await estado.abrir(ID_IMPORTACION);
+      expect(estado.porConfirmar()).toBe(2);
+      api.editarBorrador.mockResolvedValue(borradorPrueba('h1', { advertencias: [], precio: '19.50' }));
+      api.listarBorradores.mockResolvedValue(paginaBorradoresPrueba([heredado('h2')]));
+      const confirmado = await estado.confirmarPrecio(heredado('h1'));
+      expect(api.editarBorrador).toHaveBeenCalledWith('h1', { precio: '19.50' });
+      expect(confirmado.advertencias).toEqual([]);
+      expect(estado.porConfirmar()).toBe(1);
+    });
+
+    it('si el recuento falla conserva el contador anterior y no lanza error', async () => {
+      api.listarBorradores.mockResolvedValue(paginaBorradoresPrueba([heredado('h1')]));
+      await estado.abrir(ID_IMPORTACION);
+      api.listarBorradores.mockRejectedValue(new ErrorApi('SIN_CONEXION', 'x', 0));
+      await expect(estado.contarPorConfirmar()).resolves.toBeUndefined();
+      expect(estado.porConfirmar()).toBe(1);
+    });
   });
 
   it('descartar llama a la API y recarga', async () => {

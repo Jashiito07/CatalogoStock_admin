@@ -3,13 +3,17 @@ import {
   advertenciasDeRevision,
   advertenciasInformativas,
   cambiosDeBorrador,
+  cambiosParaConfirmarPrecio,
   descripcionDeFallidos,
   infoAdvertencia,
   MAX_BYTES_PDF,
   precioDeBorrador,
   puedeAprobar,
+  puedeConfirmarPrecio,
   resumenDeAnalisis,
   resumirLote,
+  textoPorConfirmar,
+  tienePrecioPorConfirmar,
   tieneSinPrecio,
   validarArchivoPdf,
 } from './importacion';
@@ -65,6 +69,44 @@ describe('Importación de catálogo en PDF: dominio (RF-PRO-01, RF-PRO-02, D-55)
       expect(puedeAprobar(borradorPrueba('b'))).toBe(true);
       expect(puedeAprobar(borradorPrueba('b', { estado: 'APROBADO' }))).toBe(false);
       expect(puedeAprobar(borradorPrueba('b', { estado: 'DESCARTADO' }))).toBe(false);
+    });
+  });
+
+  describe('precio heredado de la ficha (RN-11, RN-13, RN-14)', () => {
+    const heredado = (parcial = {}) =>
+      borradorPrueba('h', { precio: '19.50', advertencias: ['PRECIO_HEREDADO', 'PRECIO_EN_OFERTA'], ...parcial });
+
+    it('PRECIO_HEREDADO pide revisión (no es informativa) y su texto es el del contrato', () => {
+      const info = infoAdvertencia('PRECIO_HEREDADO');
+      expect(info.informativa).toBe(false);
+      expect(info.etiqueta).toBe('Precio tomado de la ficha del catálogo. Confírmalo antes de aprobar');
+      expect(info.ayuda).toContain('puede ser el de otro formato o de un set');
+      expect(advertenciasDeRevision(heredado())).toEqual(['PRECIO_HEREDADO']);
+    });
+
+    it('un borrador con precio heredado no se puede aprobar hasta confirmarlo', () => {
+      expect(tienePrecioPorConfirmar(heredado())).toBe(true);
+      expect(puedeAprobar(heredado())).toBe(false);
+      expect(puedeAprobar(heredado({ advertencias: ['PRECIO_EN_OFERTA'] }))).toBe(true);
+    });
+
+    it('solo se confirma un pendiente heredado con precio', () => {
+      expect(puedeConfirmarPrecio(heredado())).toBe(true);
+      expect(puedeConfirmarPrecio(heredado({ estado: 'APROBADO' }))).toBe(false);
+      expect(puedeConfirmarPrecio(heredado({ precio: null }))).toBe(false);
+      expect(puedeConfirmarPrecio(borradorPrueba('x'))).toBe(false);
+    });
+
+    it('confirmar envía el precio actual como texto exacto, aunque sea el mismo', () => {
+      expect(cambiosParaConfirmarPrecio(heredado())).toEqual({ precio: '19.50' });
+      expect(cambiosParaConfirmarPrecio(heredado({ precio: '19.5' }))).toEqual({ precio: '19.50' });
+      expect(() => cambiosParaConfirmarPrecio(heredado({ precio: null }))).toThrow();
+    });
+
+    it('PRECIO_NO_CONFIRMADO se describe y se cuenta en el texto del aviso', () => {
+      expect(descripcionDeFallidos([{ id: 'a', error: 'PRECIO_NO_CONFIRMADO' }])).toBe('1 con el precio sin confirmar');
+      expect(textoPorConfirmar(1)).toBe('1 borrador necesita confirmar el precio');
+      expect(textoPorConfirmar(3)).toBe('3 borradores necesitan confirmar el precio');
     });
   });
 

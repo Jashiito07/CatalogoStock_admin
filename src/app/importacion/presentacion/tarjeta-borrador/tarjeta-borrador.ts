@@ -12,7 +12,9 @@ import {
   infoAdvertencia,
   precioActualDistinto,
   precioDeBorrador,
+  puedeConfirmarPrecio,
   puedeEditar,
+  tienePrecioPorConfirmar,
 } from '../../dominio/importacion';
 
 type SeveridadTag = 'success' | 'danger' | 'warn';
@@ -38,10 +40,15 @@ export class TarjetaBorrador {
   readonly borrador = input.required<Borrador>();
   readonly seleccionable = input(false);
   readonly seleccionado = input(false);
+  /** Hay un PATCH de «Confirmar precio» en curso para este borrador. */
+  readonly confirmando = input(false);
 
   readonly seleccionadoCambio = output<boolean>();
   readonly editar = output<Borrador>();
+  readonly confirmarPrecio = output<Borrador>();
 
+  protected readonly tienePrecioPorConfirmar = tienePrecioPorConfirmar;
+  protected readonly puedeConfirmarPrecio = puedeConfirmarPrecio;
   protected readonly etiquetaDisponibilidad = etiquetaDisponibilidad;
   protected readonly precioDeBorrador = precioDeBorrador;
   protected readonly precioActualDistinto = precioActualDistinto;

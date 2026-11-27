@@ -42,13 +42,17 @@ import {
   etiquetaEstadoBorrador,
   infoAdvertencia,
   MAXIMO_IDS_POR_LOTE,
+  ERROR_PRECIO_NO_CONFIRMADO,
   precioDeBorrador,
   puedeAprobar,
+  puedeConfirmarPrecio,
   puedeEditar,
   ResumenLote,
   resumenDeAnalisis,
   TAMANIOS_PAGINA_BORRADORES,
+  textoPorConfirmar,
   tieneSinPrecio,
+  tienePrecioPorConfirmar,
 } from '../../dominio/importacion';
 import { DialogoBorrador } from '../dialogo-borrador/dialogo-borrador';
 import { TarjetaBorrador } from '../tarjeta-borrador/tarjeta-borrador';
@@ -68,6 +72,8 @@ export interface AvisoLote {
   readonly cantidad: number;
   /** «2 sin precio, 1 que ya no estaban pendientes»; vacío si todo salió bien. */
   readonly omitidos: string;
+  /** Borradores que el servidor rechazó con `PRECIO_NO_CONFIRMADO` (siguen seleccionados). */
+  readonly porConfirmar: number;
 }
 
 /**
@@ -119,6 +125,9 @@ export class Revision implements OnInit, OnDestroy {
   protected readonly advertenciasInformativas = advertenciasInformativas;
   protected readonly puedeEditar = puedeEditar;
   protected readonly tieneSinPrecio = tieneSinPrecio;
+  protected readonly tienePrecioPorConfirmar = tienePrecioPorConfirmar;
+  protected readonly puedeConfirmarPrecio = puedeConfirmarPrecio;
+  protected readonly textoPorConfirmar = textoPorConfirmar;
   protected readonly resumenDeAnalisis = resumenDeAnalisis;
 
   /** Menos de 768 px: tarjetas en vez de tabla, filtros colapsables y barra inferior (D-61). */
@@ -127,6 +136,9 @@ export class Revision implements OnInit, OnDestroy {
 
   protected readonly estadoFiltro = signal<EstadoBorrador>('PENDIENTE');
   protected readonly soloAdvertencias = signal(false);
+  protected readonly soloPorConfirmar = signal(false);
+  /** Ids de borradores con un «Confirmar precio» en curso. */
+  protected readonly confirmando = signal<ReadonlySet<string>>(new Set());
   protected readonly texto = signal('');
   protected readonly paginaPdf = signal('');
   protected readonly errorPaginaPdf = signal<string | null>(null);
@@ -156,11 +168,15 @@ export class Revision implements OnInit, OnDestroy {
   protected readonly seleccionSinPrecio = computed(
     () => this.seleccion().filter((b) => tieneSinPrecio(b)).length,
   );
+  protected readonly seleccionPorConfirmar = computed(
+    () => this.seleccion().filter((b) => tienePrecioPorConfirmar(b)).length,
+  );
 
   /** Cuántos filtros hay aplicados (para la insignia del botón «Filtros» en el celular). */
   protected readonly cantidadFiltros = computed(
     () =>
       (this.soloAdvertencias() ? 1 : 0) +
+      (this.soloPorConfirmar() ? 1 : 0) +
       (this.texto().trim() !== '' ? 1 : 0) +
       (this.paginaPdf().trim() !== '' ? 1 : 0),
   );
@@ -206,6 +222,19 @@ export class Revision implements OnInit, OnDestroy {
       return; // el selector no admite quedar vacío
     }
     this.estadoFiltro.set(valor);
+    if (valor !== 'PENDIENTE') {
+      this.soloPorConfirmar.set(false); // solo existe entre los pendientes
+    }
+    this.alElegirFiltro();
+  }
+
+  /** Atajo del encabezado: ver (o dejar de ver) solo los que esperan confirmar el precio. */
+  protected alternarPorConfirmar(): void {
+    const activar = !this.soloPorConfirmar();
+    this.soloPorConfirmar.set(activar);
+    if (activar) {
+      this.estadoFiltro.set('PENDIENTE');
+    }
     this.alElegirFiltro();
   }
 
@@ -236,11 +265,12 @@ export class Revision implements OnInit, OnDestroy {
     this.paginaPdf.set('');
     this.errorPaginaPdf.set(null);
     this.soloAdvertencias.set(false);
+    this.soloPorConfirmar.set(false);
     void this.aplicarFiltros();
   }
 
   protected readonly hayFiltrosActivos = computed(
-    () => this.soloAdvertencias() || this.texto() !== '' || this.paginaPdf() !== '',
+    () => this.soloAdvertencias() || this.soloPorConfirmar() || this.texto() !== '' || this.paginaPdf() !== '',
   );
 
   protected alCambiarPagina(evento: TableLazyLoadEvent): void {
@@ -300,6 +330,7 @@ export class Revision implements OnInit, OnDestroy {
       estado: this.estadoFiltro(),
       busqueda: this.texto(),
       ...(this.soloAdvertencias() ? { conAdvertencias: true } : {}),
+      ...(this.soloPorConfirmar() ? { soloPorConfirmar: true } : {}),
       ...(/^[1-9]\d{0,5}$/.test(pagina) ? { paginaPdf: Number(pagina) } : {}),
     });
   }
@@ -333,6 +364,39 @@ export class Revision implements OnInit, OnDestroy {
     void this.estado.refrescarImportacion();
   }
 
+  // ── Confirmar el precio heredado de la ficha ──────────────────────────────────────────
+
+  protected async confirmarPrecio(borrador: Borrador): Promise<void> {
+    if (this.confirmando().has(borrador.id)) {
+      return;
+    }
+    this.confirmando.update((ids) => new Set(ids).add(borrador.id));
+    try {
+      const confirmado = await this.estado.confirmarPrecio(borrador);
+      this.seleccion.update((lista) => lista.map((b) => (b.id === borrador.id ? confirmado : b)));
+      this.avisos.add({
+        severity: 'success',
+        summary: 'Precio confirmado',
+        detail: `${confirmado.nombre}: ${precioDeBorrador(confirmado.precio)}`,
+        life: 3000,
+      });
+    } catch (error) {
+      this.avisos.add({
+        severity: 'error',
+        summary: 'No se pudo confirmar el precio',
+        detail: mensajeDeErrorDeImportacion(error),
+        life: 6000,
+      });
+      void this.estado.cargar();
+    } finally {
+      this.confirmando.update((ids) => {
+        const siguiente = new Set(ids);
+        siguiente.delete(borrador.id);
+        return siguiente;
+      });
+    }
+  }
+
   // ── Aprobar y descartar (RNF-12: siempre con confirmación) ───────────────────────────
 
   protected pedirAprobar(): void {
@@ -341,10 +405,14 @@ export class Revision implements OnInit, OnDestroy {
       return;
     }
     const sinPrecio = this.seleccionSinPrecio();
+    const porConfirmar = this.seleccionPorConfirmar();
     const omitidos =
-      sinPrecio > 0
+      (sinPrecio > 0
         ? ` ${sinPrecio === 1 ? '1 borrador sin precio no se aprobará' : `${sinPrecio} borradores sin precio no se aprobarán`}: escribe su precio primero.`
-        : '';
+        : '') +
+      (porConfirmar > 0
+        ? ` ${textoPorConfirmar(porConfirmar)} y no se aprobará${porConfirmar === 1 ? '' : 'n'} hasta entonces.`
+        : '');
     this.confirmacion.confirm({
       header: 'Aprobar borradores',
       message: `Se crearán ${aprobables.length === 1 ? '1 producto' : `${aprobables.length} productos`} y se publicarán en el catálogo de tus clientes.${omitidos}`,
@@ -394,19 +462,32 @@ export class Revision implements OnInit, OnDestroy {
     try {
       const ids = borradores.map((b) => b.id).slice(0, MAXIMO_IDS_POR_LOTE);
       const resumen = await enviar(ids);
-      this.seleccion.set([]);
+      // Los que faltan confirmar el precio siguen seleccionados (ya con los datos recargados).
+      const sinConfirmar = new Set(
+        resumen.fallidos.filter((f) => f.error === ERROR_PRECIO_NO_CONFIRMADO).map((f) => f.id),
+      );
+      const filasActuales = new Map(this.estado.elementos().map((b) => [b.id, b]));
+      this.seleccion.set(
+        borradores.filter((b) => sinConfirmar.has(b.id)).map((b) => filasActuales.get(b.id) ?? b),
+      );
       this.aviso.set({
         accion,
         cantidad: resumen.correctos.length,
-        omitidos: descripcionDeFallidos(resumen.fallidos),
+        omitidos: descripcionDeFallidos(
+          resumen.fallidos.filter((f) => f.error !== ERROR_PRECIO_NO_CONFIRMADO),
+        ),
+        porConfirmar: sinConfirmar.size,
       });
       this.avisos.add({
         severity: resumen.fallidos.length > 0 ? 'warn' : 'success',
         summary: accion === 'aprobados' ? 'Borradores aprobados' : 'Borradores descartados',
         detail:
           `${resumen.correctos.length} ${accion}` +
-          (resumen.fallidos.length > 0 ? `; ${resumen.fallidos.length} no se pudieron procesar` : ''),
-        life: 4000,
+          (sinConfirmar.size > 0 ? `; ${textoPorConfirmar(sinConfirmar.size)}` : '') +
+          (resumen.fallidos.length > sinConfirmar.size
+            ? `; ${resumen.fallidos.length - sinConfirmar.size} no se pudieron procesar`
+            : ''),
+        life: 5000,
       });
     } catch (error) {
       this.avisos.add({
