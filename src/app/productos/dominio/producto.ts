@@ -19,16 +19,25 @@ export interface MarcaDeProducto {
 
 export interface ImagenProducto {
   readonly id: string;
-  /** Ruta pública `/api/v1/imagenes/<uuid>.<ext>` (D-46). */
+  /** Imagen de detalle: ruta pública `/api/v1/imagenes/<uuid>.<ext>` (D-46, D-62). */
   readonly url: string;
+  /** Miniatura `/api/v1/imagenes/<uuid>-m.jpg` (D-62); igual a `url` en imágenes anteriores. */
+  readonly urlMiniatura?: string;
   readonly orden: number;
   /** `true` solo en la de `orden` 0. */
   readonly principal: boolean;
 }
 
+/** Ruta de la miniatura de una imagen (o la de detalle si la API no la envía). */
+export function urlMiniaturaDe(imagen: ImagenProducto): string {
+  return imagen.urlMiniatura ?? imagen.url;
+}
+
 export interface Producto {
   readonly id: string;
   readonly nombre: string;
+  /** «CÓD.»/«Ref.» del catálogo de la marca (D-57); `null` si no tiene. */
+  readonly codigo?: string | null;
   readonly marca: MarcaDeProducto;
   /** Texto decimal `"12.50"`; nunca número de punto flotante. */
   readonly precio: string;

@@ -222,6 +222,35 @@ Sección **Productos** (`/productos`, módulo `src/app/productos/`), contra `doc
 - Crear y editar en un diálogo: marca (solo activas), precio como **texto** con 2 decimales (nunca `number`; se muestra «$12.50»), descripción, disponibilidad (RN-09) e imágenes (`p-fileupload`, máx. 5, 2 MB, JPG/PNG/WebP, validadas también en el cliente; la primera es la principal).
 - Las imágenes nuevas y el orden se aplican al guardar (POST multipart y PUT de orden); quitar una imagen guardada es inmediato y pide confirmación. Eliminar un producto pide confirmación (RNF-12).
 - Sin marcas, el guard de «Configura tu negocio» (D-48) redirige.
+- La tabla muestra la **miniatura** (`urlMiniatura`, D-62); si la API no la envía, usa la imagen de detalle.
+
+## Subir fotos en lote (RF-PRO-01, D-62, DEC-07)
+
+En **Productos**, el botón «Subir fotos en lote» abre `/productos/fotos`:
+
+- **Elegir fotos.** Se eligen o arrastran muchas fotos a la vez (`p-fileupload`, JPG, PNG o WebP de hasta 2 MB).
+- **Emparejar por código.** Cada foto se empareja con el producto por el **código** del nombre del archivo: lo que va
+  antes de `-`, `_`, espacio o `(` (`12345.jpg`, `12345-2.jpg`, `12345_b.jpg`). No distingue mayúsculas.
+- **Orden.** Las fotos se ordenan por código y, dentro de cada uno, primero la que no tiene sufijo. Así queda como
+  principal si el producto aún no tiene fotos.
+- **Revisión antes de guardar.** `p-table` con vista previa local, producto (`p-select` con búsqueda para corregirlo)
+  y avisos:
+  - sin código;
+  - código desconocido o repetido en dos productos;
+  - no es una imagen admitida;
+  - repetida en el lote;
+  - el producto ya llega a 5 fotos.
+
+  Se puede quitar o volver a incluir una foto. Nada se sube hasta confirmar (`p-confirmdialog`).
+- **Subida.** Va de una en una con `POST /productos/{id}/imagenes`, **a 30 por minuto** (2 s entre fotos, el límite
+  del servidor):
+  - ante un 429, espera 20 s y reintenta hasta 3 veces;
+  - un error no detiene el lote y la foto queda con su motivo;
+  - hay botones para detener, continuar, reintentar las fallidas y subir otro lote;
+  - el avance se ve con `p-progressbar` y el resultado con `p-toast`.
+- **En el celular** (D-61), cada fila se apila como una tarjeta.
+- **Código.** El dominio está en `productos/dominio/fotos-lote.ts`, el estado en `productos/aplicacion/estado-fotos-lote.ts`
+  y la pantalla en `productos/presentacion/fotos-lote/`.
 
 ## Importar el catálogo en PDF (RF-PRO-01, RF-PRO-02, D-49, D-55)
 
