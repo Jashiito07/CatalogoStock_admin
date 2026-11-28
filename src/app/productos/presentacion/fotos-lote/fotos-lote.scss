@@ -1,0 +1,128 @@
+// Subir fotos en lote (D-62, DEC-07). Colores solo con variables del tema (AGENTS.md, D-06).
+.cs-fotos-lote {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.cs-fotos-lote__encabezado {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.cs-fotos-lote__titulo {
+  margin: 0;
+  font-size: 1.5rem;
+}
+
+.cs-fotos-lote__descripcion {
+  margin: 0.25rem 0 0;
+  max-width: 60ch;
+  color: var(--p-text-muted-color);
+}
+
+.cs-fotos-lote__error,
+.cs-fotos-lote__resumen,
+.cs-fotos-lote__acciones {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.cs-fotos-lote__vacio {
+  margin: 0;
+  padding: 1.5rem 0.5rem;
+  text-align: center;
+  color: var(--p-text-muted-color);
+}
+
+.cs-fotos-lote__miniatura {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 3.5rem;
+  height: 3.5rem;
+  border-radius: 0.5rem;
+  object-fit: cover;
+  background: var(--p-content-hover-background);
+}
+
+.cs-fotos-lote__miniatura--vacia {
+  color: var(--p-text-muted-color);
+}
+
+.cs-fotos-lote__nombre {
+  display: block;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.cs-fotos-lote__detalle,
+.cs-fotos-lote__motivo {
+  display: block;
+  font-size: 0.875rem;
+  color: var(--p-text-muted-color);
+}
+
+.cs-fotos-lote__celda-producto {
+  min-width: 14rem;
+}
+
+.cs-fotos-lote__celda-revision {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+}
+
+.cs-fotos-lote__fila--quitada {
+  opacity: 0.6;
+}
+
+.cs-fotos-lote__avance {
+  flex: 1 1 18rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.cs-fotos-lote__final {
+  margin: 0;
+  flex: 1 1 100%;
+}
+
+// En el celular (D-61) cada fila se apila como una tarjeta.
+@media (max-width: 767.98px) {
+  :host ::ng-deep .cs-fotos-lote__tabla {
+    thead {
+      display: none;
+    }
+
+    tr {
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 0.5rem 0.75rem;
+      padding: 0.75rem 0;
+      border-bottom: 1px solid var(--p-content-border-color);
+    }
+
+    td {
+      border: 0;
+      padding: 0;
+    }
+
+    .cs-fotos-lote__celda-foto {
+      grid-row: span 2;
+    }
+
+    .cs-fotos-lote__celda-producto,
+    .cs-fotos-lote__celda-revision,
+    .cs-fotos-lote__celda-accion {
+      grid-column: 1 / -1;
+      min-width: 0;
+    }
+  }
+}

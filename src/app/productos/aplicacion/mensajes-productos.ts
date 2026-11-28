@@ -12,6 +12,8 @@ export const MENSAJE_ARCHIVO_GRANDE = 'La imagen pesa más de 2 MB.';
 export const MENSAJE_TIPO_NO_ADMITIDO =
   'El archivo no es una imagen válida. Usa JPG, PNG o WebP.';
 export const MENSAJE_LIMITE_IMAGENES = 'Un producto admite hasta 5 imágenes.';
+export const MENSAJE_DIMENSIONES_NO_ADMITIDAS =
+  'La imagen es demasiado grande: hasta 8000 px por lado y 40 megapíxeles. Redúcela e inténtalo de nuevo.';
 export const MENSAJE_DEMASIADAS_SUBIDAS =
   'Estás subiendo imágenes muy rápido. Espera un momento e inténtalo de nuevo.';
 export const MENSAJE_ERROR_INESPERADO = 'Ocurrió un error inesperado. Inténtalo de nuevo.';
@@ -35,6 +37,8 @@ export function mensajeDeErrorDeProducto(
       return MENSAJE_MARCA_INACTIVA;
     case 'LIMITE_IMAGENES':
       return MENSAJE_LIMITE_IMAGENES;
+    case 'DIMENSIONES_NO_ADMITIDAS':
+      return MENSAJE_DIMENSIONES_NO_ADMITIDAS;
     case 'ARCHIVO_DEMASIADO_GRANDE':
       return MENSAJE_ARCHIVO_GRANDE;
     case 'TIPO_NO_ADMITIDO':

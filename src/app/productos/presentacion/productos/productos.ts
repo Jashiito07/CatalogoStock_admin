@@ -33,6 +33,7 @@ import {
   imagenPrincipal,
   Producto,
   TAMANIOS_PAGINA,
+  urlMiniaturaDe,
 } from '../../dominio/producto';
 import { DialogoProducto } from '../dialogo-producto/dialogo-producto';
 
@@ -131,7 +132,8 @@ export class Productos implements OnInit, OnDestroy {
 
   protected urlMiniatura(producto: Producto): string | null {
     const imagen = this.imagenPrincipal(producto);
-    return imagen === null ? null : this.estado.urlImagen(imagen.url);
+    // D-62: en la tabla basta la miniatura (carga más rápido).
+    return imagen === null ? null : this.estado.urlImagen(urlMiniaturaDe(imagen));
   }
 
   // ── Filtros y paginación ─────────────────────────────────────────────────────────────

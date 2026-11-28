@@ -1,0 +1,201 @@
+<p-confirmdialog />
+
+<section class="cs-fotos-lote" aria-labelledby="titulo-fotos-lote">
+  <header class="cs-fotos-lote__encabezado">
+    <div>
+      <h2 id="titulo-fotos-lote" class="cs-fotos-lote__titulo">Subir fotos en lote</h2>
+      <p class="cs-fotos-lote__descripcion">
+        Elige varias fotos a la vez. Cada una se empareja con el producto por el código que lleva en
+        el nombre del archivo, por ejemplo <strong>12345.jpg</strong> o <strong>12345-2.jpg</strong>.
+        Revisa la lista antes de subirlas: nada se guarda hasta que confirmes.
+      </p>
+    </div>
+    <p-button
+      label="Volver a Productos"
+      icon="pi pi-arrow-left"
+      severity="secondary"
+      [text]="true"
+      routerLink="/productos"
+      data-prueba="volver"
+    />
+  </header>
+
+  @if (estado.errorCarga(); as error) {
+    <div class="cs-fotos-lote__error">
+      <p-message severity="error" icon="pi pi-times-circle" role="alert" data-prueba="error-carga">{{ error }}</p-message>
+      <p-button label="Reintentar" icon="pi pi-refresh" [text]="true" size="small" (onClick)="estado.cargarProductos()" />
+    </div>
+  }
+
+  @if (!estado.iniciado()) {
+    <p-fileupload
+      #cargador
+      mode="advanced"
+      name="fotos"
+      accept="image/jpeg,image/png,image/webp"
+      [multiple]="true"
+      [customUpload]="true"
+      [auto]="false"
+      [showUploadButton]="false"
+      [showCancelButton]="false"
+      [disabled]="estado.cargando()"
+      chooseLabel="Elegir fotos"
+      chooseIcon="pi pi-images"
+      data-prueba="cargador"
+      (onSelect)="alSeleccionar($event)"
+    >
+      <ng-template #empty>
+        <p class="cs-fotos-lote__vacio">
+          @if (estado.cargando()) {
+            Cargando tus productos…
+          } @else {
+            Arrastra las fotos aquí o usa «Elegir fotos». JPG, PNG o WebP de hasta 2 MB.
+          }
+        </p>
+      </ng-template>
+    </p-fileupload>
+  }
+
+  @if (filas().length > 0) {
+    <div class="cs-fotos-lote__resumen" role="status" data-prueba="resumen">
+      <p-tag severity="success" icon="pi pi-check-circle" [value]="resumen().listas + ' listas para subir'" />
+      @if (resumen().conAviso > 0) {
+        <p-tag severity="warn" icon="pi pi-exclamation-triangle" [value]="resumen().conAviso + ' por revisar'" />
+      }
+      @if (resumen().excluidas > 0) {
+        <p-tag severity="secondary" icon="pi pi-minus-circle" [value]="resumen().excluidas + ' quitadas'" />
+      }
+    </div>
+
+    <p-table
+      [value]="filas()"
+      dataKey="clave"
+      [paginator]="filas().length > filasPorPagina"
+      [rows]="filasPorPagina"
+      styleClass="cs-fotos-lote__tabla"
+      data-prueba="tabla-fotos"
+    >
+      <ng-template #header>
+        <tr>
+          <th scope="col">Foto</th>
+          <th scope="col">Archivo</th>
+          <th scope="col">Producto</th>
+          <th scope="col">Revisión</th>
+          <th scope="col">Acción</th>
+        </tr>
+      </ng-template>
+      <ng-template #body let-fila>
+        <tr [class.cs-fotos-lote__fila--quitada]="fila.excluida" data-prueba="fila-foto">
+          <td class="cs-fotos-lote__celda-foto">
+            @if (vistaPrevia(fila); as url) {
+              <img [src]="url" [alt]="'Vista previa de ' + fila.nombre" class="cs-fotos-lote__miniatura" />
+            } @else {
+              <span class="cs-fotos-lote__miniatura cs-fotos-lote__miniatura--vacia"
+                ><i class="pi pi-image" aria-hidden="true"></i
+              ></span>
+            }
+          </td>
+          <td>
+            <span class="cs-fotos-lote__nombre">{{ fila.nombre }}</span>
+            <span class="cs-fotos-lote__detalle">
+              {{ formatearTamano(fila.tamano) }}
+              @if (fila.codigo) {
+                · código {{ fila.codigo }}
+              }
+            </span>
+          </td>
+          <td class="cs-fotos-lote__celda-producto">
+            <p-select
+              [options]="opcionesProducto()"
+              optionLabel="etiqueta"
+              optionValue="id"
+              [filter]="true"
+              filterBy="etiqueta"
+              [showClear]="true"
+              appendTo="body"
+              placeholder="Elige el producto"
+              [ariaLabel]="'Producto de ' + fila.nombre"
+              [disabled]="estado.iniciado() || fila.errorArchivo !== null || fila.excluida"
+              [ngModel]="fila.productoId"
+              (ngModelChange)="estado.asignarProducto(fila.clave, $event ?? null)"
+              data-prueba="producto-foto"
+            />
+          </td>
+          <td class="cs-fotos-lote__celda-revision">
+            @if (progresoDe(fila); as progreso) {
+              <p-tag [severity]="progreso.severidad" [icon]="progreso.icono" [value]="progreso.texto" data-prueba="progreso-foto" />
+              @if (progreso.mensaje) {
+                <span class="cs-fotos-lote__motivo">{{ progreso.mensaje }}</span>
+              }
+            } @else if (fila.excluida) {
+              <p-tag severity="secondary" icon="pi pi-minus-circle" value="Quitada del lote" />
+            } @else if (fila.lista) {
+              <p-tag severity="success" icon="pi pi-check" value="Lista" data-prueba="lista-foto" />
+            } @else {
+              @for (aviso of fila.avisos; track aviso) {
+                <p-tag
+                  [severity]="severidadAviso(aviso)"
+                  icon="pi pi-exclamation-triangle"
+                  [value]="textoAviso(aviso)"
+                  data-prueba="aviso-foto"
+                />
+              }
+              @if (fila.errorArchivo) {
+                <span class="cs-fotos-lote__motivo">{{ fila.errorArchivo }}</span>
+              }
+            }
+          </td>
+          <td class="cs-fotos-lote__celda-accion">
+            @if (!estado.iniciado()) {
+              <p-button
+                [label]="fila.excluida ? 'Incluir' : 'Quitar'"
+                [icon]="fila.excluida ? 'pi pi-undo' : 'pi pi-times'"
+                severity="secondary"
+                [text]="true"
+                size="small"
+                [ariaLabel]="(fila.excluida ? 'Incluir ' : 'Quitar ') + fila.nombre"
+                (onClick)="estado.alternarExclusion(fila.clave)"
+                data-prueba="quitar-foto"
+              />
+            }
+          </td>
+        </tr>
+      </ng-template>
+    </p-table>
+
+    <footer class="cs-fotos-lote__acciones">
+      @if (estado.subiendo()) {
+        <div class="cs-fotos-lote__avance" role="status" aria-live="polite">
+          <p-progressbar [value]="porcentaje()" data-prueba="avance" />
+          <span>
+            Subiendo {{ estado.subidas() + estado.fallidas() + 1 }} de {{ estado.totalLote() }}
+            ({{ subidasPorMinuto }} por minuto). Mantén esta pantalla abierta.
+          </span>
+        </div>
+        <p-button label="Detener" icon="pi pi-pause" severity="secondary" [outlined]="true" (onClick)="estado.detener()" data-prueba="detener" />
+      } @else if (estado.iniciado()) {
+        <p class="cs-fotos-lote__final" role="status" data-prueba="final">
+          Subidas: {{ estado.subidas() }}. Con error: {{ estado.fallidas() }}.
+          @if (pendientes() > 0) {
+            En espera: {{ pendientes() }}.
+          }
+        </p>
+        @if (pendientes() > 0) {
+          <p-button label="Continuar" icon="pi pi-play" (onClick)="subir()" data-prueba="continuar" />
+        }
+        @if (estado.fallidas() > 0) {
+          <p-button label="Reintentar las que fallaron" icon="pi pi-refresh" severity="secondary" [outlined]="true" (onClick)="reintentar()" data-prueba="reintentar" />
+        }
+        <p-button label="Subir otro lote" icon="pi pi-images" severity="secondary" [text]="true" (onClick)="nuevoLote()" data-prueba="nuevo-lote" />
+      } @else {
+        <p-button
+          [label]="'Subir ' + resumen().listas + (resumen().listas === 1 ? ' foto' : ' fotos')"
+          icon="pi pi-upload"
+          [disabled]="resumen().listas === 0"
+          (onClick)="confirmarSubida()"
+          data-prueba="subir"
+        />
+      }
+    </footer>
+  }
+</section>

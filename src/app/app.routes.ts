@@ -94,6 +94,15 @@ export const routes: Routes = [
         ],
       },
       {
+        // Subida de fotos en lote, emparejadas por código (RF-PRO-01, D-62, DEC-07).
+        path: 'productos/fotos',
+        title: 'Subir fotos en lote · CatálogoStock',
+        canActivate: [negocioConfigurado],
+        providers: [proveerProductos()],
+        loadComponent: () =>
+          import('./productos/presentacion/fotos-lote/fotos-lote').then((m) => m.FotosLote),
+      },
+      {
         path: 'productos',
         title: 'Productos — CatálogoStock',
         // Sin marcas, el guard existente lleva a «Configura tu negocio» (D-48).
